@@ -58,3 +58,20 @@ class Town(Base):
     town_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    guild_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    town_name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    stockpile_name: Mapped[str] = mapped_column(String(128), nullable=False, default="Public")
+
+    image_path: Mapped[str] = mapped_column(String(512), nullable=False)
+
+    # QUEUED | PROCESSING | DONE | FAILED
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="QUEUED", index=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
