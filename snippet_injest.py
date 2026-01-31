@@ -104,7 +104,7 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
 
 
 async def main() -> None:
-    town = "CallumsKeep"
+    town = "Tine"
 
     snapshot_id = await ingest_tsv(
         tsv_path=f"sample_data/Foxhole Logi Tool - {town}.tsv",

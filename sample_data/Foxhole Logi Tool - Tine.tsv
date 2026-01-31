@@ -1,0 +1,78 @@
+Stockpile Title	Stockpile Name	Structure Type	Quantity	Name	Crated?	Per Crate	Total	Description	CodeName
+Tine		Seaport	4	Soldier Supplies	TRUE	10	40	A standard issue set of supplies for foot soldiers. Bases must be stockpiled with Soldier Supplies in order for players to spawn.	SoldierSupplies
+Tine		Seaport	23	Maintenance Supplies	TRUE	100	2300	Supplies for maintaining structures. Store at Bases or Maintenance Tunnels to prevent decay on surrounding structures.	MaintenanceSupplies
+Tine		Seaport	229	7.62mm	TRUE	40	9160	Standard ammunition for rifles.	RifleAmmo
+Tine		Seaport	140	Physician’s Jacket	TRUE	15	2100	Physicians in the Warden army are unmatched and this uniform has a plethora of pockets and bags designed to carry and deploy first aid gear easily.	MedicUniformW
+Tine		Seaport	60	20mm	TRUE	10	600	Standard ammunition for anti-tank rifles.	ATRifleAmmo
+Tine		Seaport	57	Binoculars	TRUE	5	285	An optical instrument used for viewing distant objects.	Binoculars
+Tine		Seaport	56	Processed Construction Materials	TRUE	1	56	Refined metal bars needed to produce advanced structures, vehicles, and equipment at Facilities.	FacilityMaterials2
+Tine		Seaport	55	20 Neville Anti-Tank Rifle	TRUE	3	165	The Neville is unmatched in its versatility as a portable, magazine-based anti-armour firearm.	ATRifleW
+Tine		Seaport	49	Buckhorn CCQ-18	TRUE	20	980	Attached to the barrel of a rifle, this short blade can spear enemies in close quarters encounters.	Bayonet
+Tine		Seaport	44	Gunner’s Breastplate	TRUE	5	220	Repurposed from ancient wars, these armour plates are highly effective at stopping enemy small arms fire. That protection comes at the cost of weight, and the wearer will feel quite restricted and encumbered.	ArmourUniformW
+Tine		Seaport	40	Basic Materials	TRUE	100	4000	Resource used for building basic structures and producing items.	Cloth
+Tine		Seaport	38	Barbed Wire	TRUE	5	190	Used to construct Barbed Wire defenses.	BarbedWireMaterials
+Tine		Seaport	34	120mm	TRUE	5	170	Payload for light artillery weapons.	LightArtilleryAmmo
+Tine		Seaport	33	Diesel	TRUE	1	33	Common fuel used to power all vehicles and resource mines.	Diesel
+Tine		Seaport	30	Wrench	TRUE	5	150	A multipurpose tool. Can be used to dismantle mines/barbed wire and unlock vehicles.	WorkWrench
+Tine		Seaport	22	Outrider’s Mantle	TRUE	15	330	The Warden army relies on outriders to provide and recieve vital intelligence. Their gear is sturdy and well-suited for extended operations in rugged terrain and inclement weather.	ScoutUniformW
+Tine		Seaport	22	Explosive Powder	TRUE	40	880	Resource used for producing explosive weapons.	Explosive
+Tine		Seaport	21	Caoivish Parka	TRUE	15	315	Born and bred in the northern cold, this heavy parka protects Warden infantry from all but the worst blizzards.	SnowUniformW
+Tine		Seaport	21	Sledge Hammer	TRUE	10	210	A tool used to salvage components from remains of old vehicles and equipment.	SledgeHammer
+Tine		Seaport	21	Gas Mask	TRUE	20	420	Protects against poison gas	GasMask
+Tine		Seaport	19	Radio	TRUE	5	95	Receives map intelligence updates	Radio
+Tine		Seaport	19	Sandbag	TRUE	5	95	Used to construct Sandbag defenses.	SandbagMaterials
+Tine		Seaport	18	Shovel	TRUE	10	180	A tool for digging Trenches and other entrenched structures.	Shovel
+Tine		Seaport	16	Sapper Gear	TRUE	15	240	Caoivish engineers are legendary in song and stature. They wear specialized uniforms, outfitted with belts and bags for easy access to tools and handheld materials.	EngineerUniformW
+Tine		Seaport	15	Construction Materials	TRUE	20	300	Metal beams needed to produce basic structures, vehicles, and equipment at Facilities.	FacilityMaterials1
+Tine		Seaport	15	Water	TRUE	1	15	Water... in a can!	Water
+Tine		Seaport	13	150mm	TRUE	5	65	Payload for heavy artillery weapons.	HeavyArtilleryAmmo
+Tine		Seaport	12	Gas Mask Filter	TRUE	20	240	When attached to a Gas Mask, this filter provides fresh air to the wearer.	GasMaskFilter
+Tine		Seaport	11	The Ospreay	TRUE	20	220	A rifle attachment that fires grenades with pneumatic force. Along with specialized grenades, it can launch standard grenades.	GrenadeAdapter
+Tine		Seaport	10	Fiddler Submachine Gun Model 868	TRUE	20	200	The Fiddler Submachine Gun is a widely used urban combat weapon. Its high rate of fire and compact frame make it ideal for close-quarters engagements.	SMGW
+Tine		Seaport	9	Officer’s Regalia	TRUE	3	27	A formal uniform that denotes a regiment’s leading officer. While impractical, the officer on duty may use their authority to discipline subordinates without reparation. Officers hold an important role in the Warden military, dating back to ancient times when Caoiva was ruled by a dozen kings.	OfficerUniformW
+Tine		Seaport	8	Metal Beam	TRUE	5	40	Used to construct Metal Beam defenses.	MetalBeamMaterials
+Tine		Seaport	7	Willow's Bane Ammo	TRUE	10	70	Ammo for Willow’s Bane Model 845	FlameBackpackW
+Tine		Seaport	7	12.7mm	TRUE	20	140	Standard ammunition for machine guns.	MGAmmo
+Tine		Seaport	7	No.2 Loughcaster	TRUE	20	140	Standard-issue Warden rifle. This bolt-action firearm is as robust as they come and has seen over a century of use on the battlefield.	RifleW
+Tine		Seaport	6	The Hangman 757	TRUE	20	120	The weapon of choice for pirates and smugglers, its legend is well-earned. With incredibly high stopping power and unique revolver mechanism, the Hangman often plays judge, jury, and executioner.	RifleHeavyW
+Tine		Seaport	6	Petrol	TRUE	1	6	A medium grade fuel that's refined from Oil. Used as a higher end fuel for vehicles and in various applications at Facilities.	Petrol
+Tine		Seaport	5	Tripod	TRUE	5	25	A mount point for deployable infantry weapons and equipment.	Tripod
+Tine		Seaport	5	Water Bucket	TRUE	50	250	A bucket that holds water. You can toss water onto fires to extinguish them.	WaterBucket
+Tine		Seaport	5	Radio Backpack	TRUE	5	25	Automatically gathers map intel periodically when equipped.	RadioBackpack
+Tine		Seaport	4	RPG	TRUE	15	60	A fast-moving explosive projectile used with RPG launchers.	RpgAmmo
+Tine		Seaport	3	Tremola Grenade GPb-1	TRUE	20	60	An explosive Estrellan grenade specially designed for use with handheld grenade launchers. This modern grenade boasts a larger payload and is deadly to lingering infantry and structural supports.	HELaunchedGrenade
+Tine		Seaport	3	7.92mm	TRUE	30	90	Standard ammunition for Storm Rifles and Armoured Cars.	AssaultRifleAmmo
+Tine		Seaport	3	Blakerow 871	TRUE	20	60	The Blakerow is a carbine with a high rate of fire compared to its bolt-action predecessor. This increased fire rate does come at the cost of innate stopping power; however, its versatility and lightweight frame more than make up for any perceived shortcomings.	RifleLightW
+Tine		Seaport	2	Wind Sock	TRUE	5	10	A sturdy fabric cylinder mounted on a tripod that’s designed to help nearby operators determine the speed and direction of wind.	WindsockT
+Tine		Seaport	2	Malone MK.2	TRUE	5	10	This heavy machine gun is bulky enough to require a steady surface to maintain stability. The Malone series of machine guns are unmatched defenders on the battlefield.	MGW
+Tine		Seaport	1	9mm	TRUE	40	40	Standard ammunition for submachine guns.	SMGAmmo
+Tine		Seaport	1	Heavy Explosive Powder	TRUE	30	30	Resource used for producing heavy explosive weapons.	HeavyExplosive
+Tine		Seaport	1	Cascadier 873	TRUE	40	40	This unique sidearm fires in three-round bursts. The Cascadier may not have the stopping power of its cousins, but it more than makes up for it with its lightweight frame, concealability and fire rate.	PistolLightW
+Tine		Seaport	1	Green Ash Grenade	TRUE	10	10	Green Ash is an asphyxiating toxin. Inhaling it without protection will result in a quick death. Be sure to wear a gas mask with fresh filters when handling Green Ash.	GreenAsh
+Tine		Seaport	1	Gentleman’s Peacoat	TRUE	15	15	Seamen of the Caoivish Naval Command are always prepared to operate at the highest levels, even in frigid, northern waters. Every Warden sailor’s readiness paints a portrait of life or death; thus, cold-weather outerwear is an essential part of every CNC gentleman’s kit.	NavalUniformW
+Tine		Seaport	24	BMS - Universal Assembly Rig	FALSE		24	A specialized vehicle designed by the Bassett Motor Society used in the construction of large structures.	Construction
+Tine		Seaport	19	BMS - Class 2 Mobile Auto-Crane	FALSE		19	The Bassett Motor Society’s Class 2 Mobile Auto-Crane is used to lift and reposition vehicles and very heavy equipment.	Crane
+Tine		Seaport	9	Dunne Responder 3e	FALSE		9	The Responder Ambulance is efficient at transporting Critically Wounded Soldiers and carrying medical supplies.	AmbulanceW
+Tine		Seaport	9	Niska Mk. I Gun Motor Carriage	FALSE		9	Designed for escort missions and to support infantry operations, the Niska Gun Motor Carriage Half-Track is an armoured, versatile all-terrain vehicle that can be equipped with a variety of mounted weapons.	HalfTrackW
+Tine		Seaport	6	Dunne Loadlugger 3c	FALSE		6	This standard Truck is fitted with a resource hopper in place of the standard cargo hold. This allows for a much greater capacity for resources at the expense of space for cargo.	TruckResourceW
+Tine		Seaport	5	Rooster - Junkwagon	FALSE		5	A simple towable trailer that holds common building resources.	TrailerResource
+Tine		Seaport	2	King Gallant Mk. II	FALSE		2	A heavily armoured variant of the King Spire, the Gallant Mk. II boasts a weighty 30mm cannon at the cost of top speed.	ScoutTankOffensiveW
+Tine		Seaport	2	Mulloy LPC	FALSE		2	The Mulloy Landing Personnel Carrier is an armoured amphibious vehicle designed for carrying troops across large bodies of water to aid in coordinated beach landings and flanking assaults.	LandingCraftW
+Tine		Seaport	2	O’Brien V.121 Highlander	FALSE		2	Fitted with all-terrain treads, the Highlander brings significant all-terrain mobility and performs especially well in snowy and mountainous environments.	ArmoredCarMobilityW
+Tine		Seaport	2	BMS - Ironship	FALSE		2	The Bassett Motor Society’s Ironship-class shipping vessel is used to freight shippable goods and heavy vehicles.	Freighter
+Tine		Seaport	1	Dunne Transport	FALSE		1	A heavy-duty Warden truck used to mobilize troops and supplies.	TruckW
+Tine		Seaport	1	BMS - Aquatipper	FALSE		1	A large shipping vessel, the Aquatipper is used to transport vehicles, equipment, and personnel over large bodies of water.	Barge
+Tine		Seaport	1	Rooster - Lamploader	FALSE		1	A simple towable trailer that holds various fuel sources and can be used to refuel vehicles.	TrailerLiquid
+Tine		Seaport	1	O’Brien V.101 Freeman	FALSE		1	This early O’Brien variant, the V.101 Freeman is fitted with a 360 degree ballistics cannon turret at the expense of top speed.	ArmoredCar2LargeW
+Tine		Seaport	1	Dunne Fuelrunner 2d	FALSE		1	The Fuelrunner is a heavy Dunne rig designed to transport and distribute large quantities of Fuel.	TruckLiquidW
+Tine		Seaport	1	Balfour Wolfhound 40mm	FALSE		1	This destructive short-ranged cannon is designed for direct engagement with enemy fortifications. The Wolfhound is fitted with reinforced shielding and a 40mm barrel.	FieldCannonW
+Tine		Seaport	10	Dunne Transport	TRUE	3	30	A heavy-duty Warden truck used to mobilize troops and supplies.	TruckW
+Tine		Seaport	6	Dunne Responder 3e	TRUE	3	18	The Responder Ambulance is efficient at transporting Critically Wounded Soldiers and carrying medical supplies.	AmbulanceW
+Tine		Seaport	3	O’Brien V.190 Knave	TRUE	3	9	One of Conor O’Brien’s best traits was his ability to modernize and make use of older technology in his designs. The V.190 Knave is the perfect example of this philosophy. Fitted with a modified, outdated twin-grenade launcher turret, the Knave is a surprising combination of speed and subterfuge that quickly routs the enemy, leaving them befuddled.	ArmoredCar2TwinW
+Tine		Seaport	13	Resource Container	FALSE		13	A container that can carry large quantities of resources and can be transported by certain vehicles.	ResourceContainer
+Tine		Seaport	13	Liquid Container	FALSE		13	A container for storing high volumes of liquids. Nearby structures and vehicles can refill directly from this container.	LiquidContainer
+Tine		Seaport	2	Shipping Container	FALSE		2	A container for shipping very large quantities of Crates using Crane loaded vehicles. This type of container can only be unloaded at Storage Depots and Seaports.	ShippingContainer
+Tine		Seaport	21	Resource Container	TRUE	3	63	A container that can carry large quantities of resources and can be transported by certain vehicles.	ResourceContainer
+Tine		Seaport	4	Leary Snare Trap 127	TRUE	3	12	The Snare Trap is a repurposed anti-aircraft flak cannon used to fortify emplaced positions with twin anti-infantry machine guns.	EmplacedInfantryW
+Tine		Seaport	2	Liquid Container	TRUE	3	6	A container for storing high volumes of liquids. Nearby structures and vehicles can refill directly from this container.	LiquidContainer
+Tine		Seaport	1	Shipping Container	TRUE	3	3	A container for shipping very large quantities of Crates using Crane loaded vehicles. This type of container can only be unloaded at Storage Depots and Seaports.	ShippingContainer
