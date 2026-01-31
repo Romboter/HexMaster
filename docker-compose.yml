@@ -1,25 +1,14 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-hexmaster}
-      POSTGRES_USER: ${POSTGRES_USER:-hexmaster}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: hexmaster
+      POSTGRES_USER: hexmaster
+      POSTGRES_PASSWORD: hexmaster
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-
-  hexmaster_bot:
-    build:
-      context: .
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DISCORD_TOKEN: ${DISCORD_TOKEN}
-    depends_on:
-      - postgres
 
 volumes:
   pgdata:

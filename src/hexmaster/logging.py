@@ -1,4 +1,4 @@
-# src/hexmaster/logging_.py
+# src/hexmaster/logging.py
 import logging
 import sys
 

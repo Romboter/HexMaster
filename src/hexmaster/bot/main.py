@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 import discord
 from discord.ext import commands
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from hexmaster.config import Settings
-from hexmaster.logging_ import configure_logging
+from hexmaster.db.init import init_db
+from hexmaster.logging import configure_logging
 
 log = logging.getLogger(__name__)
 
@@ -23,13 +25,23 @@ class HexmasterBot(commands.Bot):
         self.engine = create_async_engine(settings.database_url, pool_pre_ping=True)
 
     async def setup_hook(self) -> None:
+        await init_db(self.engine)
+
         await self.load_extension("hexmaster.bot.cogs.health")
-        await self.tree.sync()
-        log.info("Slash commands synced.")
+
+        guild_id = os.getenv("DISCORD_GUILD_ID")
+        if guild_id:
+            synced = await self.tree.sync(guild=discord.Object(id=int(guild_id)))
+            log.info("Slash commands synced to guild %s: %s", guild_id, [c.name for c in synced])
+        else:
+            synced = await self.tree.sync()
+            log.info("Slash commands synced globally: %s", [c.name for c in synced])
 
     async def close(self) -> None:
-        await super().close()
+        # Dispose DB resources while the event loop is still alive.
+        # This prevents asyncpg from trying to close sockets after loop shutdown.
         await self.engine.dispose()
+        await super().close()
 
 
 async def main() -> None:
@@ -37,7 +49,10 @@ async def main() -> None:
     settings = Settings.load()
 
     bot = HexmasterBot(settings)
-    await bot.start(settings.discord_token)
+
+    # Ensure cleanup happens even on cancellation / Ctrl+C.
+    async with bot:
+        await bot.start(settings.discord_token)
 
 
 if __name__ == "__main__":

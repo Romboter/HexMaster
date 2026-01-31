@@ -1,7 +1,7 @@
 # Hexmaster — Foxhole Logistics Discord Bot
 
-Hexmaster is a Discord bot for **Foxhole** logistics groups. It tracks **stockpile inventory over time** using *
-*snapshot-based storage** (no overwriting), allowing logistics teams to see changes and trends per town and stockpile
+Hexmaster is a Discord bot for **Foxhole** logistics groups. It tracks **stockpile inventory over time** using
+**snapshot-based storage** (no overwriting), allowing logistics teams to see changes and trends per town and stockpile
 across days.
 
 Hexmaster runs on your server via **Docker Compose**, is written in **Python (discord.py 2.x)**, and uses **PostgreSQL**
@@ -27,12 +27,11 @@ export, driven by a headless worker (Playwright).
 - **hexmaster_bot**
     - discord.py bot
     - SQLAlchemy async + asyncpg
-    - Creates database tables on startup
 - **postgres**
     - Stores all bot data
-- **fir**
+- **fir** *(planned)*
     - FIR website (screenshot processing + TSV export)
-- **fir_worker**
+- **fir_worker** *(planned)*
     - Playwright automation:
         - uploads screenshot to FIR
         - clicks “Download TSV”
@@ -41,9 +40,9 @@ export, driven by a headless worker (Playwright).
 
 ---
 
-### Shared Volume Layout
+### Shared Volume Layout *(planned)*
 
-The bot and worker share a filesystem volume:
+The bot and worker will share a filesystem volume:
 
 - Incoming screenshots  
   `/shared/incoming/<guild_id>/<job_id>/<filename>.png`
@@ -85,11 +84,10 @@ Hexmaster uses:
 
 ### `/ping`
 
-Health check and database connectivity test.
+Health check and database connectivity test. It performs a lightweight DB query (`SELECT 1`) and returns a clear error if
+the database is unreachable.
 
-### `/import_screenshot town:<Town> stockpile_name:<optional> image:<attachment>`
-
-Imports one stockpile screenshot.
+*(More commands are planned in later phases.)*
 
 Rules:
 
@@ -104,7 +102,7 @@ Shows the latest snapshot metadata
 
 ---
 
-## Database Overview
+## Database Overview *(target schema)*
 
 ### Global reference tables (shared across all guilds)
 
@@ -132,19 +130,25 @@ All timestamps use PostgreSQL **TIMESTAMPTZ**.
 
 - Docker + Docker Compose
 - A Discord bot token (`DISCORD_TOKEN`)
-- *(Recommended)* A populated `towns` table  
-  (imports are rejected if town validation fails)
 
 ---
 
 ### 2) Configure Environment
 
-Create a `.env` file:
+Create a `.env` file in the project root.
+
+**If you run the bot from PyCharm on Windows and Postgres via Docker Compose:**
+
+~~~env
+DATABASE_URL=postgresql+asyncpg://hexmaster:<PASSWORD>@localhost:5432/hexmaster
+DISCORD_TOKEN=<DISCORD_BOT_TOKEN>
+~~~
+
+**If you run the bot inside Docker Compose (same network as Postgres):**
 
 ~~~env
 DATABASE_URL=postgresql+asyncpg://hexmaster:<PASSWORD>@postgres:5432/hexmaster
 DISCORD_TOKEN=<DISCORD_BOT_TOKEN>
-POSTGRES_PASSWORD=<POSTGRES_PASSWORD>
 ~~~
 
 Use placeholders for secrets.  
@@ -152,18 +156,19 @@ Use placeholders for secrets.
 
 ---
 
-### 3) Start Services
+### 3) Start Postgres
 
 ~~~bash
-docker compose up --build
+docker compose up -d
 ~~~
 
-This starts:
+---
 
-- PostgreSQL
-- FIR
-- Hexmaster bot
-- FIR worker
+### 4) Run the bot
+
+Run the bot entrypoint (for example, from PyCharm):
+
+- `python -m hexmaster.bot.main`
 
 ---
 
@@ -244,11 +249,11 @@ This preserves full historical state.
 
 **Goal:** bootable stack that runs locally and on your Ubuntu server.
 
-- [ ] Create repo layout (`bot/`, `fir_worker/`, `shared/`, `docker-compose.yml`, `.env.example`)
-- [ ] Docker Compose services: `postgres`, `hexmaster_bot`
-- [ ] Bot boots, connects to DB, logs in to Discord
-- [ ] `/ping` command works
-- [ ] Basic logging + env config loading
+- [x] Create repo layout (`bot/`, `fir_worker/`, `shared/`, `docker-compose.yml`, `.env.example`)
+- [x] Docker Compose services: `postgres`, `hexmaster_bot`
+- [x] Bot boots, connects to DB, logs in to Discord
+- [x] `/ping` command works
+- [x] Basic logging + env config loading
 
 **Exit criteria:** `docker compose up --build` starts and `/ping` replies.
 
@@ -343,7 +348,7 @@ This preserves full historical state.
     - [ ] insert snapshot row
     - [ ] insert snapshot_items rows
 
-**Exit criteria:** importing one screenshot creates a new snapshot and snapshot_items in Postgres.
+**Exit criteria:** importing one TSV creates a new snapshot and snapshot_items in Postgres.
 
 ---
 
