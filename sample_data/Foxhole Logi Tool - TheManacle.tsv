@@ -1,0 +1,73 @@
+Stockpile Title	Stockpile Name	Structure Type	Quantity	Name	Crated?	Per Crate	Total	Description	CodeName
+TheManacle		Seaport	61	Soldier Supplies	TRUE	10	610	A standard issue set of supplies for foot soldiers. Bases must be stockpiled with Soldier Supplies in order for players to spawn.	SoldierSupplies
+TheManacle		Seaport	7	Maintenance Supplies	TRUE	100	700	Supplies for maintaining structures. Store at Bases or Maintenance Tunnels to prevent decay on surrounding structures.	MaintenanceSupplies
+TheManacle		Seaport	120	Basic Materials	TRUE	100	12000	Resource used for building basic structures and producing items.	Cloth
+TheManacle		Seaport	100	20mm	TRUE	10	1000	Standard ammunition for anti-tank rifles.	ATRifleAmmo
+TheManacle		Seaport	72	9mm	TRUE	40	2880	Standard ammunition for submachine guns.	SMGAmmo
+TheManacle		Seaport	68	Blakerow 871	TRUE	20	1360	The Blakerow is a carbine with a high rate of fire compared to its bolt-action predecessor. This increased fire rate does come at the cost of innate stopping power; however, its versatility and lightweight frame more than make up for any perceived shortcomings.	RifleLightW
+TheManacle		Seaport	43	Mammon 91-b	TRUE	20	860	This densely packed, high-explosive grenade is designed to damage structures and vehicles.	HEGrenade
+TheManacle		Seaport	40	7.92mm	TRUE	30	1200	Standard ammunition for Storm Rifles and Armoured Cars.	AssaultRifleAmmo
+TheManacle		Seaport	39	12.7mm	TRUE	20	780	Standard ammunition for machine guns.	MGAmmo
+TheManacle		Seaport	30	Fiddler Submachine Gun Model 868	TRUE	20	600	The Fiddler Submachine Gun is a widely used urban combat weapon. Its high rate of fire and compact frame make it ideal for close-quarters engagements.	SMGW
+TheManacle		Seaport	26	Gravel	TRUE	20	520	Resource used for building Roads and Foundations.	GroundMaterials
+TheManacle		Seaport	22	Bandages	TRUE	50	1100	Used to stem bleeding.	Bandages
+TheManacle		Seaport	22	First Aid Kit	TRUE	10	220	Used by medics to heal other soldiers.	FirstAidKit
+TheManacle		Seaport	18	Green Ash Grenade	TRUE	10	180	Green Ash is an asphyxiating toxin. Inhaling it without protection will result in a quick death. Be sure to wear a gas mask with fresh filters when handling Green Ash.	GreenAsh
+TheManacle		Seaport	18	7.62mm	TRUE	40	720	Standard ammunition for rifles.	RifleAmmo
+TheManacle		Seaport	18	Sampo Auto-Rifle 77	TRUE	20	360	The precursor to the storm rifle, the Sampo Auto-Rifle, is a mastercraft of its day. With a single shot and automatic fire mode, this versatile rifle may not reach the fire rates of automatic weapons but more than makes up for it with utility.	RifleAutomaticW
+TheManacle		Seaport	17	20 Neville Anti-Tank Rifle	TRUE	3	51	The Neville is unmatched in its versatility as a portable, magazine-based anti-armour firearm.	ATRifleW
+TheManacle		Seaport	16	Gas Mask Filter	TRUE	20	320	When attached to a Gas Mask, this filter provides fresh air to the wearer.	GasMaskFilter
+TheManacle		Seaport	14	30mm	TRUE	20	280	Standard explosive shell used with certain small vehicles and infantry weapons.	MiniTankAmmo
+TheManacle		Seaport	13	Metal Beam	TRUE	5	65	Used to construct Metal Beam defenses.	MetalBeamMaterials
+TheManacle		Seaport	13	Radio	TRUE	5	65	Receives map intelligence updates	Radio
+TheManacle		Seaport	13	No.1 “The Liar” Submachinegun	TRUE	20	260	This unique, heavy-duty submachine gun is not very useful on the run, but with careful aim and adequate cover, becomes a razorblade in the night.	SMGHeavyW
+TheManacle		Seaport	12	Anti-Tank Sticky Bomb	TRUE	10	120	An adherable grenade designed to penetrate heavy tank armor. The Sticky Bomb can only be thrown a short distance and is ineffective against structures.	StickyBomb
+TheManacle		Seaport	11	Caoivish Parka	TRUE	15	165	Born and bred in the northern cold, this heavy parka protects Warden infantry from all but the worst blizzards.	SnowUniformW
+TheManacle		Seaport	11	Buckshot	TRUE	40	440	Standard ammunition for Shotguns.	ShotgunAmmo
+TheManacle		Seaport	10	A3 Harpa Fragmentation Grenade	TRUE	20	200	This anti-personnel fragmentation grenade is designed with pull-pin mechanics and a timed fuse for user safety. Serrations in the casing allow for a better grip and increased fragmentation effectiveness.	GrenadeW
+TheManacle		Seaport	10	Buckhorn CCQ-18	TRUE	20	200	Attached to the barrel of a rifle, this short blade can spear enemies in close quarters encounters.	Bayonet
+TheManacle		Seaport	9	Physician’s Jacket	TRUE	15	135	Physicians in the Warden army are unmatched and this uniform has a plethora of pockets and bags designed to carry and deploy first aid gear easily.	MedicUniformW
+TheManacle		Seaport	9	Cremari Mortar	TRUE	5	45	This short-range cannon is designed to bombard enemy infantry with indirect fire.	Mortar
+TheManacle		Seaport	8	Tripod	TRUE	5	40	A mount point for deployable infantry weapons and equipment.	Tripod
+TheManacle		Seaport	8	Blood Plasma	TRUE	50	400	A blood component used to treat wounded soldiers on the battlefield.	BloodPlasma
+TheManacle		Seaport	7	The Hangman 757	TRUE	20	140	The weapon of choice for pirates and smugglers, its legend is well-earned. With incredibly high stopping power and unique revolver mechanism, the Hangman often plays judge, jury, and executioner.	RifleHeavyW
+TheManacle		Seaport	6	Alligator Charge	TRUE	10	60	This heavy-duty explosive device is designed to deal significant damage to fortified structures and stationary vehicles.	SatchelChargeW
+TheManacle		Seaport	6	Binoculars	TRUE	5	30	An optical instrument used for viewing distant objects.	Binoculars
+TheManacle		Seaport	6	Trauma Kit	TRUE	10	60	Used by medics to revive wounded soldiers.	TraumaKit
+TheManacle		Seaport	6	Malone Ratcatcher MK.1	TRUE	5	30	Early iterations of this machinegun were built to be emplaced in bunkers and on the decks of lightly armed warships, the Ratcatcher is Harvey Malone’s first freely mountable infantry weapon designed for field use. Just like its predecessors, this heavy weapon suppresses enemy soldiers with unmatched efficiency.	MGTW
+TheManacle		Seaport	6	0.44	TRUE	40	240	Standard ammunition for revolvers.	RevolverAmmo
+TheManacle		Seaport	6	150mm	TRUE	5	30	Payload for heavy artillery weapons.	HeavyArtilleryAmmo
+TheManacle		Seaport	5	Cutler Launcher 4	TRUE	5	25	The Cutler Launcher is capable of firing an unguided, rocket-propelled grenade over short distances with startling efficiency. Its simple design allows for easy deployment and storage.	RpgW
+TheManacle		Seaport	5	Gas Mask	TRUE	20	100	Protects against poison gas	GasMask
+TheManacle		Seaport	5	Barbed Wire	TRUE	5	25	Used to construct Barbed Wire defenses.	BarbedWireMaterials
+TheManacle		Seaport	5	Malone MK.2	TRUE	5	25	This heavy machine gun is bulky enough to require a steady surface to maintain stability. The Malone series of machine guns are unmatched defenders on the battlefield.	MGW
+TheManacle		Seaport	4	Cascadier 873	TRUE	40	160	This unique sidearm fires in three-round bursts. The Cascadier may not have the stopping power of its cousins, but it more than makes up for it with its lightweight frame, concealability and fire rate.	PistolLightW
+TheManacle		Seaport	4	Mortar Shell	TRUE	15	60	An explosive payload used with mortar tubes.	MortarAmmo
+TheManacle		Seaport	4	Sandbag	TRUE	5	20	Used to construct Sandbag defenses.	SandbagMaterials
+TheManacle		Seaport	4	Listening Kit	TRUE	5	20	A device used to intercept enemy radio broadcasts transmitted from nearby sources.	ListeningKit
+TheManacle		Seaport	4	Wrench	TRUE	5	20	A multipurpose tool. Can be used to dismantle mines/barbed wire and unlock vehicles.	WorkWrench
+TheManacle		Seaport	3	Sledge Hammer	TRUE	10	30	A tool used to salvage components from remains of old vehicles and equipment.	SledgeHammer
+TheManacle		Seaport	3	No.4 The Pillory Scattergun	TRUE	15	45	A hunting shotgun with a sawn-off barrel for higher stopping power and mobility at the expense of accuracy. This traditional civilian firearm can fire two shots in rapid succession before needing to be reloaded. It became a favourite sidearm among Caoivish Watchers and has since earned quite an ominous reputation as a result.	ShotgunW
+TheManacle		Seaport	3	Diesel	TRUE	1	3	Common fuel used to power all vehicles and resource mines.	Diesel
+TheManacle		Seaport	3	Willow's Bane Ammo	TRUE	10	30	Ammo for Willow’s Bane Model 845	FlameBackpackW
+TheManacle		Seaport	2	Officer’s Regalia	TRUE	3	6	A formal uniform that denotes a regiment’s leading officer. While impractical, the officer on duty may use their authority to discipline subordinates without reparation. Officers hold an important role in the Warden military, dating back to ancient times when Caoiva was ruled by a dozen kings.	OfficerUniformW
+TheManacle		Seaport	2	Cometa T2-9	TRUE	30	60	The Cometa T2-9 boasts remarkable stopping power for a sidearm. This Estrellan mainstay has lived through several generations due to its fine craftsmanship and design.	Revolver
+TheManacle		Seaport	2	Shovel	TRUE	10	20	A tool for digging Trenches and other entrenched structures.	Shovel
+TheManacle		Seaport	2	PT-815 Smoke Grenade	TRUE	10	20	A standard smoke grenade designed for concealing allied movement or screening the enemy’s vision.	SmokeGrenade
+TheManacle		Seaport	1	Specialist’s Overcoat	TRUE	15	15	Warden specialists require a uniform designed to optimize their capacity to haul a variety of heavy ammunition.	AmmoUniformW
+TheManacle		Seaport	1	No.2B Hawthorne	TRUE	15	15	Initially a field-modified Loughcaster, the Hawthorne sports a sawed-off barrel and a much lower profile than its ancestor. While sacrificing accuracy, its lightweight frame opens up the Hawthorne to a much higher degree of flexibility in battle and can be carried alongside a heavier primary firearm.	RifleShortW
+TheManacle		Seaport	1	Willow’s Bane Model 845	TRUE	10	10	Named for the unfortunate trees harmed in the development of this highly destructive weapon, the Willow’s Bane utilizes flammable chemicals and fires them into a concentrated stream through an open flame. This liquid flame ignites Colonial emplacements and garrisons to route infantry while reducing their defenses to a pile of ash.	FlameTorchW
+TheManacle		Seaport	1	BF5 White Ash Flask Grenade	TRUE	10	10	An explosive flask used for melting enemy armour. This carefully designed liquid bomb explodes into a dazzling flash of molten debris upon impact.	ATGrenadeW
+TheManacle		Seaport	1	Tremola Grenade GPb-1	TRUE	20	20	An explosive Estrellan grenade specially designed for use with handheld grenade launchers. This modern grenade boasts a larger payload and is deadly to lingering infantry and structural supports.	HELaunchedGrenade
+TheManacle		Seaport	1	Radio Backpack	TRUE	5	5	Automatically gathers map intel periodically when equipped.	RadioBackpack
+TheManacle		Seaport	67	BMS - Packmule Flatbed	FALSE		67	A heavy duty shipping transport truck designed by Bassett Motor Society. It’s built for hauling the heaviest of equipment over long distances with ease.	FlatbedTruck
+TheManacle		Seaport	8	O’Brien V.101 Freeman	FALSE		8	This early O’Brien variant, the V.101 Freeman is fitted with a 360 degree ballistics cannon turret at the expense of top speed.	ArmoredCar2LargeW
+TheManacle		Seaport	4	BMS - Ironship	FALSE		4	The Bassett Motor Society’s Ironship-class shipping vessel is used to freight shippable goods and heavy vehicles.	Freighter
+TheManacle		Seaport	2	Dunne Transport	FALSE		2	A heavy-duty Warden truck used to mobilize troops and supplies.	TruckW
+TheManacle		Seaport	2	Balfour Wolfhound 40mm	FALSE		2	This destructive short-ranged cannon is designed for direct engagement with enemy fortifications. The Wolfhound is fitted with reinforced shielding and a 40mm barrel.	FieldCannonW
+TheManacle		Seaport	1	O’Brien v.200 Squire	FALSE		1	The second full iteration of Conor O’Brien’s storied Armoured Car designs, the Squire serves as a reinforced rocket platform. The squire—designed to play a support role for larger assault operations with its rocket battery platform—is easy to reposition and provides operators and nearby infantry with more protection than might be afforded by a standard utility vehicle.	ArmoredCar2MultiW
+TheManacle		Seaport	1	O’Brien V.110	FALSE		1	Warden Armoured Cars are quick, well-rounded urban assault platforms. These anti-infantry vehicles are equipped with twin-barrelled machineguns.	ArmoredCarW
+TheManacle		Seaport	1	BMS - Aquatipper	FALSE		1	A large shipping vessel, the Aquatipper is used to transport vehicles, equipment, and personnel over large bodies of water.	Barge
+TheManacle		Seaport	1	Drummond Spitfire 100d	FALSE		1	This LMG-mounted Light Utility Vehicle provides a heavy-duty weapons platform with superior speed. Perfectly suited for supporting flanking infantry or an armoured assault.	ScoutVehicleOffensiveW
+TheManacle		Seaport	94	Shipping Container	FALSE		94	A container for shipping very large quantities of Crates using Crane loaded vehicles. This type of container can only be unloaded at Storage Depots and Seaports.	ShippingContainer
+TheManacle		Seaport	2	Leary Snare Trap 127	FALSE		2	The Snare Trap is a repurposed anti-aircraft flak cannon used to fortify emplaced positions with twin anti-infantry machine guns.	EmplacedInfantryW
