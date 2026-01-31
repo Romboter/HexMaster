@@ -18,7 +18,7 @@ def parse_bool(x) -> bool | None:
     return None
 
 
-async def ingest_tsv(tsv_path: str, stockpile_key: str) -> int:
+async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name: str) -> int:
     """
     Inserts:
       - 1 row into stockpile_snapshots
@@ -43,16 +43,25 @@ async def ingest_tsv(tsv_path: str, stockpile_key: str) -> int:
 
     captured_at = datetime.now(timezone.utc)
 
+    town = town.strip()
+    struct_type = struct_type.strip()
+    stockpile_name = (stockpile_name or "").strip() or "Public"
+
     async with engine.begin() as conn:
         snapshot_id = await conn.execute(
             text(
                 """
-                INSERT INTO stockpile_snapshots (stockpile_key, captured_at)
-                VALUES (:stockpile_key, :captured_at)
+                INSERT INTO stockpile_snapshots (town, struct_type, stockpile_name, captured_at)
+                VALUES (:town, :struct_type, :stockpile_name, :captured_at)
                 RETURNING id
                 """
             ),
-            {"stockpile_key": stockpile_key, "captured_at": captured_at},
+            {
+                "town": town,
+                "struct_type": struct_type,
+                "stockpile_name": stockpile_name,
+                "captured_at": captured_at,
+            },
         )
         snapshot_id = snapshot_id.scalar_one()
 
@@ -83,7 +92,8 @@ async def ingest_tsv(tsv_path: str, stockpile_key: str) -> int:
                     """
                     INSERT INTO snapshot_items
                     (snapshot_id, code_name, item_name, quantity, is_crated, per_crate, total, description)
-                    VALUES (:snapshot_id, :code_name, :item_name, :quantity, :is_crated, :per_crate, :total, :description)
+                    VALUES (:snapshot_id, :code_name, :item_name, :quantity, :is_crated, :per_crate, :total,
+                            :description)
                     """
                 ),
                 rows,
@@ -94,9 +104,13 @@ async def ingest_tsv(tsv_path: str, stockpile_key: str) -> int:
 
 
 async def main() -> None:
+    town = "CallumsKeep"
+
     snapshot_id = await ingest_tsv(
-        tsv_path="sample_data/Foxhole Logi Tool - TheManacle.tsv",
-        stockpile_key="TheManacle|Seaport|Public",
+        tsv_path=f"sample_data/Foxhole Logi Tool - {town}.tsv",
+        town=town,
+        struct_type="Seaport",
+        stockpile_name="Public",
     )
     print(f"Inserted snapshot_id={snapshot_id}")
 

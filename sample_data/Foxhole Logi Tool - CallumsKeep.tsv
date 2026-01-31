@@ -1,0 +1,81 @@
+Stockpile Title	Stockpile Name	Structure Type	Quantity	Name	Crated?	Per Crate	Total	Description	CodeName
+CallumsKeep		Seaport	20	Soldier Supplies	TRUE	10	200	A standard issue set of supplies for foot soldiers. Bases must be stockpiled with Soldier Supplies in order for players to spawn.	SoldierSupplies
+CallumsKeep		Seaport	18	Maintenance Supplies	TRUE	100	1800	Supplies for maintaining structures. Store at Bases or Maintenance Tunnels to prevent decay on surrounding structures.	MaintenanceSupplies
+CallumsKeep		Seaport	94	Physician’s Jacket	TRUE	15	1410	Physicians in the Warden army are unmatched and this uniform has a plethora of pockets and bags designed to carry and deploy first aid gear easily.	MedicUniformW
+CallumsKeep		Seaport	72	Basic Materials	TRUE	100	7200	Resource used for building basic structures and producing items.	Cloth
+CallumsKeep		Seaport	51	Heavy Explosive Powder	TRUE	30	1530	Resource used for producing heavy explosive weapons.	HeavyExplosive
+CallumsKeep		Seaport	47	Gunner’s Breastplate	TRUE	5	235	Repurposed from ancient wars, these armour plates are highly effective at stopping enemy small arms fire. That protection comes at the cost of weight, and the wearer will feel quite restricted and encumbered.	ArmourUniformW
+CallumsKeep		Seaport	39	20mm	TRUE	10	390	Standard ammunition for anti-tank rifles.	ATRifleAmmo
+CallumsKeep		Seaport	32	Outrider’s Mantle	TRUE	15	480	The Warden army relies on outriders to provide and recieve vital intelligence. Their gear is sturdy and well-suited for extended operations in rugged terrain and inclement weather.	ScoutUniformW
+CallumsKeep		Seaport	31	12.7mm	TRUE	20	620	Standard ammunition for machine guns.	MGAmmo
+CallumsKeep		Seaport	29	The Ospreay	TRUE	20	580	A rifle attachment that fires grenades with pneumatic force. Along with specialized grenades, it can launch standard grenades.	GrenadeAdapter
+CallumsKeep		Seaport	25	Fiddler Submachine Gun Model 868	TRUE	20	500	The Fiddler Submachine Gun is a widely used urban combat weapon. Its high rate of fire and compact frame make it ideal for close-quarters engagements.	SMGW
+CallumsKeep		Seaport	23	20 Neville Anti-Tank Rifle	TRUE	3	69	The Neville is unmatched in its versatility as a portable, magazine-based anti-armour firearm.	ATRifleW
+CallumsKeep		Seaport	21	9mm	TRUE	40	840	Standard ammunition for submachine guns.	SMGAmmo
+CallumsKeep		Seaport	21	Gas Mask Filter	TRUE	20	420	When attached to a Gas Mask, this filter provides fresh air to the wearer.	GasMaskFilter
+CallumsKeep		Seaport	19	Malone Ratcatcher MK.1	TRUE	5	95	Early iterations of this machinegun were built to be emplaced in bunkers and on the decks of lightly armed warships, the Ratcatcher is Harvey Malone’s first freely mountable infantry weapon designed for field use. Just like its predecessors, this heavy weapon suppresses enemy soldiers with unmatched efficiency.	MGTW
+CallumsKeep		Seaport	18	Barbed Wire	TRUE	5	90	Used to construct Barbed Wire defenses.	BarbedWireMaterials
+CallumsKeep		Seaport	18	Malone MK.2	TRUE	5	90	This heavy machine gun is bulky enough to require a steady surface to maintain stability. The Malone series of machine guns are unmatched defenders on the battlefield.	MGW
+CallumsKeep		Seaport	18	No.2 Loughcaster	TRUE	20	360	Standard-issue Warden rifle. This bolt-action firearm is as robust as they come and has seen over a century of use on the battlefield.	RifleW
+CallumsKeep		Seaport	18	7.92mm	TRUE	30	540	Standard ammunition for Storm Rifles and Armoured Cars.	AssaultRifleAmmo
+CallumsKeep		Seaport	15	120mm	TRUE	5	75	Payload for light artillery weapons.	LightArtilleryAmmo
+CallumsKeep		Seaport	15	RPG	TRUE	15	225	A fast-moving explosive projectile used with RPG launchers.	RpgAmmo
+CallumsKeep		Seaport	14	Radio	TRUE	5	70	Receives map intelligence updates	Radio
+CallumsKeep		Seaport	14	Buckhorn CCQ-18	TRUE	20	280	Attached to the barrel of a rifle, this short blade can spear enemies in close quarters encounters.	Bayonet
+CallumsKeep		Seaport	13	Sandbag	TRUE	5	65	Used to construct Sandbag defenses.	SandbagMaterials
+CallumsKeep		Seaport	12	7.62mm	TRUE	40	480	Standard ammunition for rifles.	RifleAmmo
+CallumsKeep		Seaport	12	Sapper Gear	TRUE	15	180	Caoivish engineers are legendary in song and stature. They wear specialized uniforms, outfitted with belts and bags for easy access to tools and handheld materials.	EngineerUniformW
+CallumsKeep		Seaport	11	Sampo Auto-Rifle 77	TRUE	20	220	The precursor to the storm rifle, the Sampo Auto-Rifle, is a mastercraft of its day. With a single shot and automatic fire mode, this versatile rifle may not reach the fire rates of automatic weapons but more than makes up for it with utility.	RifleAutomaticW
+CallumsKeep		Seaport	10	Blood Plasma	TRUE	50	500	A blood component used to treat wounded soldiers on the battlefield.	BloodPlasma
+CallumsKeep		Seaport	10	Shovel	TRUE	10	100	A tool for digging Trenches and other entrenched structures.	Shovel
+CallumsKeep		Seaport	9	PT-815 Smoke Grenade	TRUE	10	90	A standard smoke grenade designed for concealing allied movement or screening the enemy’s vision.	SmokeGrenade
+CallumsKeep		Seaport	9	Wrench	TRUE	5	45	A multipurpose tool. Can be used to dismantle mines/barbed wire and unlock vehicles.	WorkWrench
+CallumsKeep		Seaport	8	Gas Mask	TRUE	20	160	Protects against poison gas	GasMask
+CallumsKeep		Seaport	8	Specialist’s Overcoat	TRUE	15	120	Warden specialists require a uniform designed to optimize their capacity to haul a variety of heavy ammunition.	AmmoUniformW
+CallumsKeep		Seaport	8	Clancy-Raca M4	TRUE	3	24	A heavy-duty, long-range marksman rifle. The Clancy-Raca has one hell of a kick but is fitted with a powerful scope, allowing infantry to survey the battlefield and provide support from a safe location.	SniperRifleW
+CallumsKeep		Seaport	7	Padded Boiler Suit	TRUE	15	105	Caoivish armour is unmatched in its design and resilience. All crew are provided with a sturdy boilersuit and satchel belts to access essential tools required for tank maintenance and operation.	TankUniformW
+CallumsKeep		Seaport	7	A3 Harpa Fragmentation Grenade	TRUE	20	140	This anti-personnel fragmentation grenade is designed with pull-pin mechanics and a timed fuse for user safety. Serrations in the casing allow for a better grip and increased fragmentation effectiveness.	GrenadeW
+CallumsKeep		Seaport	7	Listening Kit	TRUE	5	35	A device used to intercept enemy radio broadcasts transmitted from nearby sources.	ListeningKit
+CallumsKeep		Seaport	7	Sledge Hammer	TRUE	10	70	A tool used to salvage components from remains of old vehicles and equipment.	SledgeHammer
+CallumsKeep		Seaport	6	Falias Raiding Club	TRUE	10	60	A heavy mace constructed from solid wood and dotted with lead rivets. Commonly used when raiding entrenched positions in close quarters where firearms are less effective and an old-fashioned bludgeoning is better suited for the job.	MaceW
+CallumsKeep		Seaport	6	Binoculars	TRUE	5	30	An optical instrument used for viewing distant objects.	Binoculars
+CallumsKeep		Seaport	5	Cutler Launcher 4	TRUE	5	25	The Cutler Launcher is capable of firing an unguided, rocket-propelled grenade over short distances with startling efficiency. Its simple design allows for easy deployment and storage.	RpgW
+CallumsKeep		Seaport	4	Trauma Kit	TRUE	10	40	Used by medics to revive wounded soldiers.	TraumaKit
+CallumsKeep		Seaport	4	Officer’s Regalia	TRUE	3	12	A formal uniform that denotes a regiment’s leading officer. While impractical, the officer on duty may use their authority to discipline subordinates without reparation. Officers hold an important role in the Warden military, dating back to ancient times when Caoiva was ruled by a dozen kings.	OfficerUniformW
+CallumsKeep		Seaport	4	Bandages	TRUE	50	200	Used to stem bleeding.	Bandages
+CallumsKeep		Seaport	4	Mortar Shell	TRUE	15	60	An explosive payload used with mortar tubes.	MortarAmmo
+CallumsKeep		Seaport	4	Blakerow 871	TRUE	20	80	The Blakerow is a carbine with a high rate of fire compared to its bolt-action predecessor. This increased fire rate does come at the cost of innate stopping power; however, its versatility and lightweight frame more than make up for any perceived shortcomings.	RifleLightW
+CallumsKeep		Seaport	4	Anti-Tank Sticky Bomb	TRUE	10	40	An adherable grenade designed to penetrate heavy tank armor. The Sticky Bomb can only be thrown a short distance and is ineffective against structures.	StickyBomb
+CallumsKeep		Seaport	4	No.1 “The Liar” Submachinegun	TRUE	20	80	This unique, heavy-duty submachine gun is not very useful on the run, but with careful aim and adequate cover, becomes a razorblade in the night.	SMGHeavyW
+CallumsKeep		Seaport	4	Mammon 91-b	TRUE	20	80	This densely packed, high-explosive grenade is designed to damage structures and vehicles.	HEGrenade
+CallumsKeep		Seaport	4	Caoivish Parka	TRUE	15	60	Born and bred in the northern cold, this heavy parka protects Warden infantry from all but the worst blizzards.	SnowUniformW
+CallumsKeep		Seaport	3	Processed Construction Materials	TRUE	1	3	Refined metal bars needed to produce advanced structures, vehicles, and equipment at Facilities.	FacilityMaterials2
+CallumsKeep		Seaport	2	Construction Materials	TRUE	20	40	Metal beams needed to produce basic structures, vehicles, and equipment at Facilities.	FacilityMaterials1
+CallumsKeep		Seaport	2	Buckshot	TRUE	40	80	Standard ammunition for Shotguns.	ShotgunAmmo
+CallumsKeep		Seaport	1	Gentleman’s Peacoat	TRUE	15	15	Seamen of the Caoivish Naval Command are always prepared to operate at the highest levels, even in frigid, northern waters. Every Warden sailor’s readiness paints a portrait of life or death; thus, cold-weather outerwear is an essential part of every CNC gentleman’s kit.	NavalUniformW
+CallumsKeep		Seaport	1	Alligator Charge	TRUE	10	10	This heavy-duty explosive device is designed to deal significant damage to fortified structures and stationary vehicles.	SatchelChargeW
+CallumsKeep		Seaport	22	Dunne Loadlugger 3c	FALSE		22	This standard Truck is fitted with a resource hopper in place of the standard cargo hold. This allows for a much greater capacity for resources at the expense of space for cargo.	TruckResourceW
+CallumsKeep		Seaport	20	BMS - Universal Assembly Rig	FALSE		20	A specialized vehicle designed by the Bassett Motor Society used in the construction of large structures.	Construction
+CallumsKeep		Seaport	18	BMS - Class 2 Mobile Auto-Crane	FALSE		18	The Bassett Motor Society’s Class 2 Mobile Auto-Crane is used to lift and reposition vehicles and very heavy equipment.	Crane
+CallumsKeep		Seaport	9	Dunne Fuelrunner 2d	FALSE		9	The Fuelrunner is a heavy Dunne rig designed to transport and distribute large quantities of Fuel.	TruckLiquidW
+CallumsKeep		Seaport	5	Kivela Power Wheel 80-1	FALSE		5	A Warden motorcycle used in patrols and fitted with a sidecar. The Kivela Power Wheel can also gain a momentary speed boost by burning additional fuel.	MotorcycleW
+CallumsKeep		Seaport	5	Drummond 100a	FALSE		5	A multipurpose off-road Warden vehicle that can scout nearby targets.	ScoutVehicleW
+CallumsKeep		Seaport	3	O’Brien V.190 Knave	FALSE		3	One of Conor O’Brien’s best traits was his ability to modernize and make use of older technology in his designs. The V.190 Knave is the perfect example of this philosophy. Fitted with a modified, outdated twin-grenade launcher turret, the Knave is a surprising combination of speed and subterfuge that quickly routs the enemy, leaving them befuddled.	ArmoredCar2TwinW
+CallumsKeep		Seaport	2	BMS - Aquatipper	FALSE		2	A large shipping vessel, the Aquatipper is used to transport vehicles, equipment, and personnel over large bodies of water.	Barge
+CallumsKeep		Seaport	2	BMS - Ironship	FALSE		2	The Bassett Motor Society’s Ironship-class shipping vessel is used to freight shippable goods and heavy vehicles.	Freighter
+CallumsKeep		Seaport	1	King Spire Mk. I	FALSE		1	This small tank has been recently recommissioned to the Warden arsenal. It boasts high maneuverability and an antenna that allows for long-range communications during high-stakes recon operations.	ScoutTankW
+CallumsKeep		Seaport	1	Dunne Responder 3e	FALSE		1	The Responder Ambulance is efficient at transporting Critically Wounded Soldiers and carrying medical supplies.	AmbulanceW
+CallumsKeep		Seaport	1	Swallowtail 988/127-2	FALSE		1	A dual barrelled, high calibre anti-infantry machine gun. The Swallowtail is fitted with forward-facing armour plating and is excellent for suppression.	FieldMGW
+CallumsKeep		Seaport	5	Kivela Power Wheel 80-1	TRUE	3	15	A Warden motorcycle used in patrols and fitted with a sidecar. The Kivela Power Wheel can also gain a momentary speed boost by burning additional fuel.	MotorcycleW
+CallumsKeep		Seaport	4	Swallowtail 988/127-2	TRUE	3	12	A dual barrelled, high calibre anti-infantry machine gun. The Swallowtail is fitted with forward-facing armour plating and is excellent for suppression.	FieldMGW
+CallumsKeep		Seaport	2	Dunne Fuelrunner 2d	TRUE	3	6	The Fuelrunner is a heavy Dunne rig designed to transport and distribute large quantities of Fuel.	TruckLiquidW
+CallumsKeep		Seaport	1	Dunne Loadlugger 3c	TRUE	3	3	This standard Truck is fitted with a resource hopper in place of the standard cargo hold. This allows for a much greater capacity for resources at the expense of space for cargo.	TruckResourceW
+CallumsKeep		Seaport	5	Resource Container	FALSE		5	A container that can carry large quantities of resources and can be transported by certain vehicles.	ResourceContainer
+CallumsKeep		Seaport	1	Liquid Container	FALSE		1	A container for storing high volumes of liquids. Nearby structures and vehicles can refill directly from this container.	LiquidContainer
+CallumsKeep		Seaport	1	Shipping Container	FALSE		1	A container for shipping very large quantities of Crates using Crane loaded vehicles. This type of container can only be unloaded at Storage Depots and Seaports.	ShippingContainer
+CallumsKeep		Seaport	1	Leary Snare Trap 127	FALSE		1	The Snare Trap is a repurposed anti-aircraft flak cannon used to fortify emplaced positions with twin anti-infantry machine guns.	EmplacedInfantryW
+CallumsKeep		Seaport	6	Huber Lariat 120mm	TRUE	3	18	A light artillery cannon designed to be a fixture in defensive fortifications. The Lariat sports a formidable long-range 120mm cannon designed to put immense pressure on enemy infantry.	EmplacedLightArtilleryW
+CallumsKeep		Seaport	6	Liquid Container	TRUE	3	18	A container for storing high volumes of liquids. Nearby structures and vehicles can refill directly from this container.	LiquidContainer
+CallumsKeep		Seaport	5	Resource Container	TRUE	3	15	A container that can carry large quantities of resources and can be transported by certain vehicles.	ResourceContainer
+CallumsKeep		Seaport	3	Shipping Container	TRUE	3	9	A container for shipping very large quantities of Crates using Crane loaded vehicles. This type of container can only be unloaded at Storage Depots and Seaports.	ShippingContainer
+CallumsKeep		Seaport	1	Leary Snare Trap 127	TRUE	3	3	The Snare Trap is a repurposed anti-aircraft flak cannon used to fortify emplaced positions with twin anti-infantry machine guns.	EmplacedInfantryW
