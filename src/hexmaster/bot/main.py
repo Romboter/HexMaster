@@ -6,8 +6,12 @@ import logging
 import os
 
 import discord
+from discord import app_commands
 from discord.ext import commands
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
+import pandas as pd
+from tabulate import tabulate
 
 from hexmaster.config import Settings
 from hexmaster.db.init import init_db
@@ -16,10 +20,14 @@ from hexmaster.logging import configure_logging
 log = logging.getLogger(__name__)
 
 
+# ... existing code ...
 class HexmasterBot(commands.Bot):
     def __init__(self, settings: Settings):
         intents = discord.Intents.default()
+        # Ensure message_content is False if you only use Slash Commands
+        intents.message_content = False
         super().__init__(command_prefix="!", intents=intents)
+        # ... existing code ...
 
         self.settings = settings
         self.engine = create_async_engine(settings.database_url, pool_pre_ping=True)

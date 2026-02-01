@@ -6,6 +6,24 @@ BEGIN
     CREATE DATABASE hexmaster;
   END IF;
 END $$;
+
+-- Global Item Catalog
+CREATE TABLE IF NOT EXISTS catalog_items (
+  codename         TEXT NOT NULL,
+  displayname      TEXT NOT NULL,
+  factionvariant   TEXT NOT NULL CHECK (factionvariant IN ('Colonials', 'Wardens', 'Both')),
+  quantitypercrate INTEGER NULL,
+  PRIMARY KEY (codename, displayname)
+);
+
+-- Staging table for catalog imports
+CREATE TABLE IF NOT EXISTS catalog_items_stage (
+  codename         TEXT NOT NULL,
+  displayname      TEXT NOT NULL,
+  factionvariant   TEXT NOT NULL,
+  quantitypercrate INTEGER NULL
+);
+
 DROP TABLE IF EXISTS snapshot_items;
 DROP TABLE IF EXISTS stockpile_snapshots;
 
@@ -28,6 +46,13 @@ CREATE TABLE snapshot_items (
   description  TEXT,
   PRIMARY KEY (snapshot_id, code_name, is_crated)
 );
+
+-- Add foreign key to ensure items in snapshots exist in our catalog
+-- Note: This requires catalog data to be present before snapshot ingestion
+ALTER TABLE snapshot_items 
+  ADD CONSTRAINT fk_snapshot_items_catalog 
+  FOREIGN KEY (code_name, item_name) 
+  REFERENCES catalog_items (codename, displayname);
 
 CREATE INDEX IF NOT EXISTS idx_snapshots_town_struct_name_time
   ON stockpile_snapshots(town, struct_type, stockpile_name, captured_at DESC);

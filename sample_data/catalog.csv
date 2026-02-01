@@ -1,0 +1,414 @@
+CodeName,DisplayName,FactionVariant,QuantityPerCrate
+AAAmmo,950-70b Anti-Aircraft Shell,Both,5.0
+AircraftAmmo,20mm,Both,5.0
+AircraftBomberC,V-1 Tzykalia,Colonials,
+AircraftBomberW,Tulka P4 Welkinrive,Wardens,
+AircraftDiveC,Mergo-4 “Myrmidon”,Colonials,
+AircraftFighterC,Toxot-902 “Blind Silver”,Colonials,
+AircraftFighterW,Luminary Mk. II Harbinger,Wardens,
+AircraftParatrooperC,V-5b Pegasus,Colonials,
+AircraftParatrooperW,Rinnspeir Mk. I Zealot,Wardens,
+AircraftPartLargeEngineC,Colonial Aircraft Engine (Large),Colonials,1.0
+AircraftPartLargeEngineW,Warden Aircraft Engine (Large),Wardens,1.0
+AircraftPartLargeEngineWreckedC,Damaged Colonial Aircraft Engine (Large),Colonials,1.0
+AircraftPartLargeEngineWreckedW,Damaged Warden Aircraft Engine (Large),Wardens,1.0
+AircraftPartLargeMechanicalC,Colonial Aircraft Mechanical Parts (Large),Colonials,1.0
+AircraftPartLargeMechanicalW,Warden Aircraft Mechanical Parts (Large),Wardens,1.0
+AircraftPartLargeMechanicalWreckedC,Damaged Colonial Aircraft Mechanical Parts (Large),Colonials,1.0
+AircraftPartLargeMechanicalWreckedW,Damaged Warden Aircraft Mechanical Parts (Large),Wardens,1.0
+AircraftPartSmallEngineC,Colonial Aircraft Engine (Small),Colonials,1.0
+AircraftPartSmallEngineW,Warden Aircraft Engine (Small),Wardens,1.0
+AircraftPartSmallEngineWreckedC,Damaged Colonial Aircraft Engine (Small),Colonials,1.0
+AircraftPartSmallEngineWreckedW,Damaged Warden Aircraft Engine (Small),Wardens,1.0
+AircraftPartSmallMechanicalC,Colonial Aircraft Mechanical Parts (Small),Colonials,1.0
+AircraftPartSmallMechanicalW,Warden Aircraft Mechanical Parts (Small),Wardens,1.0
+AircraftPartSmallMechanicalWreckedC,Damaged Colonial Aircraft Mechanical Parts (Small),Colonials,1.0
+AircraftPartSmallMechanicalWreckedW,Damaged Warden Aircraft Mechanical Parts (Small),Wardens,1.0
+AircraftScoutC,A51 Venti “Daedalus”,Colonials,
+AircraftScoutW,Luminary Mk. IV Herald,Wardens,
+AircraftTorpedoW,M925 Austringer Man-O-War,Wardens,
+AircraftWaterW,Tulka I1.9 White Raven,Wardens,
+Aluminum,Aluminum,Both,100.0
+AluminumA,Aluminum Alloy,Both,20.0
+AmbulanceC,R-12 - “Salus” Ambulance,Colonials,
+AmbulanceFlameC,R-12b - “Salva” Flame Truck,Colonials,
+AmbulanceFlameW,Dunne Dousing Engine 3r,Wardens,
+AmbulanceW,Dunne Responder 3e,Wardens,
+AmmoUniformW,Specialist’s Overcoat,Wardens,15.0
+ArmoredCar2LargeW,O’Brien V.101 Freeman,Wardens,
+ArmoredCar2MultiW,O’Brien v.200 Squire,Wardens,
+ArmoredCar2TwinW,O’Brien V.190 Knave,Wardens,
+ArmoredCarATW,O’Brien V.113 Gravekeeper,Wardens,
+ArmoredCarC,T3 “Xiphos”,Colonials,
+ArmoredCarFlameW,O’Brien V.130 Wild Jack,Wardens,
+ArmoredCarMobilityW,O’Brien V.121 Highlander,Wardens,
+ArmoredCarOffensiveC,T5 “Percutio”,Colonials,
+ArmoredCarTwinC,T8 “Gemini”,Colonials,
+ArmoredCarW,O’Brien V.110,Wardens,
+ArmourUniformC,Velian Flak Vest,Colonials,10.0
+ArmourUniformW,Gunner’s Breastplate,Wardens,5.0
+AssaultRifleAmmo,7.92mm,Both,30.0
+AssaultRifleC,Catara mo.II,Colonials,20.0
+AssaultRifleHeavyC,“Dusk” ce.III,Colonials,20.0
+AssaultRifleHeavyW,Booker Storm Rifle Model 838,Wardens,20.0
+AssaultRifleW,Aalto Storm Rifle 24,Wardens,20.0
+ATAmmo,68mm,Both,20.0
+ATGrenadeW,BF5 White Ash Flask Grenade,Wardens,10.0
+ATLargeAmmo,94.5mm,Both,1.0
+ATLaunchedGrenadeW,B2 Varsi Anti-Tank Grenade,Wardens,20.0
+ATRifleAmmo,14.5mm,Both,10.0
+ATRifleAssaultW,228 Satterley Heavy Storm Rifle,Wardens,5.0
+ATRifleAutomaticW,Booker Greyhound Model 910,Wardens,3.0
+ATRifleLightC,“Dawn” Ve.II,Colonials,3.0
+ATRifleSniperC,“Quickhatch” Rt.I,Colonials,3.0
+ATRifleTC,“Typhon” ra.XII,Colonials,5.0
+ATRifleW,20 Neville Anti-Tank Rifle,Wardens,3.0
+ATRPGAmmo,AP/RPG,Both,15.0
+ATRPGC,Venom c.II 35,Colonials,5.0
+ATRPGHeavyC,Bane 45,Colonials,5.0
+ATRPGHeavyW,Carnyx Anti-Tank Rocket Launcher,Wardens,5.0
+ATRPGIndirectAmmo,ARC/RPG,Both,15.0
+ATRPGLightC,Ignifist 30,Colonials,10.0
+ATRPGTW,Mounted Bonesaw MK.3,Wardens,5.0
+ATRPGW,Bonesaw MK.3,Wardens,5.0
+Bandages,Bandages,Both,50.0
+BannerTC,Legion Vexillum,Colonials,5.0
+BannerTW,War Ensign,Wardens,5.0
+BarbedWireMaterials,Barbed Wire,Both,5.0
+Barge,BMS - Aquatipper,Both,
+BattleTankAmmo,75mm,Both,1.0
+BattleTankATC,Lance-25 “Hasta”,Colonials,
+BattleTankC,Lance-36,Colonials,
+BattleTankDefensiveW,Flood Juggernaut Mk. VII,Wardens,
+BattleTankHeavyArtilleryC,Lance-46 “Sarissa”,Colonials,
+BattleTankHeavyArtilleryW,Flood Mk. IX Stain,Wardens,
+BattleTankW,Flood Mk. I,Wardens,
+Bayonet,Buckhorn CCQ-18,Both,20.0
+Bicycle,Blumfield LK205,Both,
+Binoculars,Binoculars,Both,5.0
+BloodPlasma,Blood Plasma,Both,50.0
+BomberAmmo,Mark II Raidbreaker,Both,5.0
+BusC,R-15 - “Chariot”,Colonials,
+BusW,Dunne Caravaner 2f,Wardens,
+Cloth,Basic Materials,Both,100.0
+Coal,Coal,Both,100.0
+Components,Components,Both,100.0
+Concrete,Concrete Materials,Both,1.0
+ConcreteMixer,Concrete Mixer,Both,
+Construction,BMS - Universal Assembly Rig,Both,
+ConstructionEquipment,Construction Equipment,Both,
+ConstructionUtility,BMS - Fabricator,Both,
+Copper,Copper,Both,100.0
+CopperA,Copper Alloy,Both,20.0
+Crane,BMS - Class 2 Mobile Auto-Crane,Both,
+CriticalSoldier,Critically Wounded Soldier,Both,50.0
+DemolitionRocketAmmo,Shatter Missile,Both,5.0
+DepthChargeAmmo,Model-7 “Evie”,Both,1.0
+DestroyerTankFlameW,Noble Firebrand Mk. XVII,Wardens,
+DestroyerTankW,Noble Widow MK. XIV,Wardens,
+Diesel,Diesel,Both,1.0
+DiveBomberAmmo,912 Shrike Rounds,Colonials,5.0
+EmplacedAircraftC,DAE 5b “Zeal”,Colonials,
+EmplacedAircraftW,Leary AA-70 Bolas,Wardens,
+EmplacedATLargeW,Huber Starbreaker 94.5mm,Wardens,
+EmplacedATW,Leary Shellbore 68mm,Wardens,
+EmplacedCannonLargeC,DAE 2a-1 “Ruptura”,Colonials,
+EmplacedHeavyArtilleryC,50-500 “Thunderbolt” Cannon,Colonials,
+EmplacedHeavyArtilleryW,Huber Exalt 150mm,Wardens,
+EmplacedIndirectC,DAE 1o-3 “Polybolos”,Colonials,
+EmplacedInfantryC,DAE 1b-2 “Serra”,Colonials,
+EmplacedInfantryW,Leary Snare Trap 127,Wardens,
+EmplacedLightArtilleryW,Huber Lariat 120mm,Wardens,
+EmplacedMultiC,DAE 3b-2 “Hades’ Net”,Colonials,
+EngineerUniformC,Fabri Rucksack,Colonials,15.0
+EngineerUniformW,Sapper Gear,Wardens,15.0
+Explosive,Explosive Powder,Both,40.0
+ExplosiveLightC,Hydra’s Whisper,Colonials,5.0
+ExplosiveTripod,Havoc Charge,Both,5.0
+FacilityCoal1,Coke,Both,1.0
+FacilityComponents1,Damaged Components,Both,100.0
+FacilityMaterials1,Construction Materials,Both,20.0
+FacilityMaterials10,Unstable Substances,Both,1.0
+FacilityMaterials11,Thermal Shielding,Both,1.0
+FacilityMaterials2,Processed Construction Materials,Both,1.0
+FacilityMaterials3,Steel Construction Materials,Both,1.0
+FacilityMaterials4,Assembly Materials I,Both,1.0
+FacilityMaterials5,Assembly Materials II,Both,1.0
+FacilityMaterials6,Assembly Materials III,Both,1.0
+FacilityMaterials7,Assembly Materials IV,Both,1.0
+FacilityMaterials8,Assembly Materials V,Both,1.0
+FacilityMaterials9,Rare Alloys,Both,1.0
+FacilityOil1,Heavy Oil,Both,1.0
+FacilityOil2,Enriched Oil,Both,1.0
+FieldAT2C,GA6 “Cestus”,Colonials,
+FieldAT2W,Duncan’s Coin 14.5mm,Wardens,
+FieldATC,"AA-2 ""Battering Ram""",Colonials,
+FieldATDamageW,Balfour Rampart 68mm,Wardens,
+FieldATW,Collins Cannon 68mm,Wardens,
+FieldCannonDamageC,40-45 “Smelter”,Colonials,
+FieldCannonW,Balfour Wolfhound 40mm,Wardens,
+FieldMGC,G40 “Sagittarii”,Colonials,
+FieldMGW,Swallowtail 988/127-2,Wardens,
+FieldMortarC,30-250 “Tisiphone” Field Cannon,Colonials,
+FieldMortarW,Balfour Falconer 250mm,Wardens,
+FireRocketAmmo,4C-Fire Rocket,Both,1.0
+FirstAidKit,First Aid Kit,Both,10.0
+FlameAmmo,Flame Ammo,Both,1.0
+FlameBackpackC,“Molten Wind” v.II Ammo,Colonials,10.0
+FlameBackpackW,Willow's Bane Ammo,Wardens,10.0
+FlameTorchC,“Molten Wind” v.II Flame Torch,Colonials,10.0
+FlameTorchW,Willow’s Bane Model 845,Wardens,10.0
+FlatbedTruck,BMS - Packmule Flatbed,Both,
+Freighter,BMS - Ironship,Both,
+FreighterLight,Das Krokodil by VAC,Both,
+GasMask,Gas Mask,Both,20.0
+GasMaskFilter,Gas Mask Filter,Both,20.0
+GreenAsh,Green Ash Grenade,Both,10.0
+GrenadeAdapter,The Ospreay,Wardens,20.0
+GrenadeC,Bomastone Grenade,Colonials,25.0
+GrenadeLauncherC,KLG901-2 Lunaire F,Colonials,5.0
+GrenadeLauncherTC,Mounted Fissura gd.I,Colonials,5.0
+GrenadeUniformC,Grenadier’s Baldric,Colonials,15.0
+GrenadeW,A3 Harpa Fragmentation Grenade,Wardens,20.0
+GroundMaterials,Gravel,Both,20.0
+Gunboat2C,Type B - “Lucian”,Colonials,
+Gunboat2W,81f-f Ronan Blackguard,Wardens,
+GunboatC,Type C - “Charon”,Colonials,
+GunboatW,74b-1 Ronan Gunship,Wardens,
+HalfTrackArtilleryC,HH-d “Peltast”,Colonials,
+HalfTrackC,HH-a “Javelin”,Colonials,
+HalfTrackDefensiveC,HH-b “Hoplite”,Colonials,
+HalftrackMultiW,Niska-Rycker Mk. IX Skycaller,Wardens,
+HalfTrackOffensiveW,Niska Mk. II Blinder,Wardens,
+HalfTrackTwinW,Niska Mk. III Scar Twin,Wardens,
+HalfTrackW,Niska Mk. I Gun Motor Carriage,Wardens,
+Harvester,BMS - Scrap Hauler,Both,
+HeavyArtilleryAmmo,150mm,Both,5.0
+HeavyExplosive,Heavy Explosive Powder,Both,30.0
+HeavyTruckC,AU-A150 Taurine Rigger,Colonials,
+HeavyTruckW,Cnute Cliffwrest,Wardens,
+HEGrenade,Mammon 91-b,Both,20.0
+HELaunchedGrenade,Tremola Grenade GPb-1,Both,20.0
+HERocketAmmo,3C-High Explosive Rocket,Both,1.0
+InfantryMine,Crow’s Foot Mine,Both,10.0
+Iron,Iron,Both,100.0
+IronA,Iron Alloy,Both,20.0
+ISGTC,Daucus isg.III,Colonials,5.0
+LandingCraftC,AB-8 “Acheron”,Colonials,
+LandingCraftOffensiveC,AB-11 “Doru”,Colonials,
+LandingCraftW,Mulloy LPC,Wardens,
+LandingShipC,Interceptor PA-12,Colonials,
+LandingShipW,MacConmara Shorerunner,Wardens,
+LargeCrane,BMS - Overseer Sky-Hauler,Both,
+LargeFieldATC,945g “Stygian Bolt”,Colonials,
+LargeFieldCannonW,Balfour Stockade 75mm,Wardens,
+LargeFieldLightArtilleryC,120-68 “Koronides” Field Gun,Colonials,
+LargeFieldMortarC,40-250 “Alekto” Heavy Cannon,Colonials,
+LargeFieldMultiW,Rycker 4/3-F Wasp Nest,Wardens,
+LargeShipBaseShip,BMS - Longhook,Both,
+LargeShipBattleshipC,Titan,Colonials,
+LargeShipBattleshipW,Callahan,Wardens,
+LargeShipDestroyerC,Conqueror,Colonials,
+LargeShipDestroyerW,Blacksteele,Wardens,
+LargeShipResourceShip,BMS - Bowhead,Both,
+LargeShipStorageShip,BMS - Bluefin,Both,
+LargeShipSubmarineC,AC-b “Trident”,Colonials,
+LargeShipSubmarineW,Nakki,Wardens,
+LightArtilleryAmmo,120mm,Both,5.0
+LightBoatInfantryC,K-81e “Sombre”,Colonials,
+LightBoatInfantryW,68A-4 Ronan Fathomer,Wardens,
+LightTank2InfantryC,HC-2 “Scorpion”,Colonials,
+LightTankAmmo,40mm,Both,20.0
+LightTankArtilleryW,Devitt-Caine Mk. IV MMR,Wardens,
+LightTankC,"H-5 ""Hatchet""",Colonials,
+LightTankDefensiveW,Devitt Ironhide Mk. IV,Wardens,
+LightTankFlameC,H-19 “Vulcan”,Colonials,
+LightTankMobilityC,H-8 “Kranesca”,Colonials,
+LightTankOffensiveC,H-10 “Pelekys”,Colonials,
+LightTankW,Devitt Mk. III,Wardens,
+LiquidContainer,Liquid Container,Both,
+ListeningKit,Listening Kit,Both,5.0
+LRArtilleryAmmo,300mm,Both,1.0
+MaceW,Falias Raiding Club,Wardens,10.0
+MaintenanceSupplies,Maintenance Supplies,Both,100.0
+MaterialPlatform,Material Pallet,Both,
+Mech,Centurion MV-2,Colonials,
+MechW,Herne QMW 1a Scourge Hunter,Wardens,
+MedicUniformC,Medic Fatigues,Colonials,15.0
+MedicUniformW,Physician’s Jacket,Wardens,15.0
+MediumBoatC,Strider,Colonials,
+MediumBoatW,Rinnspeir Ornitier-Class Gunship,Wardens,
+MediumTank2C,86K-a “Bardiche”,Colonials,
+MediumTank2IndirectW,Gallagher Thornfall Mk. VI,Wardens,
+MediumTank2MultiW,Gallagher Highwayman Mk. III,Wardens,
+MediumTank2RangeW,Gallagher Outlaw Mk. II,Wardens,
+MediumTank2TwinC,86K-c “Ranseur”,Colonials,
+MediumTank2W,Gallagher Brigand Mk. I,Wardens,
+MediumTank3C,90T-v “Nemesis”,Colonials,
+MediumTankATW,Silverhand Lordscar - Mk. X,Wardens,
+MediumTankC,85K-b “Falchion”,Colonials,
+MediumTankLargeC,"85V-g ""Talos""",Colonials,
+MediumTankOffensiveC,85K-a “Spatha”,Colonials,
+MediumTankSiegeW,Silverhand Chieftain - Mk. VI,Wardens,
+MediumTankW,Silverhand - Mk. IV,Wardens,
+Metal,Salvage,Both,100.0
+MetalBeamMaterials,Metal Beam,Both,5.0
+MGAmmo,12.7mm,Both,20.0
+MGC,KRN886-127 Gast Machine Gun,Colonials,5.0
+MGTC,Lamentum mm.IV,Colonials,5.0
+MGTW,Malone Ratcatcher MK.1,Wardens,5.0
+MGW,Malone MK.2,Wardens,5.0
+MineBoat,Bellweather by VAC,Both,
+MiniTankAmmo,30mm,Both,20.0
+MiniTorpedoAmmo,Quillback Torpedo,Wardens,5.0
+Mortar,Cremari Mortar,Both,5.0
+MortarAmmo,Mortar Shell,Both,15.0
+MortarAmmoFL,Flare Mortar Shell,Both,15.0
+MortarAmmoFlame,Incendiary Mortar Shell,Both,15.0
+MortarAmmoSH,Shrapnel Mortar Shell,Both,15.0
+MortarTankAmmo,"250mm ""Purity"" Shell",Both,5.0
+MortarTankAmmoBR,"250mm ""Fury"" Shell",Both,5.0
+MortarTankC,"HC-7 ""Ballista""",Colonials,
+Motorboat,BMS - Grouper,Both,
+MotorcycleC,03MM “Caster”,Colonials,
+MotorcycleOffensiveC,00MS “Stinger”,Colonials,
+MotorcycleW,Kivela Power Wheel 80-1,Wardens,
+NavalUniformC,Remex Garb,Colonials,15.0
+NavalUniformW,Gentleman’s Peacoat,Wardens,15.0
+OfficerUniformC,Officialis’ Attire,Colonials,3.0
+OfficerUniformW,Officer’s Regalia,Wardens,3.0
+Oil,Oil,Both,1.0
+ParatrooperBackpack,Paratrooper’s Ruck,Both,10.0
+ParatrooperUniformC,Auster’s Harness,Colonials,15.0
+ParatrooperUniformW,Cloudrunner’s Vesture,Wardens,15.0
+Petrol,Petrol,Both,1.0
+PilotUniformC,Lodesman’s Lorica,Colonials,10.0
+PilotUniformW,Aviator’s Raiment,Wardens,10.0
+PipeMaterials,Pipe,Both,2.0
+PistolAmmo,8mm,Both,40.0
+PistolC,Ferro 879,Colonials,20.0
+PistolLightW,Cascadier 873,Wardens,40.0
+PistolW,Ahti Model 2,Wardens,20.0
+Radio,Radio,Both,5.0
+RadioAircraft,Liason Transmitter,Both,5.0
+RadioBackpack,Radio Backpack,Both,5.0
+RainUniformC,Legionary’s Oilcoat,Colonials,15.0
+RareMetal,Rare Metal,Both,100.0
+RelicAPC,Heavy Infantry Carrier,Both,
+RelicArmouredCar,Armoured Fighting Tractor,Both,
+RelicLightTank,Storm Tank,Both,
+RelicMaterials,Relic Materials,Both,20.0
+RelicMediumTank,PL-1 “Phalanx”,Both,
+RelicScoutVehicle,Staff Car,Both,
+RelicTruck,Repurposed Truck,Both,
+ReservePower,Reserve Power,Both,10.0
+ResourceContainer,Resource Container,Both,
+Revolver,Cometa T2-9,Both,30.0
+RevolverAmmo,.44,Both,40.0
+RifleAmmo,7.62mm,Both,40.0
+RifleAutomaticC,Catena rt.IV Auto-Rifle,Colonials,15.0
+RifleAutomaticW,Sampo Auto-Rifle 77,Wardens,20.0
+RifleC,Argenti r.II Rifle,Colonials,20.0
+RifleHeavyC,Volta r.I Repeater,Colonials,15.0
+RifleHeavyW,The Hangman 757,Wardens,20.0
+RifleLightC,Fuscina pi.I,Colonials,20.0
+RifleLightW,Blakerow 871,Wardens,20.0
+RifleLongC,KRR2-790 Omen,Colonials,15.0
+RifleLongW,Clancy Cinder M3,Wardens,15.0
+RifleShortW,No.2B Hawthorne,Wardens,15.0
+RifleW,No.2 Loughcaster,Wardens,20.0
+RocketPartBottom,A0E-9 Rocket Booster,Both,
+RocketPartCenter,A0E-9 Rocket Body,Both,
+RocketPartTop,A0E-9 Rocket Warhead,Both,
+RpgAmmo,RPG,Both,15.0
+RPGTW,Cutler Foebreaker,Wardens,5.0
+RpgW,Cutler Launcher 4,Wardens,5.0
+SandbagMaterials,Sandbag,Both,5.0
+SatchelChargeT,Havoc Charge Detonator,Both,5.0
+SatchelChargeW,Alligator Charge,Wardens,10.0
+ScoutTankMultiW,King Jester Mk. I-1,Wardens,
+ScoutTankOffensiveW,King Gallant Mk. II,Wardens,
+ScoutTankW,King Spire Mk. I,Wardens,
+ScoutUniformC,Recon Camo,Colonials,15.0
+ScoutUniformW,Outrider’s Mantle,Wardens,15.0
+ScoutVehicleMobilityC,UV-05a “Argonaut”,Colonials,
+ScoutVehicleOffensiveC,UV-24 “Icarus”,Colonials,
+ScoutVehicleOffensiveW,Drummond Spitfire 100d,Wardens,
+ScoutVehicleUtilityC,UV-5c “Odyssey”,Colonials,
+ScoutVehicleUtilityW,Drummond Loscann 55c,Wardens,
+ScoutVehicleW,Drummond 100a,Wardens,
+ShipPart1,Naval Hull Segments,Both,
+ShipPart2,Naval Shell Plating,Both,
+ShipPart3,Naval Turbine Components,Both,
+ShippingContainer,Shipping Container,Both,
+ShotgunAmmo,Buckshot,Both,40.0
+ShotgunC,KRF1-750 Dragonfly,Colonials,15.0
+ShotgunW,No.4 The Pillory Scattergun,Wardens,15.0
+Shovel,Shovel,Both,10.0
+SledgeHammer,Sledge Hammer,Both,10.0
+SmallTrainEngine,BMS Mineseeker,Both,
+SmallTrainLiquid,BMS Tinderbox,Both,
+SmallTrainMaterial,BMS Linerunner,Both,
+SmallTrainResource,BMS Railtruck,Both,
+SmallTrainShipping,BMS Stowheel,Both,
+SMGAmmo,9mm,Both,40.0
+SMGC,“The Pitch Gun” mc.V,Colonials,20.0
+SMGHeavyC,“Lionclaw” mc.VIII,Colonials,20.0
+SMGHeavyW,No.1 “The Liar” Submachinegun,Wardens,20.0
+SMGW,Fiddler Submachine Gun Model 868,Wardens,20.0
+SmokeGrenade,PT-815 Smoke Grenade,Both,15.0
+SniperRifleC,KRR3-792 Auger,Colonials,5.0
+SniperRifleW,Clancy-Raca M4,Wardens,3.0
+SnowUniformC,Heavy Topcoat,Colonials,15.0
+SnowUniformW,Caoivish Parka,Wardens,15.0
+SoldierSupplies,Soldier Supplies,Both,10.0
+SoldierUniformC,Legionary Fatigues,Colonials,15.0
+SoldierUniformW,Infantry Battledress,Wardens,15.0
+StickyBomb,Anti-Tank Sticky Bomb,Both,10.0
+Sulfur,Sulfur,Both,100.0
+SuperTankC,"O-75b ""Ares""",Colonials,
+SuperTankW,Cullen Predator Mk. III,Wardens,
+SurfaceWaterMine,E681-B Hullbreaker Mine,Both,5.0
+SwordC,Eleos Infantry Dagger,Colonials,10.0
+TanketteC,T12 “Actaeon” Tankette,Colonials,
+TanketteFlameC,T14 “Vesta” Tankette,Colonials,
+TanketteMultiC,T13 “Deioneus” Rocket Battery,Colonials,
+TanketteOffensiveC,T20 “Ixion” Tankette,Colonials,
+TankMine,Abisme AT-99 Mine,Both,10.0
+TankUniformC,Tankman’s Coveralls,Colonials,15.0
+TankUniformW,Padded Boiler Suit,Wardens,15.0
+TorpedoAmmo,Moray Torpedo,Both,1.0
+TrailerLiquid,Rooster - Lamploader,Both,
+TrailerMaterial,Rooster - Tumblebox,Both,
+TrailerResource,Rooster - Junkwagon,Both,
+TrainCaboose,BMS Roadhouse,Both,
+TrainCoal,BMS Rockhold,Both,
+TrainCombatCarC,Aegis Steelbreaker K5a,Colonials,
+TrainCombatCarW,O’Brien Warsmith v.215,Wardens,
+TrainEngine,BMS Black Bolt,Both,
+TrainFlatbed,BMS Longrider,Both,
+TrainHospital,BMS Bloodtender,Both,
+TrainInfantry,BMS Holdout,Both,
+TrainLRArtillery,Tempest Cannon RA-2,Both,
+TraumaKit,Trauma Kit,Both,10.0
+Tripod,Tripod,Both,5.0
+TruckC,R-1 Hauler,Colonials,
+TruckDefensiveW,Dunne Leatherback 2a,Wardens,
+TruckLiquidC,RR-3 “Stolon” Tanker,Colonials,
+TruckLiquidW,Dunne Fuelrunner 2d,Wardens,
+TruckMobilityC,R-5b “Sisyphus” Hauler,Colonials,
+TruckMobilityW,Dunne Landrunner 12c,Wardens,
+TruckMultiC,R-17 “Retiarius” Skirmisher,Colonials,
+TruckOffensiveC,R-9 “Speartip” Escort,Colonials,
+TruckResourceC,R-5 “Atlas” Hauler,Colonials,
+TruckResourceW,Dunne Loadlugger 3c,Wardens,
+TruckW,Dunne Transport,Wardens,
+UnexplodedOrdnance,Unexploded Ordnance,Both,5.0
+Water,Water,Both,1.0
+WaterBucket,Water Bucket,Both,50.0
+WaterMine,E680-S Rudder Lock,Both,1.0
+WindsockT,Wind Sock,Both,5.0
+Wood,Refined Materials,Both,20.0
+WorkHammer,Hammer,Both,20.0
+WorkWrench,Wrench,Both,5.0
+Wreckage,Wreckage,Both,0.0
