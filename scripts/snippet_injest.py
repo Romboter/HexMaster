@@ -1,10 +1,14 @@
 import os
 import asyncio
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
+from tabulate import tabulate
+
+from hexmaster.config import Settings
 
 
 def parse_bool(x) -> bool | None:
@@ -25,7 +29,8 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
       - N rows into snapshot_items (one per TSV line)
     Returns snapshot_id.
     """
-    db_url = os.environ["DATABASE_URL"]  # e.g. postgresql+asyncpg://user:pass@localhost:5432/db
+    settings = Settings.load()
+    db_url = settings.database_url
 
     # This script must match an async URL (postgresql+asyncpg://...) with an async engine.
     engine = create_async_engine(db_url)
@@ -48,6 +53,10 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
     stockpile_name = (stockpile_name or "").strip() or "Public"
 
     async with engine.begin() as conn:
+        # 1. Fetch valid keys from the catalog to prevent Foreign Key violations
+        catalog_res = await conn.execute(text("SELECT codename, displayname FROM catalog_items"))
+        valid_keys = {(row.codename, row.displayname) for row in catalog_res}
+
         snapshot_id = await conn.execute(
             text(
                 """
@@ -72,6 +81,11 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
 
             if not code_name or not item_name:
                 continue  # skip malformed lines
+            
+            # 2. Skip items not present in the master catalog
+            if (code_name, item_name) not in valid_keys:
+                print(f"Warning: Skipping {item_name} ({code_name}) - not found in catalog_items.")
+                continue
 
             rows.append(
                 {
@@ -103,16 +117,67 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
     return snapshot_id
 
 
+SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN = """
+SELECT
+  snapshot_items.item_name,
+  snapshot_items.code_name,
+  snapshot_items.quantity,
+  snapshot_items.is_crated,
+  stockpile_snapshots.captured_at
+FROM snapshot_items
+LEFT JOIN stockpile_snapshots ON snapshot_items.snapshot_id = stockpile_snapshots.id
+WHERE stockpile_snapshots.town = :town
+AND snapshot_items.item_name || snapshot_items.code_name || stockpile_snapshots.captured_at IN (
+  SELECT
+    snapshot_items.item_name || snapshot_items.code_name || MAX(stockpile_snapshots.captured_at)
+  FROM snapshot_items
+  LEFT JOIN stockpile_snapshots ON snapshot_items.snapshot_id = stockpile_snapshots.id
+  WHERE stockpile_snapshots.town = :town
+  GROUP BY
+    snapshot_items.item_name,
+    snapshot_items.code_name
+)
+"""
+
+
+async def fetch_latest_items_for_town(town: str) -> list[dict]:
+    settings = Settings.load()
+    engine = create_async_engine(settings.database_url)
+
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text(SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN),
+                {"town": town},
+            )
+            rows = [dict(row) for row in result.mappings()]  # convert RowProxy -> dict
+            return rows
+    finally:
+        await engine.dispose()
+
+
 async def main() -> None:
     town = "Tine"
 
+    # Calculate the path relative to this script's location
+    # This script is in /scripts, so we go up one level and then into /sample_data
+    script_dir = Path(__file__).parent
+    tsv_path = script_dir.parent / "sample_data" / f"Foxhole Logi Tool - {town}.tsv"
+
+    if not tsv_path.exists():
+        print(f"Error: TSV file not found at: {tsv_path.absolute()}")
+        return
+
     snapshot_id = await ingest_tsv(
-        tsv_path=f"sample_data/Foxhole Logi Tool - {town}.tsv",
+        tsv_path=str(tsv_path),
         town=town,
         struct_type="Seaport",
         stockpile_name="Public",
     )
     print(f"Inserted snapshot_id={snapshot_id}")
+
+    rows = await fetch_latest_items_for_town(town=town)
+    print(f"Latest items in {town}:\n{tabulate(rows, headers='keys')}")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import pandas as pd
 from tabulate import tabulate
 
+from hexmaster.config import Settings
 SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN = """
                                     WITH latest_per_key
                                              AS (SELECT DISTINCT ON (s.town, s.struct_type, s.stockpile_name) s.id,
@@ -41,8 +42,8 @@ SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN = """
 
 
 async def fetch_latest_items_for_town(town: str) -> list[dict]:
-    db_url = os.environ["DATABASE_URL"]
-    engine = create_async_engine(db_url)
+    settings = Settings.load()
+    engine = create_async_engine(settings.database_url)
 
     try:
         async with engine.connect() as conn:

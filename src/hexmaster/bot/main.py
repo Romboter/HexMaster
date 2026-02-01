@@ -36,6 +36,7 @@ class HexmasterBot(commands.Bot):
         await init_db(self.engine)
 
         await self.load_extension("hexmaster.bot.cogs.health")
+        await self.load_extension("hexmaster.bot.cogs.stockpile_cog")
 
         guild_id = os.getenv("DISCORD_GUILD_ID")
         if guild_id:
