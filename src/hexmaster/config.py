@@ -50,6 +50,7 @@ def _find_dotenv(start: Path) -> Path | None:
 class Settings:
     database_url: str
     discord_token: str
+    ocr_url: str  # 1. Add this field here
 
     @staticmethod
     def load() -> "Settings":
@@ -68,10 +69,15 @@ class Settings:
 
         database_url = os.getenv("DATABASE_URL")
         discord_token = os.getenv("DISCORD_TOKEN")
+        ocr_url = os.getenv("OCR_URL", "http://localhost:8000")  # 2. Extract it to a variable
 
         missing = [
             name
-            for name, value in (("DATABASE_URL", database_url), ("DISCORD_TOKEN", discord_token))
+            for name, value in (
+                ("DATABASE_URL", database_url),
+                ("DISCORD_TOKEN", discord_token),
+                ("OCR_URL", ocr_url)  # 3. Optional: add to validation
+            )
             if not value
         ]
         if missing:
@@ -94,4 +100,6 @@ class Settings:
         return Settings(
             database_url=database_url,
             discord_token=discord_token,
+            ocr_url=ocr_url,  # Default to localhost if not set
+
         )

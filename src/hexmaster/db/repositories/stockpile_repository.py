@@ -1,0 +1,84 @@
+from sqlalchemy import select, insert, desc
+from sqlalchemy.ext.asyncio import AsyncEngine
+from datetime import datetime, timezone
+from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem
+
+
+class StockpileRepository:
+    def __init__(self, engine: AsyncEngine):
+        self.engine = engine
+
+    async def get_unique_towns(self) -> list[str]:
+        """Fetches unique town names for autocomplete."""
+        async with self.engine.connect() as conn:
+            stmt = select(StockpileSnapshot.town).distinct().order_by(StockpileSnapshot.town)
+            result = await conn.execute(stmt)
+            return [row[0] for row in result.all() if row[0]]
+
+    async def get_catalog_items(self) -> set[tuple[str, str]]:
+        """Fetches codename/displayname pairs for validation."""
+        async with self.engine.connect() as conn:
+            stmt = select(CatalogItem.codename, CatalogItem.displayname)
+            result = await conn.execute(stmt)
+            return {(row.codename, row.displayname) for row in result}
+
+    async def ingest_snapshot(self, town: str, struct_type: str, stockpile_name: str, items_data: list[dict]):
+        """Creates a new snapshot and inserts its items in a single transaction."""
+        async with self.engine.begin() as conn:
+            # 1. Insert the snapshot header
+            stmt = insert(StockpileSnapshot).values(
+                town=town,
+                struct_type=struct_type,
+                stockpile_name=stockpile_name,
+                captured_at=datetime.now(timezone.utc)
+            ).returning(StockpileSnapshot.id)
+
+            res = await conn.execute(stmt)
+            snapshot_id = res.scalar_one()
+
+            # 2. Insert items in bulk
+            if items_data:
+                for item in items_data:
+                    item["snapshot_id"] = snapshot_id
+
+                await conn.execute(insert(SnapshotItem), items_data)
+
+            return snapshot_id
+
+    async def get_latest_inventory(self, town: str, stockpile: str = None):
+        """Fetches the latest item counts for a specific town."""
+        async with self.engine.connect() as conn:
+            # Subquery to find the IDs of the latest snapshots for each unique combination
+            # This uses Postgres 'DISTINCT ON' equivalent in SQLAlchemy
+            subq = (
+                select(StockpileSnapshot.id)
+                .where(StockpileSnapshot.town == town)
+                .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
+                .order_by(
+                    StockpileSnapshot.town,
+                    StockpileSnapshot.struct_type,
+                    StockpileSnapshot.stockpile_name,
+                    desc(StockpileSnapshot.captured_at),
+                    desc(StockpileSnapshot.id)
+                )
+            )
+
+            if stockpile:
+                subq = subq.where(StockpileSnapshot.stockpile_name == stockpile)
+
+            # Join with SnapshotItem to get the actual inventory
+            stmt = (
+                select(
+                    StockpileSnapshot.struct_type,
+                    StockpileSnapshot.stockpile_name,
+                    SnapshotItem.item_name,
+                    SnapshotItem.quantity,
+                    SnapshotItem.is_crated
+                )
+                .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
+                .where(StockpileSnapshot.id.in_(subq))
+                .order_by(StockpileSnapshot.stockpile_name, desc(SnapshotItem.is_crated), desc(SnapshotItem.quantity))
+            )
+
+            result = await conn.execute(stmt)
+            return result.mappings().all()
