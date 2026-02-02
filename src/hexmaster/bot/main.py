@@ -12,7 +12,7 @@ from hexmaster.services.ocr_service import OCRService
 
 class HexmasterBot(commands.Bot):
     def __init__(self, settings: Settings):
-        # Default intents are sufficient for Slash Commands
+        # Default intents are enough for Slash Commands
         intents = discord.Intents.default()
         super().__init__(command_prefix="!", intents=intents)
 
@@ -22,7 +22,7 @@ class HexmasterBot(commands.Bot):
         # Dependency Injection: Initialize once, use everywhere
         self.repo = StockpileRepository(self.engine)
         self.ocr_service = OCRService(settings.ocr_url)
-
+#
     async def setup_hook(self):
         # 1. Ensure DB schema is created (Replaces manual SQL files)
         await init_db(self.engine)
