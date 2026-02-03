@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import (String, Integer, DateTime, Boolean,
+from sqlalchemy import (Column, String, Integer, DateTime, Boolean,
                         ForeignKey, Text, Float)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
@@ -13,6 +13,14 @@ class CatalogItem(Base):
     codename: Mapped[str] = mapped_column(String(100), primary_key=True)
     displayname: Mapped[str] = mapped_column(String(255))
 
+class Priority(Base):
+    __tablename__ = 'priority'
+
+    codename = Column(String, primary_key=True)
+    name = Column(String)
+    qty_per_crate = Column(Integer)
+    min_for_base_crates = Column(Integer)
+    priority = Column(Float)
 
 class StockpileSnapshot(Base):
     """A single 'upload' or snapshot of a stockpile at a point in time."""
