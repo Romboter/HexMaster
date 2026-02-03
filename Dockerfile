@@ -1,17 +1,25 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# System deps kept minimal for Phase 0
-RUN pip install --no-cache-dir --upgrade pip
+# Install system dependencies (if any are needed in the future)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml /app/pyproject.toml
-RUN pip install --no-cache-dir .
+# Install dependencies from requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src /app/src
+# Copy the rest of the application
+COPY . .
 
-# Run the bot module
+# Install the project itself (enables the 'hexmaster' package from /src)
+RUN pip install .
+
+# Start the bot
 CMD ["python", "-m", "hexmaster.bot.main"]
