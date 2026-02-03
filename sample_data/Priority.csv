@@ -1,0 +1,60 @@
+Name,CodeName,Qty per Crate,Min For Base (crates),Priority
+Soldier Supplies,SoldierSupplies,10,20,1.00
+Basic Materials,Cloth,100,30,1.01
+Blakerow 871,RifleLightW,20,5,2.00
+Sampo Auto-Rifle 77,RifleAutomaticW,20,5,2.01
+No.2 Loughcaster,RifleW,20,5,2.02
+7.62mm,RifleAmmo,40,5,2.03
+Anti-Tank Sticky Bomb,StickyBomb,10,8,2.04
+BF5 White Ash Flask Grenade,ATGrenadeW,10,8,2.05
+A3 Harpa Fragmentation Grenade,GrenadeW,20,5,2.06
+Mammon 91-b,HEGrenade,20,5,2.07
+Shovel,Shovel,10,2,3.00
+Bandages,Bandages,50,4,3.01
+Green Ash Grenade,GreenAsh,10,5,3.02
+First Aid Kit,FirstAidKit,10,3,3.03
+Trauma Kit,TraumaKit,10,3,3.04
+Blood Plasma,BloodPlasma,50,3,3.05
+Physician’s Jacket,MedicUniformW,15,2,3.06
+Cutler Launcher 4,RpgW,5,3,4.00
+RPG,RpgAmmo,15,6,4.01
+PT-815 Smoke Grenade,SmokeGrenade,15,2,4.02
+Radio,Radio,5,6,4.03
+Gas Mask,GasMask,20,2,4.04
+Gas Mask Filter,GasMaskFilter,20,5,4.05
+Buckhorn CCQ-18,Bayonet,20,3,4.06
+Specialist’s Overcoat,AmmoUniformW,15,2,4.07
+No.4 The Pillory Scattergun,ShotgunW,15,2,4.08
+Buckshot,ShotgunAmmo,40,1,4.09
+Booker Storm Rifle Model 838,AssaultRifleHeavyW,20,1,4.10
+7.92mm,AssaultRifleAmmo,30,1,4.11
+Tremola Grenade GPb-1,HELaunchedGrenade,20,2,4.12
+20 Neville Anti-Tank Rifle,ATRifleW,3,5,5.00
+Booker Greyhound Model 910,ATRifleAutomaticW,3,5,5.01
+228 Satterley Heavy Storm Rifle,ATRifleAssaultW,5,5,5.02
+20mm,AircraftAmmo,5,4,5.03
+Fiddler Submachine Gun Model 868,SMGW,20,3,5.04
+9mm,SMGAmmo,40,4,5.05
+Abisme AT-99 Mine,TankMine,10,,5.06
+Crow’s Foot Mine,InfantryMine,10,3,5.07
+Clancy Cinder M3,RifleLongW,15,2,5.08
+The Ospreay,GrenadeAdapter,20,1,5.09
+B2 Varsi Anti-Tank Grenade,ATLaunchedGrenadeW,20,3,5.10
+Wrench,WorkWrench,5,2,5.11
+Binoculars,Binoculars,5,4,5.12
+Caoivish Parka,SnowUniformW,15,2,5.13
+Malone MK.2,MGW,5,3,6.00
+12.7mm,MGAmmo,20,3,6.01
+Cremari Mortar,Mortar,5,2,6.02
+Incendiary Mortar Shell,MortarAmmoFlame,15,4,6.03
+Mortar Shell,MortarAmmo,15,4,6.04
+Flare Mortar Shell,MortarAmmoFL,15,4,6.05
+68mm,ATAmmo,20,3,6.06
+30mm,MiniTankAmmo,20,5,6.07
+40mm,LightTankAmmo,20,5,6.08
+Padded Boiler Suit,TankUniformW,15,2,6.09
+The Hangman 757,RifleHeavyW,20,2,6.10
+0.44,RevolverAmmo,40,2,6.11
+Cometa T2-9,Revolver,30,1,6.12
+Tripod,Tripod,5,3,7.00
+Mounted Bonesaw MK.3,ATRPGTW,5,2,7.01
