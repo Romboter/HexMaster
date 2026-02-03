@@ -28,7 +28,7 @@ services:
     environment:
       # This overrides the local localhost URL for internal container networking
       - DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@postgres:5432/hexmaster
-      - OCR_URL="http://192.168.50.44:5000"
+      - OCR_URL=http://192.168.50.44:5000
     volumes:
       - shared_data:/app/shared
 
