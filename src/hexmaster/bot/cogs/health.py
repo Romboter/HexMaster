@@ -33,5 +33,25 @@ class HealthCog(commands.Cog):
                f"• Items: `{items or 0}`")
         await interaction.response.send_message(msg, ephemeral=True)
 
+    @app_commands.command(name="check_towns", description="Verify the towns table content.")
+    async def check_towns(self, interaction: discord.Interaction) -> None:
+        """Health check to see if towns are correctly seeded."""
+        async with self.bot.engine.connect() as conn:
+            result = await conn.execute(text("SELECT name, region FROM towns ORDER BY name LIMIT 10"))
+            rows = result.all()
+            total = await conn.scalar(text("SELECT COUNT(*) FROM towns"))
+
+        if not rows:
+            return await interaction.response.send_message("❌ The `towns` table is empty!", ephemeral=True)
+
+        lines = "\n".join([f"• {row[0]} ({row[1]})" for row in rows])
+        await interaction.response.send_message(
+            f"✅ **Towns Preview (Total: {total})**\n{lines}\n*Showing first 10 alphabetically.*",
+            ephemeral=True
+        )
+
+
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(HealthCog(bot))

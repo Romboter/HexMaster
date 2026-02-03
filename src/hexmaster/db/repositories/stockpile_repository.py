@@ -1,17 +1,28 @@
 from sqlalchemy import select, insert, desc
 from sqlalchemy.ext.asyncio import AsyncEngine
 from datetime import datetime, timezone
-from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem
+from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem, Town
 
 
 class StockpileRepository:
     def __init__(self, engine: AsyncEngine):
         self.engine = engine
 
-    async def get_unique_towns(self) -> list[str]:
-        """Fetches unique town names for autocomplete."""
+    async def get_all_towns(self) -> list[str]:
+        """Fetches all valid town names from the reference table."""
         async with self.engine.connect() as conn:
-            stmt = select(StockpileSnapshot.town).distinct().order_by(StockpileSnapshot.town)
+            stmt = select(Town.name).order_by(Town.name)
+            result = await conn.execute(stmt)
+            return [row[0] for row in result.all()]
+
+    async def get_towns_with_snapshots(self) -> list[str]:
+        """Fetches unique town names that already have snapshots in the DB."""
+        async with self.engine.connect() as conn:
+            stmt = (
+                select(StockpileSnapshot.town)
+                .distinct()
+                .order_by(StockpileSnapshot.town)
+            )
             result = await conn.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Text
+from sqlalchemy import (String, Integer, DateTime, Boolean,
+                        ForeignKey, Text, Float)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -49,3 +50,13 @@ class SnapshotItem(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
 
     snapshot: Mapped["StockpileSnapshot"] = relationship(back_populates="items")
+
+
+class Town(Base):
+    __tablename__ = "towns"
+
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    region: Mapped[str] = mapped_column(String, index=True)
+    x: Mapped[float] = mapped_column(Float)
+    y: Mapped[float] = mapped_column(Float)
+    marker_type: Mapped[str] = mapped_column(String)
