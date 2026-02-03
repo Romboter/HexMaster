@@ -68,6 +68,36 @@ class StockpileCog(commands.Cog):
         snapshot_id = await self.repo.ingest_snapshot(town, struct_type, stockpile_name, items)
         return snapshot_id, len(items), struct_type
 
+    @app_commands.command(name="upload", description="Upload a stockpile screenshot for processing")
+    @app_commands.describe(town="Town name", image="Stockpile screenshot",
+                           stockpile_name="Optional specific stockpile name")
+    async def upload(
+            self,
+            interaction: discord.Interaction,
+            town: str,
+            image: discord.Attachment,
+            stockpile_name: str = "Public"
+    ) -> None:
+        """Handles the file upload and kicks off the OCR/Ingestion pipeline."""
+        if not image.content_type or not image.content_type.startswith("image/"):
+            return await interaction.response.send_message("Please upload a valid image file.", ephemeral=True)
+
+        # Defer because OCR processing is slow and we don't want to timeout
+        await interaction.response.defer(ephemeral=False)
+
+        try:
+            image_bytes = await image.read()
+            snapshot_id, count, struct_type = await self.process_remote_and_ingest(
+                image_bytes, town, stockpile_name
+            )
+
+            await interaction.followup.send(
+                f"✅ **Success!** Imported {count} items for `{stockpile_name}` ({struct_type}) in `{town}`.\n"
+                f"Snapshot ID: `{snapshot_id}`"
+            )
+        except Exception as e:
+            await interaction.followup.send(f"❌ **Error during upload:** {str(e)}")
+
     @app_commands.command(name="stockpile", description="View the latest items for a specific town")
     @app_commands.describe(town="Town name", stockpile="Optional specific stockpile filter")
     async def view_stockpile(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
@@ -96,7 +126,7 @@ class StockpileCog(commands.Cog):
         # Handle Discord character limit
         n_rows = len(df.index)
         while len(lines) > DISCORD_CHARACTER_LIMIT - 150:
-            n_rows-= 1
+            n_rows -= 1
             lines = get_table(df_select.head(n_rows)) + "\n... (truncated)"
 
         title = f"**{town} Inventory #{len(df.index)}**" + (f" (Filter: {stockpile})" if stockpile else "")

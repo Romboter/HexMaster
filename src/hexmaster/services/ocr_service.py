@@ -16,7 +16,7 @@ class OCRService:
         url = f"{self.base_url}/process"
 
         data = aiohttp.FormData()
-        data.add_field('file', image_bytes, filename='screenshot.png', content_type='image/png')
+        data.add_field('image', image_bytes, filename='screenshot.png', content_type='image/png')
         data.add_field('town', town)
         data.add_field('label', label)
 
