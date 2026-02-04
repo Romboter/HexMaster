@@ -30,10 +30,13 @@ class HealthCog(commands.Cog):
             snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
             items = await conn.scalar(text("SELECT COUNT(*) FROM snapshot_items"))
 
-        msg = (f"**System Stats**\n"
-               f"• Snapshots: `{snapshots or 0}`\n"
-               f"• Items: `{items or 0}`")
-        await interaction.response.send_message(msg, ephemeral=True)
+        stats = [
+            ["Snapshots", snapshots or 0],
+            ["Items", items or 0]
+        ]
+        table = tabulate(stats, headers=["Stat", "Value"], tablefmt="simple")
+        
+        await interaction.response.send_message(f"**System Stats**\n```\n{table}\n```", ephemeral=True)
 
     @app_commands.command(name="check_towns", description="Verify the towns table content.")
     @app_commands.default_permissions(administrator=True)
@@ -53,9 +56,9 @@ class HealthCog(commands.Cog):
         if not rows:
             return await interaction.response.send_message("❌ The `towns` table is empty!", ephemeral=True)
 
-        lines = "\n".join([f"• {row[0]} ({row[1]})" for row in rows])
+        table = tabulate(rows, headers=["Town", "Region"], tablefmt="simple")
         await interaction.response.send_message(
-            f"✅ **Towns Preview (Total: {total})**\n{lines}\n*Showing first 10 alphabetically.*",
+            f"✅ **Towns Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 alphabetically.*",
             ephemeral=True
         )
 
@@ -71,9 +74,9 @@ class HealthCog(commands.Cog):
         if not rows:
             return await interaction.response.send_message("❌ The `regions` table is empty!", ephemeral=True)
 
-        lines = "\n".join([f"• {row[0]} (q: {row[1]}, r: {row[2]})" for row in rows])
+        table = tabulate(rows, headers=["Region", "Q", "R"], tablefmt="simple")
         await interaction.response.send_message(
-            f"✅ **Regions Preview (Total: {total})**\n{lines}\n*Showing first 10 alphabetically.*",
+            f"✅ **Regions Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 alphabetically.*",
             ephemeral=True
         )
 
@@ -89,9 +92,9 @@ class HealthCog(commands.Cog):
         if not rows:
             return await interaction.response.send_message("❌ The `priority` table is empty!", ephemeral=True)
 
-        lines = "\n".join([f"• {row[0]} (`{row[1]}`) - Prio: {row[2]}" for row in rows])
+        table = tabulate(rows, headers=["Item", "Codename", "Priority"], tablefmt="simple")
         await interaction.response.send_message(
-            f"✅ **Priority Preview (Total: {total})**\n{lines}\n*Showing first 10 by priority.*",
+            f"✅ **Priority Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 by priority.*",
             ephemeral=True
         )
 
