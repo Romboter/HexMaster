@@ -34,6 +34,7 @@ class StockpileRepository:
                 .distinct()
                 .where(
                     (StockpileSnapshot.struct_type.ilike("%Storage Warehouse%")) |
+                    (StockpileSnapshot.struct_type.ilike("%Storage Depot%")) |
                     (StockpileSnapshot.struct_type.ilike("%Seaport%"))
                 )
                 .order_by(StockpileSnapshot.town)

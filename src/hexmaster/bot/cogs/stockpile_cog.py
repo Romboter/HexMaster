@@ -223,7 +223,7 @@ class StockpileCog(commands.Cog):
                 recv_total_map[item["code_name"]] = recv_total_map.get(item["code_name"], 0) + item["total"]
 
             # 3. Determine types
-            hubs = ["Storage Warehouse", "Seaport"]
+            hubs = ["Storage Warehouse", "Storage Depot", "Seaport"]
             is_recv_hub = any(h in recv_snap["struct_type"] for h in hubs)
             is_ship_hub = any(h in ship_snap["struct_type"] for h in hubs) if ship_snap else False
 
