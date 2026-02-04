@@ -4,3 +4,4 @@ python-dotenv
 tabulate
 pandas
 asyncpg
+aiohttp
