@@ -80,14 +80,14 @@ class StockpileCog(commands.Cog):
             print(f"Autocomplete error for {cache_key}: {e}")
             return []
 
-    @app_commands.command(name="upload", description="Upload a stockpile screenshot for processing")
+    @app_commands.command(name="report", description="File an Intelligence Report (upload screenshot)")
     @app_commands.describe(image="Stockpile screenshot", town="Town name",
                            stockpile_name="Optional specific stockpile name")
-    async def upload(
+    async def report(
             self,
             interaction: discord.Interaction,
-            image: discord.Attachment,  # ✅ moved up
-            town: str,  # ✅ moved down
+            image: discord.Attachment,
+            town: str,
             stockpile_name: str = "Public"
     ) -> None:
         """Handles the file upload and kicks off the OCR/Ingestion pipeline."""
@@ -107,16 +107,16 @@ class StockpileCog(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during upload:** {str(e)}")
 
-    @upload.autocomplete("town")
-    async def upload_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @report.autocomplete("town")
+    async def report_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         # if len(current.strip()) < 3:
         #     return []
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
-    @app_commands.command(name="stockpile", description="View the latest items for a specific town")
+    @app_commands.command(name="manifest", description="View the Shipping Manifest for a specific town")
     @app_commands.describe(town="Town name", stockpile="Optional specific stockpile filter")
-    async def view_stockpile(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
+    async def view_manifest(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
         town = (town or "").strip()
         if not town:
             return await interaction.response.send_message("Town is required.", ephemeral=True)
@@ -133,20 +133,19 @@ class StockpileCog(commands.Cog):
         def get_table(data_frame):
             return tabulate(data_frame, headers=headers, showindex=False, tablefmt="simple")
 
-        df_select = df[cols]
+        # Optimization: Slice to max 40 rows before tabulate
+        df_select = df[cols].head(40)
         lines = get_table(df_select)
 
         # Discord message limit handling
-        n_rows = len(df.index)
-        while len(lines) > DISCORD_CHARACTER_LIMIT - 150:
-            n_rows -= 1
-            lines = get_table(df_select.head(n_rows)) + "\n... (truncated)"
+        if len(df.index) > 40:
+            lines += "\n... (truncated to 40 rows)"
 
         title = f"**{town} Inventory**" + (f" (Filter: {stockpile})" if stockpile else "")
         await interaction.response.send_message(f"{title}\n```\n{lines}\n```", ephemeral=False)
 
-    @view_stockpile.autocomplete("town")
-    async def stockpile_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @view_manifest.autocomplete("town")
+    async def manifest_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
@@ -185,13 +184,13 @@ class StockpileCog(commands.Cog):
         return snapshot_id, len(items), struct_type
 
 
-    @app_commands.command(name="compare", description="Compare shipping hub to receiving hub or base")
+    @app_commands.command(name="requisition", description="Calculate Requisition Order (compare hubs)")
     @app_commands.describe(
         shipping_hub="The hub with available supplies",
         receiving="The hub or base that needs supplies",
         min_multiplier="Multiplier for hub minimums (default 4)"
     )
-    async def compare(
+    async def requisition(
             self,
             interaction: discord.Interaction,
             shipping_hub: str,
@@ -256,8 +255,8 @@ class StockpileCog(commands.Cog):
                     
                     comparison_data.append({
                         "Item": p["name"],
-                        "Need": f"{round(lacking_crates, 1):g}", 
-                        "Avail": f"{round(avail_crates, 1):g}"
+                        "Avail": f"{round(avail_crates, 1):g}",
+                        "Need": f"{round(lacking_crates, 1):g}"
                     })
 
             # 5. Process Non-Priority Items (Items in inventories but not on the list)
@@ -286,16 +285,16 @@ class StockpileCog(commands.Cog):
                 
                 comparison_data.append({
                     "Item": codename_to_name.get(codename, codename),
-                    "Need": "0",  # No defined minimum requirement
-                    "Avail": f"{round(avail_crates, 1):g}"
+                    "Avail": f"{round(avail_crates, 1):g}",
+                    "Need": "0"  # No defined minimum requirement
                 })
 
             if not comparison_data:
                 return await interaction.followup.send(f"{warning}✅ `{receiving}` meets all priority minimums!")
 
             # 6. Format table
-            headers = ["Item", "Need", "Avail"]
-            table_rows = [[d["Item"], d["Need"], d["Avail"]] for d in comparison_data]
+            headers = ["Item", "Avail", "Need"]
+            table_rows = [[d["Item"], d["Avail"], d["Need"]] for d in comparison_data]
             
             def render_table(rows):
                 return tabulate(rows, headers=headers, tablefmt="simple")
@@ -316,22 +315,22 @@ class StockpileCog(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
 
-    @compare.autocomplete("shipping_hub")
-    async def compare_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @requisition.autocomplete("shipping_hub")
+    async def requisition_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots)
 
-    @compare.autocomplete("receiving")
-    async def compare_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @requisition.autocomplete("receiving")
+    async def requisition_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
-    @app_commands.command(name="find", description="Find an item across all stockpiles and show distance")
+    @app_commands.command(name="locate", description="Perform Reconnaissance (locate assets globally)")
     @app_commands.describe(
         item="The item to search for",
         from_town="Reference town for distance calculation"
     )
-    async def find_item(self, interaction: discord.Interaction, item: str, from_town: str) -> None:
+    async def locate(self, interaction: discord.Interaction, item: str, from_town: str) -> None:
         await interaction.response.defer(ephemeral=False)
 
         try:
@@ -348,16 +347,15 @@ class StockpileCog(commands.Cog):
             processed_results = []
             for r in results:
                 town_name = r["town"]
-                target_town = await self.repo.get_town_data(town_name)
                 
                 dist = 0.0
-                if target_town:
+                if r["q"] is not None and r["r"] is not None:
                     # Cartesian-Staggered Distance Formula
                     # q, r are the staggered axial-like centers
                     # SQRT3 ~= 1.73205
                     SQRT3 = 1.73205
-                    x2 = target_town["q"] * 1.5 + (target_town["x"] - 0.5) * 2.0
-                    y2 = target_town["r"] * SQRT3 + (target_town["y"] - 0.5) * SQRT3
+                    x2 = r["q"] * 1.5 + (r["x"] - 0.5) * 2.0
+                    y2 = r["r"] * SQRT3 + (r["y"] - 0.5) * SQRT3
                     
                     x1 = ref_town["q"] * 1.5 + (ref_town["x"] - 0.5) * 2.0
                     y1 = ref_town["r"] * SQRT3 + (ref_town["y"] - 0.5) * SQRT3
@@ -370,7 +368,8 @@ class StockpileCog(commands.Cog):
 
                 processed_results.append({
                     "Town": town_name,
-                    "Snapshot": f"{r['stockpile_name']} ({r['struct_type']})",
+                    "Stockpile": r["stockpile_name"],
+                    "Type": r["struct_type"],
                     "Qty": f"{qty_crates:g}",
                     "Dist": dist
                 })
@@ -379,8 +378,8 @@ class StockpileCog(commands.Cog):
             processed_results.sort(key=lambda x: x["Dist"])
 
             # 3. Format table
-            headers = ["Town", "Snapshot", "Qty(Cr)", "Dist"]
-            table_rows = [[d["Town"], d["Snapshot"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
+            headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist"]
+            table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
 
             def render_table(rows):
                 return tabulate(rows, headers=headers, tablefmt="simple")
@@ -400,13 +399,13 @@ class StockpileCog(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during search:** {str(e)}")
 
-    @find_item.autocomplete("item")
-    async def find_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @locate.autocomplete("item")
+    async def locate_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "stockpile_items", self.repo.get_items_in_stockpiles)
 
-    @find_item.autocomplete("from_town")
-    async def find_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @locate.autocomplete("from_town")
+    async def locate_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         # Use all valid towns for reference, not just ones with snapshots
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)

@@ -1,7 +1,0 @@
-discord.py
-SQLAlchemy
-python-dotenv
-tabulate
-pandas
-asyncpg
-aiohttp

@@ -184,11 +184,17 @@ class StockpileRepository:
                     SnapshotItem.quantity,
                     SnapshotItem.is_crated,
                     SnapshotItem.per_crate,
-                    SnapshotItem.total
+                    SnapshotItem.total,
+                    Town.x,
+                    Town.y,
+                    Region.q,
+                    Region.r
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
-                # Join towns to get the pretty name
+                # Join towns to get the pretty name and x, y
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
+                # Join regions to get q, r
+                .join(Region, Region.id == Town.region_id)
                 .where(StockpileSnapshot.id.in_(subq))
                 .where(SnapshotItem.item_name == item_name)
                 .order_by(Town.name)

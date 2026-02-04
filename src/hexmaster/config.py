@@ -6,44 +6,10 @@ import os
 from pathlib import Path
 
 
-def _load_dotenv(dotenv_path: Path) -> None:
-    """
-    Minimal .env loader:
-    - supports KEY=VALUE
-    - ignores blank lines and comments starting with #
-    - strips surrounding single/double quotes from values
-    - does not overwrite already-set environment variables
-    """
-    if not dotenv_path.exists():
-        return
+from dotenv import load_dotenv
 
-    for raw_line in dotenv_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("'").strip('"')
-
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-def _find_dotenv(start: Path) -> Path | None:
-    """
-    Find the nearest .env by walking upward from `start` (file or directory).
-    Returns the first match, or None if not found.
-    """
-    start_dir = start if start.is_dir() else start.parent
-
-    for directory in (start_dir, *start_dir.parents):
-        candidate = directory / ".env"
-        if candidate.exists():
-            return candidate
-    return None
+# load_dotenv() will automatically find the nearest .env file
+load_dotenv()
 
 
 @dataclass(frozen=True)
@@ -54,18 +20,9 @@ class Settings:
 
     @staticmethod
     def load() -> "Settings":
-        searched: list[Path] = []
-
-        # 1) Try current working directory (what you already relied on)
-        cwd_env = Path.cwd() / ".env"
-        searched.append(cwd_env)
-        _load_dotenv(cwd_env)
-
-        # 2) Also try walking upward from this module's location (robust across run modes)
-        module_env = _find_dotenv(Path(__file__).resolve())
-        if module_env is not None:
-            searched.append(module_env)
-            _load_dotenv(module_env)
+        # No need to manually search and load anymore as load_dotenv() handles it.
+        # But we can keep the searched paths for error reporting if needed.
+        searched = [Path.cwd() / ".env"]
 
         database_url = os.getenv("DATABASE_URL")
         discord_token = os.getenv("DISCORD_TOKEN")

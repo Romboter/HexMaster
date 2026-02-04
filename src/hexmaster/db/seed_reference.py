@@ -2,7 +2,7 @@ import csv
 import re
 import pandas as pd
 from pathlib import Path
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 from hexmaster.db.models import Town, CatalogItem, Priority, Region
@@ -57,26 +57,18 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     async with engine.begin() as conn:
-        # 3. UPSERT towns
+        # Check if towns already exist to avoid wasted resources
+        count = await conn.scalar(select(func.count()).select_from(Town))
+        if count > 0:
+            print(f"✅ Towns table already populated ({count} entries). Skipping seeding.")
+            return
+
+        # 3. UPSERT towns (using on_conflict_do_nothing to be safer/faster on reboot if requested)
         stmt = insert(Town).values(towns_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Town.name],
-            set_={
-                "region_id": stmt.excluded.region_id,
-                "x": stmt.excluded.x,
-                "y": stmt.excluded.y,
-                "marker_type": stmt.excluded.marker_type,
-            }
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=[Town.name])
         await conn.execute(stmt)
         
-        # 4. DELETE towns not in the CSV
-        all_town_names = [t["name"] for t in towns_data]
-        from sqlalchemy import delete
-        del_stmt = delete(Town).where(Town.name.not_in(all_town_names))
-        res = await conn.execute(del_stmt)
-        
-        print(f"✅ Town reference seeded ({len(towns_data)} entries). Purged {res.rowcount} stale entries.")
+        print(f"✅ Town reference seeded ({len(towns_data)} entries).")
 
 
 async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
@@ -112,14 +104,13 @@ async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     async with engine.begin() as conn:
+        count = await conn.scalar(select(func.count()).select_from(CatalogItem))
+        if count > 0:
+            print(f"✅ Catalog table already populated ({count} entries). skipping seeding.")
+            return
+
         stmt = insert(CatalogItem).values(items)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[CatalogItem.codename, CatalogItem.displayname],
-            set_={
-                "factionvariant": stmt.excluded.factionvariant,
-                "quantitypercrate": stmt.excluded.quantitypercrate
-            }
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=[CatalogItem.codename, CatalogItem.displayname])
         await conn.execute(stmt)
         print(f"✅ Catalog items seeded ({len(items)} entries).")
 
@@ -153,16 +144,13 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     async with engine.begin() as conn:
+        count = await conn.scalar(select(func.count()).select_from(Priority))
+        if count > 0:
+            print(f"✅ Priority table already populated ({count} entries). skipping seeding.")
+            return
+
         stmt = insert(Priority).values(priority_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Priority.codename],
-            set_={
-                "name": stmt.excluded.name,
-                "qty_per_crate": stmt.excluded.qty_per_crate,
-                "min_for_base_crates": stmt.excluded.min_for_base_crates,
-                "priority": stmt.excluded.priority
-            }
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=[Priority.codename])
         await conn.execute(stmt)
         print(f"✅ Priority list seeded ({len(priority_data)} entries).")
 
@@ -192,22 +180,14 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     async with engine.begin() as conn:
+        count = await conn.scalar(select(func.count()).select_from(Region))
+        if count > 0:
+            print(f"✅ Regions table already populated ({count} entries). skipping seeding.")
+            return
+
         # 1. UPSERT all regions from CSV
         stmt = insert(Region).values(regions_data)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[Region.name],
-            set_={
-                "q": stmt.excluded.q,
-                "raw_r": stmt.excluded.raw_r,
-                "r": stmt.excluded.r,
-            }
-        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=[Region.name])
         await conn.execute(stmt)
         
-        # 2. DELETE regions that are not in the CSV
-        all_names = [r["name"] for r in regions_data]
-        from sqlalchemy import delete
-        del_stmt = delete(Region).where(Region.name.not_in(all_names))
-        res = await conn.execute(del_stmt)
-        
-        print(f"✅ Region reference seeded ({len(regions_data)} entries). Purged {res.rowcount} stale entries.")
+        print(f"✅ Region reference seeded ({len(regions_data)} entries).")

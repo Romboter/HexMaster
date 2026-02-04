@@ -17,12 +17,14 @@ class HealthCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="ping", description="Healthcheck and DB connectivity test.")
+    @app_commands.default_permissions(administrator=True)
     async def ping(self, interaction: discord.Interaction) -> None:
         async with self.bot.engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         await interaction.response.send_message("Pong. DB OK.", ephemeral=True)
 
     @app_commands.command(name="db_stats", description="Show system database statistics.")
+    @app_commands.default_permissions(administrator=True)
     async def db_stats(self, interaction: discord.Interaction) -> None:
         async with self.bot.engine.connect() as conn:
             snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
@@ -34,6 +36,7 @@ class HealthCog(commands.Cog):
         await interaction.response.send_message(msg, ephemeral=True)
 
     @app_commands.command(name="check_towns", description="Verify the towns table content.")
+    @app_commands.default_permissions(administrator=True)
     async def check_towns(self, interaction: discord.Interaction) -> None:
         """Health check to see if towns are correctly seeded."""
         async with self.bot.engine.connect() as conn:
@@ -56,22 +59,60 @@ class HealthCog(commands.Cog):
             ephemeral=True
         )
 
+    @app_commands.command(name="check_regions", description="Verify the regions table content.")
+    @app_commands.default_permissions(administrator=True)
+    async def check_regions(self, interaction: discord.Interaction) -> None:
+        """Health check to see if regions are correctly seeded."""
+        async with self.bot.engine.connect() as conn:
+            result = await conn.execute(text("SELECT name, q, r FROM regions ORDER BY name LIMIT 10"))
+            rows = result.all()
+            total = await conn.scalar(text("SELECT COUNT(*) FROM regions"))
+
+        if not rows:
+            return await interaction.response.send_message("❌ The `regions` table is empty!", ephemeral=True)
+
+        lines = "\n".join([f"• {row[0]} (q: {row[1]}, r: {row[2]})" for row in rows])
+        await interaction.response.send_message(
+            f"✅ **Regions Preview (Total: {total})**\n{lines}\n*Showing first 10 alphabetically.*",
+            ephemeral=True
+        )
+
+    @app_commands.command(name="check_priority", description="Verify the priority table content.")
+    @app_commands.default_permissions(administrator=True)
+    async def check_priority(self, interaction: discord.Interaction) -> None:
+        """Health check to see if priority list is correctly seeded."""
+        async with self.bot.engine.connect() as conn:
+            result = await conn.execute(text("SELECT name, codename, priority FROM priority ORDER BY priority LIMIT 10"))
+            rows = result.all()
+            total = await conn.scalar(text("SELECT COUNT(*) FROM priority"))
+
+        if not rows:
+            return await interaction.response.send_message("❌ The `priority` table is empty!", ephemeral=True)
+
+        lines = "\n".join([f"• {row[0]} (`{row[1]}`) - Prio: {row[2]}" for row in rows])
+        await interaction.response.send_message(
+            f"✅ **Priority Preview (Total: {total})**\n{lines}\n*Showing first 10 by priority.*",
+            ephemeral=True
+        )
+
     @app_commands.command(name="help", description="List all available commands and their usage.")
     async def help(self, interaction: discord.Interaction) -> None:
         """Shows help information for the bot."""
         help_text = (
             "### 🛠️ Hexmaster Commands\n"
             "**General**\n"
-            "• `/help`: Show this help message.\n"
-            "• `/ping`: Check bot and database health.\n"
-            "• `/db_stats`: Show database statistics.\n\n"
+            "• `/help`: Show this help message.\n\n"
             "**Stockpiles**\n"
-            "• `/upload [image] [town] [name]`: Process an OCR image and save it.\n"
-            "• `/stockpile [town] [filter]`: View the latest inventory for a town.\n"
-            "• `/find [item]`: Find which stockpiles currently have a specific item.\n"
-            "• `/compare [shipping] [receiving]`: Compare two hubs to find supply gaps.\n\n"
+            "• `/report [image] [town] [name]`: File an Intelligence Report (upload screenshot).\n"
+            "• `/manifest [town] [filter]`: View the Shipping Manifest for a town.\n"
+            "• `/locate [item] [from_town]`: Perform Reconnaissance to locate assets globally.\n"
+            "• `/requisition [shipping] [receiving]`: Calculate a Requisition Order to fill gaps.\n\n"
             "**Maintenance**\n"
-            "• `/check_towns`: Debug current town seeding status."
+            "• `/ping`: Check bot and database health (Admin only).\n"
+            "• `/db_stats`: Show database statistics (Admin only).\n"
+            "• `/check_towns`: Debug current town seeding status (Admin only).\n"
+            "• `/check_regions`: Debug current region seeding status (Admin only).\n"
+            "• `/check_priority`: Debug current priority list status (Admin only)."
         )
         await interaction.response.send_message(help_text, ephemeral=True)
 
