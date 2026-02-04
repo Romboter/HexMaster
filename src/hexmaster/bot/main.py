@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from hexmaster.config import Settings
 from hexmaster.logging import configure_logging
 from hexmaster.db.init import init_db
-from hexmaster.db.seed_reference import seed_towns_from_csv, seed_catalog_from_csv
+from hexmaster.db.seed_reference import seed_towns_from_csv, seed_catalog_from_csv, seed_priority_from_csv
 
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
 from hexmaster.services.ocr_service import OCRService
@@ -35,6 +35,7 @@ class HexmasterBot(commands.Bot):
         data_dir = Path("sample_data")
         await seed_towns_from_csv(self.engine, data_dir / "Towns.csv")
         await seed_catalog_from_csv(self.engine, data_dir / "catalog.csv")
+        await seed_priority_from_csv(self.engine, data_dir / "Priority.csv")
 
         # 3.
         await self.load_extension("hexmaster.bot.cogs.stockpile_cog")

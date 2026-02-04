@@ -16,11 +16,11 @@ class CatalogItem(Base):
 class Priority(Base):
     __tablename__ = 'priority'
 
-    codename = Column(String, primary_key=True)
-    name = Column(String)
-    qty_per_crate = Column(Integer)
-    min_for_base_crates = Column(Integer)
-    priority = Column(Float)
+    codename: Mapped[str] = mapped_column(String(100), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    qty_per_crate: Mapped[int] = mapped_column(Integer)
+    min_for_base_crates: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    priority: Mapped[float] = mapped_column(Float)
 
 class StockpileSnapshot(Base):
     """A single 'upload' or snapshot of a stockpile at a point in time."""

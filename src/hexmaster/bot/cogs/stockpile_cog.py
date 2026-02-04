@@ -184,5 +184,113 @@ class StockpileCog(commands.Cog):
         return snapshot_id, len(items), struct_type
 
 
+    @app_commands.command(name="compare", description="Compare shipping hub to receiving hub or base")
+    @app_commands.describe(
+        shipping_hub="The hub with available supplies",
+        receiving="The hub or base that needs supplies",
+        min_multiplier="Multiplier for hub minimums (default 4)"
+    )
+    async def compare(
+            self,
+            interaction: discord.Interaction,
+            shipping_hub: str,
+            receiving: str,
+            min_multiplier: float = 4.0
+    ) -> None:
+        await interaction.response.defer(ephemeral=False)
+
+        try:
+            # 1. Fetch data
+            priority_list = await self.repo.get_priority_list()
+            if not priority_list:
+                return await interaction.followup.send("❌ Priority list is empty. Please seed the database.")
+
+            ship_snap, ship_items = await self.repo.get_latest_snapshot_for_town(shipping_hub)
+            recv_snap, recv_items = await self.repo.get_latest_snapshot_for_town(receiving)
+
+            if not recv_snap:
+                return await interaction.followup.send(f"❌ No snapshots found for receiving town `{receiving}`.")
+
+            # 2. Process inventories into total quantities by code_name
+            # Sum up all 'total' counts for each item (handling both crated and loose)
+            ship_total_map = {}
+            for item in ship_items:
+                ship_total_map[item["code_name"]] = ship_total_map.get(item["code_name"], 0) + item["total"]
+
+            recv_total_map = {}
+            for item in recv_items:
+                recv_total_map[item["code_name"]] = recv_total_map.get(item["code_name"], 0) + item["total"]
+
+            # 3. Determine types
+            hubs = ["Storage Warehouse", "Seaport"]
+            is_recv_hub = any(h in recv_snap["struct_type"] for h in hubs)
+            is_ship_hub = any(h in ship_snap["struct_type"] for h in hubs) if ship_snap else False
+
+            warning = ""
+            if ship_snap and not is_ship_hub:
+                warning = f"⚠️ **Warning**: `{shipping_hub}` is a `{ship_snap['struct_type']}`, not a Hub (Storage Warehouse/Seaport).\n"
+
+            comparison_data = []
+            for p in priority_list:
+                codename = p["codename"]
+                qty_per_crate = p["qty_per_crate"] or 1
+                base_min_crates = p["min_for_base_crates"] or 0
+                target_min_crates = base_min_crates * (min_multiplier if is_recv_hub else 1.0)
+
+                # Total held at receiving, converted to crates
+                recv_total_items = recv_total_map.get(codename, 0)
+                held_crates = recv_total_items / qty_per_crate
+                
+                lacking_crates = target_min_crates - held_crates
+
+                if lacking_crates > 0:
+                    # Total available at shipping hub, converted to crates
+                    ship_total_items = ship_total_map.get(codename, 0)
+                    avail_crates = ship_total_items / qty_per_crate
+                    
+                    comparison_data.append({
+                        "Item": p["name"],
+                        "Need": f"{lacking_crates:g}", # :g removes trailing .0 or unnecessary decimals
+                        "Avail": f"{avail_crates:g}"
+                    })
+
+            if not comparison_data:
+                return await interaction.followup.send(f"{warning}✅ `{receiving}` meets all priority minimums!")
+
+            # 4. Format table
+            headers = ["Item", "Need", "Avail"]
+            table_rows = [[d["Item"], d["Need"], d["Avail"]] for d in comparison_data]
+            
+            def render_table(rows):
+                return tabulate(rows, headers=headers, tablefmt="simple")
+
+            lines = render_table(table_rows)
+            
+            # Truncate if too long
+            if len(lines) > DISCORD_CHARACTER_LIMIT - 300:
+                current_rows = table_rows
+                while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
+                    current_rows = current_rows[:-1]
+                lines = render_table(current_rows) + "\n... (truncated)"
+
+            title = f"**Comparison: {shipping_hub} ➔ {receiving}**"
+            mode_str = f"Mode: {'Hub' if is_recv_hub else 'Base'} ({min_multiplier}x Multiplier)"
+            msg = f"{warning}{title}\n{mode_str}\n```\n{lines}\n```"
+            await interaction.followup.send(msg)
+
+        except Exception as e:
+            await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
+
+    @compare.autocomplete("shipping_hub")
+    async def compare_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+        app_commands.Choice[str]]:
+        return await self._get_cached_town_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots)
+
+    @compare.autocomplete("receiving")
+    async def compare_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+        app_commands.Choice[str]]:
+        return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(StockpileCog(bot))

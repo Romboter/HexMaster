@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
-from hexmaster.db.models import Town, CatalogItem
+from hexmaster.db.models import Town, CatalogItem, Priority
 
 
 async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
@@ -74,3 +74,44 @@ async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         )
         await conn.execute(stmt)
         print(f"✅ Catalog items seeded ({len(items)} entries).")
+
+
+async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
+    """Seeds the priority table from sample_data/Priority.csv."""
+    if not csv_path.exists():
+        return
+
+    df = pd.read_csv(csv_path)
+    priority_data = []
+    for _, row in df.iterrows():
+        # Handle empty Min For Base (crates)
+        min_crates = row.get("Min For Base (crates)")
+        if pd.isna(min_crates) or min_crates == "":
+            min_crates = None
+        else:
+            min_crates = int(min_crates)
+
+        priority_data.append({
+            "codename": str(row["CodeName"]).strip(),
+            "name": str(row["Name"]).strip(),
+            "qty_per_crate": int(row["Qty per Crate"]),
+            "min_for_base_crates": min_crates,
+            "priority": float(row["Priority"])
+        })
+
+    if not priority_data:
+        return
+
+    async with engine.begin() as conn:
+        stmt = insert(Priority).values(priority_data)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[Priority.codename],
+            set_={
+                "name": stmt.excluded.name,
+                "qty_per_crate": stmt.excluded.qty_per_crate,
+                "min_for_base_crates": stmt.excluded.min_for_base_crates,
+                "priority": stmt.excluded.priority
+            }
+        )
+        await conn.execute(stmt)
+        print(f"✅ Priority list seeded ({len(priority_data)} entries).")
