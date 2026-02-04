@@ -37,7 +37,13 @@ class HealthCog(commands.Cog):
     async def check_towns(self, interaction: discord.Interaction) -> None:
         """Health check to see if towns are correctly seeded."""
         async with self.bot.engine.connect() as conn:
-            result = await conn.execute(text("SELECT name, region FROM towns ORDER BY name LIMIT 10"))
+            # Join with regions to get the region name instead of ID
+            result = await conn.execute(text("""
+                SELECT t.name, r.name 
+                FROM towns t 
+                JOIN regions r ON t.region_id = r.id 
+                ORDER BY t.name LIMIT 10
+            """))
             rows = result.all()
             total = await conn.scalar(text("SELECT COUNT(*) FROM towns"))
 

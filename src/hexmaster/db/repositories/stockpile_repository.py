@@ -180,7 +180,7 @@ class StockpileRepository:
         async with self.engine.connect() as conn:
             stmt = (
                 select(Town.name, Town.x, Town.y, Region.q, Region.r)
-                .join(Region, Region.name == Town.region)
+                .join(Region, Region.id == Town.region_id)
                 .where(Town.name == town_name)
             )
             res = await conn.execute(stmt)

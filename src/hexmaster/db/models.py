@@ -11,7 +11,9 @@ class CatalogItem(Base):
     __tablename__ = "catalog_items"
 
     codename: Mapped[str] = mapped_column(String(100), primary_key=True)
-    displayname: Mapped[str] = mapped_column(String(255))
+    displayname: Mapped[str] = mapped_column(String(255), primary_key=True)
+    factionvariant: Mapped[str] = mapped_column(String(20))
+    quantitypercrate: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 class Priority(Base):
     __tablename__ = 'priority'
@@ -63,15 +65,30 @@ class SnapshotItem(Base):
 class Town(Base):
     __tablename__ = "towns"
 
-    name: Mapped[str] = mapped_column(String, primary_key=True)
-    region: Mapped[str] = mapped_column(String, ForeignKey("regions.name"), index=True)
-    x: Mapped[float] = mapped_column(Float)
-    y: Mapped[float] = mapped_column(Float)
-    marker_type: Mapped[str] = mapped_column(String)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    region_id: Mapped[int] = mapped_column(ForeignKey("regions.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String, unique=True, index=True)
+    x: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    y: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    marker_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    global_q: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    global_r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    town_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
 
 class Region(Base):
     __tablename__ = "regions"
 
-    name: Mapped[str] = mapped_column(String, primary_key=True)
-    q: Mapped[float] = mapped_column(Float)
-    r: Mapped[float] = mapped_column(Float)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, unique=True, index=True)
+    q: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    distance_to_origin: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
