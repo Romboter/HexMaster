@@ -45,16 +45,14 @@ class HexmasterBot(commands.Bot):
         await self.load_extension("hexmaster.bot.cogs.health")
 
 
-        # 4. Syncing on every boot is fine for development but slow for production
-        # ✅ DEV: sync to one guild (fast), and wipe stale guild commands first
+        # 4. Syncing on every boot
         guild_id = os.getenv("DISCORD_GUILD_ID")
         if guild_id:
             guild = discord.Object(id=int(guild_id))
-            self.tree.copy_global_to(guild=guild)  # 👈 This is the missing link!
+            self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
             print(f"✅ Synced commands to guild {guild_id}")
         else:
-            # Fallback: global (slow + can cause the “dupe” situation during dev)
             await self.tree.sync()
             print("✅ Synced commands globally")
 

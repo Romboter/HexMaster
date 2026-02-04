@@ -309,7 +309,7 @@ class StockpileCog(commands.Cog):
                     current_rows = current_rows[:-1]
                 lines = render_table(current_rows) + "\n... (truncated)"
 
-            title = f"**{shipping_hub}[{ship_snap['struct_type'] if ship_snap else 'Unknown'}] ➔ {receiving}[{recv_snap['struct_type']}] {min_multiplier if is_recv_hub else 1.0:g}x**"
+            title = f"**{shipping_hub.title()} ➔ {receiving.title()} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
             msg = f"{warning}{title}\n```\n{lines}\n```"
             await interaction.followup.send(msg)
 

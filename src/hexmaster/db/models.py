@@ -49,12 +49,11 @@ class SnapshotItem(Base):
     """The individual item counts within a specific snapshot."""
     __tablename__ = "snapshot_items"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    snapshot_id: Mapped[int] = mapped_column(ForeignKey("stockpile_snapshots.id"))
-    code_name: Mapped[str] = mapped_column(String(100))
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("stockpile_snapshots.id"), primary_key=True)
+    code_name: Mapped[str] = mapped_column(String(100), primary_key=True)
+    is_crated: Mapped[bool] = mapped_column(Boolean, default=False, primary_key=True)
     item_name: Mapped[str] = mapped_column(String(255))
     quantity: Mapped[int] = mapped_column(Integer, default=0)
-    is_crated: Mapped[bool] = mapped_column(Boolean, default=False)
     per_crate: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[Optional[str]] = mapped_column(Text)

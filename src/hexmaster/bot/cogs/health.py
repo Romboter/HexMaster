@@ -56,6 +56,25 @@ class HealthCog(commands.Cog):
             ephemeral=True
         )
 
+    @app_commands.command(name="help", description="List all available commands and their usage.")
+    async def help(self, interaction: discord.Interaction) -> None:
+        """Shows help information for the bot."""
+        help_text = (
+            "### 🛠️ Hexmaster Commands\n"
+            "**General**\n"
+            "• `/help`: Show this help message.\n"
+            "• `/ping`: Check bot and database health.\n"
+            "• `/db_stats`: Show database statistics.\n\n"
+            "**Stockpiles**\n"
+            "• `/upload [image] [town] [name]`: Process an OCR image and save it.\n"
+            "• `/stockpile [town] [filter]`: View the latest inventory for a town.\n"
+            "• `/find [item]`: Find which stockpiles currently have a specific item.\n"
+            "• `/compare [shipping] [receiving]`: Compare two hubs to find supply gaps.\n\n"
+            "**Maintenance**\n"
+            "• `/check_towns`: Debug current town seeding status."
+        )
+        await interaction.response.send_message(help_text, ephemeral=True)
+
 
 
 
