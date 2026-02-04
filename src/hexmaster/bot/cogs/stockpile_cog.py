@@ -117,31 +117,42 @@ class StockpileCog(commands.Cog):
     @app_commands.command(name="manifest", description="View the Shipping Manifest for a specific town")
     @app_commands.describe(town="Town name", stockpile="Optional specific stockpile filter")
     async def view_manifest(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
-        town = (town or "").strip()
-        if not town:
+        town_input = (town or "").strip()
+        if not town_input:
             return await interaction.response.send_message("Town is required.", ephemeral=True)
 
-        rows = await self.repo.get_latest_inventory(town, stockpile)
+        rows = await self.repo.get_latest_inventory(town_input, stockpile)
         if not rows:
-            return await interaction.response.send_message(f"No snapshots found for `{town}`.", ephemeral=False)
+            return await interaction.response.send_message(f"No snapshots found for `{town_input}`.", ephemeral=False)
 
-        df = pd.DataFrame(rows)
-        df['is_crated'] = df['is_crated'].map({True: 'Y', False: 'N'})
-        cols = ['item_name', 'quantity', 'is_crated']
-        headers = ["Item", "Qty", "Crate"]
+        # Process data into table rows
+        table_rows = []
+        for r in rows:
+            # Qty in crates
+            qpc = r["catalog_qpc"] if r["catalog_qpc"] else (r["per_crate"] if r["per_crate"] else 1)
+            qty_crates = r["total"] / qpc
+            table_rows.append([r["item_name"], f"{qty_crates:g}"])
 
-        def get_table(data_frame):
-            return tabulate(data_frame, headers=headers, showindex=False, tablefmt="simple")
+        headers = ["Item", "Qty(Cr)"]
 
-        # Optimization: Slice to max 40 rows before tabulate
-        df_select = df[cols].head(40)
-        lines = get_table(df_select)
+        def get_table(data_list):
+            return tabulate(data_list, headers=headers, showindex=False, tablefmt="simple")
 
         # Discord message limit handling
-        if len(df.index) > 40:
-            lines += "\n... (truncated to 40 rows)"
+        max_rows = 40
+        display_rows = table_rows[:max_rows]
+        lines = get_table(display_rows)
+        
+        if len(table_rows) > max_rows:
+            hidden_count = len(table_rows) - max_rows
+            lines += f"\n... (+ {hidden_count} items hidden)"
 
-        title = f"**{town} Inventory**" + (f" (Filter: {stockpile})" if stockpile else "")
+        # Standardized header using pretty town name from DB
+        pretty_name = rows[0].get("pretty_town") or town_input.title()
+        title = f"**{pretty_name}**"
+        if stockpile:
+            title += f" (Filter: {stockpile})"
+            
         await interaction.response.send_message(f"{title}\n```\n{lines}\n```", ephemeral=False)
 
     @view_manifest.autocomplete("town")
@@ -260,25 +271,26 @@ class StockpileCog(commands.Cog):
                     })
 
             # 5. Process Non-Priority Items (Items in inventories but not on the list)
-            # We combine keys from both inventories that haven't been handled
+            # Create a quick lookup map for item details O(1)
+            item_details_map = {
+                i["code_name"]: i 
+                for i in ship_items + recv_items
+            }
+
             all_inventory_codenames = set(recv_total_map.keys()) | set(ship_total_map.keys())
             non_priority_codenames = all_inventory_codenames - handled_codenames
 
             # We need the display names for these codenames. 
-            # We can use the ship_items/recv_items to find them.
-            codename_to_name = {}
-            for item in ship_items + recv_items:
-                codename_to_name[item["code_name"]] = item["item_name"]
+            codename_to_name = {
+                i["code_name"]: i["item_name"]
+                for i in ship_items + recv_items
+            }
 
             # Sort non-priority items alphabetically for consistency
             for codename in sorted(non_priority_codenames, key=lambda c: codename_to_name.get(c, c)):
-                # Non-priority items have no target, so Need is 0.
-                # However, if it's on the shipping hub, it might be useful to show?
-                # The user said "allow items... but after". 
-                # Usually we only show items if they are relevant.
                 ship_total = ship_total_map.get(codename, 0)
-                # We need qty_per_crate. Try to get it from items.
-                item_ref = next((i for i in ship_items + recv_items if i["code_name"] == codename), None)
+                # Instant O(1) lookup
+                item_ref = item_details_map.get(codename)
                 qpc = item_ref["catalog_qpc"] if item_ref and item_ref["catalog_qpc"] else (item_ref["per_crate"] if item_ref and item_ref["per_crate"] else 1)
                 
                 avail_crates = ship_total / qpc
@@ -306,9 +318,13 @@ class StockpileCog(commands.Cog):
                 current_rows = table_rows
                 while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
                     current_rows = current_rows[:-1]
-                lines = render_table(current_rows) + "\n... (truncated)"
+                hidden_count = len(table_rows) - len(current_rows)
+                lines = render_table(current_rows) + f"\n... (+ {hidden_count} items hidden)"
 
-            title = f"**{shipping_hub.title()} ➔ {receiving.title()} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
+            ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
+            recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else receiving.title()
+
+            title = f"**{ship_p} ➔ {recv_p} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
             msg = f"{warning}{title}\n```\n{lines}\n```"
             await interaction.followup.send(msg)
 
@@ -392,9 +408,13 @@ class StockpileCog(commands.Cog):
                 current_rows = table_rows
                 while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
                     current_rows = current_rows[:-1]
-                lines = render_table(current_rows) + "\n... (truncated)"
+                hidden_count = len(table_rows) - len(current_rows)
+                lines = render_table(current_rows) + f"\n... (+ {hidden_count} findings hidden)"
 
-            title = f"**Findings for `{item}`** (Referenced from `{from_town}`)"
+            title = f"**Findings for `{item}`**"
+            if ref_town and ref_town.get("name"):
+                title += f" (Referenced from `{ref_town['name']}`)"
+                
             await interaction.followup.send(f"{title}\n```\n{lines}\n```")
 
         except Exception as e:

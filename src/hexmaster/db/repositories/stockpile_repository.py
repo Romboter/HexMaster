@@ -97,7 +97,7 @@ class StockpileRepository:
             if stockpile:
                 subq = subq.where(StockpileSnapshot.stockpile_name == stockpile.strip())
 
-            # Join with SnapshotItem to get the actual inventory
+            # Join with SnapshotItem and Town to get actual inventory with pretty names
             stmt = (
                 select(
                     StockpileSnapshot.struct_type,
@@ -107,10 +107,12 @@ class StockpileRepository:
                     SnapshotItem.quantity,
                     SnapshotItem.is_crated,
                     SnapshotItem.total,
-                    CatalogItem.quantitypercrate.label("catalog_qpc")
+                    CatalogItem.quantitypercrate.label("catalog_qpc"),
+                    Town.name.label("pretty_town")
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
-                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
+                .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
+                .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.id.in_(subq))
                 .order_by(StockpileSnapshot.stockpile_name, desc(SnapshotItem.is_crated), desc(SnapshotItem.quantity))
             )
@@ -152,15 +154,16 @@ class StockpileRepository:
                     SnapshotItem.per_crate,
                     CatalogItem.quantitypercrate.label("catalog_qpc")
                 )
-                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
+                .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
                 .where(SnapshotItem.snapshot_id.in_(subq))
             )
             items_res = await conn.execute(stmt_items)
             items = items_res.mappings().all()
             
-            # Return any snapshot header as a reference
+            # Return any snapshot header as a reference, with pretty town name
             latest_snap_stmt = (
-                select(StockpileSnapshot)
+                select(StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name, Town.name.label("pretty_town"))
+                .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
                 .order_by(desc(StockpileSnapshot.captured_at))
                 .limit(1)
@@ -206,7 +209,7 @@ class StockpileRepository:
                 # Join regions to get q, r
                 .join(Region, Region.id == Town.region_id)
                 # Join catalog to get canonical crate size
-                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
+                .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
                 .where(StockpileSnapshot.id.in_(subq))
                 .where(SnapshotItem.item_name == item_name)
                 .order_by(Town.name)

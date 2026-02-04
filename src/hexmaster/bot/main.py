@@ -33,12 +33,20 @@ class HexMasterBot(commands.Bot):
         # 1. Ensure DB schema is created (Replaces manual SQL files)
         await init_db(self.engine)
 
-        # 2.
-        data_dir = Path("sample_data")
-        await seed_regions_from_csv(self.engine, data_dir / "Regions.csv")
-        await seed_towns_from_csv(self.engine, data_dir / "Towns.csv")
-        await seed_catalog_from_csv(self.engine, data_dir / "catalog.csv")
-        await seed_priority_from_csv(self.engine, data_dir / "Priority.csv")
+        # 2. Seed database if empty
+        async with self.engine.connect() as conn:
+            from sqlalchemy import text
+            town_count = await conn.scalar(text("SELECT COUNT(*) FROM towns"))
+
+        if town_count == 0:
+            print("🌱 Seeding database...")
+            data_dir = Path("sample_data")
+            await seed_regions_from_csv(self.engine, data_dir / "Regions.csv")
+            await seed_towns_from_csv(self.engine, data_dir / "Towns.csv")
+            await seed_catalog_from_csv(self.engine, data_dir / "catalog.csv")
+            await seed_priority_from_csv(self.engine, data_dir / "Priority.csv")
+        else:
+            print("✅ Database already seeded. Skipping initial seed.")
 
         # 3.
         await self.load_extension("hexmaster.bot.cogs.stockpile_cog")
