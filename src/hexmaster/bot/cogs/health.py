@@ -99,7 +99,7 @@ class HealthCog(commands.Cog):
     async def help(self, interaction: discord.Interaction) -> None:
         """Shows help information for the bot."""
         help_text = (
-            "### 🛠️ Hexmaster Commands\n"
+            "### 🛠️ HexMaster Commands\n"
             "**General**\n"
             "• `/help`: Show this help message.\n\n"
             "**Stockpiles**\n"

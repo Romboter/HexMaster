@@ -1,12 +1,12 @@
-# Hexmaster — Foxhole Logistics Discord Bot
+# HexMaster — Foxhole Logistics Discord Bot
 
-Hexmaster is a powerful Discord bot designed for **Foxhole** logistics groups. It enables seamless stockpile management, cross-map item discovery, and intelligent supply chain comparison using OCR and real-time game data.
+HexMaster is a powerful Discord bot designed for **Foxhole** logistics groups. It enables seamless stockpile management, cross-map item discovery, and intelligent supply chain comparison using OCR and real-time game data.
 
 The bot follows a **snapshot-based storage** model, preserving full historical data of every stockpile update without ever overwriting.
 
 ---
 
-## What Hexmaster Does (MVP)
+## What HexMaster Does (MVP)
 
 ### 1. Stockpile Ingestion (OCR)
 
@@ -104,7 +104,7 @@ This is handled automatically during setup.
 
 ## Credits & Attribution
 
-Hexmaster relies on several critical community-maintained tools and APIs:
+HexMaster relies on several critical community-maintained tools and APIs:
 
 - **FIR (Foxhole Inventory Reporter)**: All OCR and screenshot-to-data logic is powered by [FIR](https://github.com/GICodeWarrior/fir). This project uses the fir-ocr methodology for its ingestion pipeline.
 - **Foxhole WarAPI**: Live town data, map status, and hex regions are provided by the official [WarAPI](https://github.com/clapfoot/warapi) maintained by Clapfoot/Siege Camp.
@@ -115,4 +115,4 @@ Hexmaster relies on several critical community-maintained tools and APIs:
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full text.
 
-Hexmaster's implementation is intended for private logistics group use and follows all community safety standards for Foxhole third-party software.
+HexMaster's implementation is intended for private logistics group use and follows all community safety standards for Foxhole third-party software.

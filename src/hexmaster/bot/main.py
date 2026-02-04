@@ -17,7 +17,7 @@ from hexmaster.db.repositories.stockpile_repository import StockpileRepository
 from hexmaster.services.ocr_service import OCRService
 
 
-class HexmasterBot(commands.Bot):
+class HexMasterBot(commands.Bot):
     def __init__(self, settings: Settings):
         # Default intents are enough for Slash Commands
         intents = discord.Intents.default()
@@ -64,7 +64,7 @@ async def main():
     configure_logging()
     settings = Settings.load()
 
-    bot = HexmasterBot(settings)
+    bot = HexMasterBot(settings)
     async with bot:
         await bot.start(settings.discord_token)
 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Hexmaster Setup Script
+# HexMaster Setup Script
 # Automates environment configuration, container startup, and firewall rules.
 
 set -e
 
-echo "🚀 Starting Hexmaster Setup..."
+echo "🚀 Starting HexMaster Setup..."
 
 # 1. Ensure .env exists
 if [ ! -f .env ]; then
