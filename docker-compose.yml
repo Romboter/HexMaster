@@ -3,15 +3,15 @@ services:
     image: postgres:16
     container_name: hexmaster_db
     environment:
-      POSTGRES_DB: hexmaster
-      POSTGRES_USER: hexmaster
-      POSTGRES_PASSWORD: hexmaster
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hexmaster"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -27,8 +27,8 @@ services:
       - .env
     environment:
       # This overrides the local localhost URL for internal container networking
-      - DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@postgres:5432/hexmaster
-      - OCR_URL=http://192.168.50.44:5000
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - OCR_URL=${OCR_URL}
     volumes:
       - shared_data:/app/shared
 
