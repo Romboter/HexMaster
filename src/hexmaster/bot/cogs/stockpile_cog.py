@@ -354,7 +354,7 @@ class StockpileCog(commands.Cog):
             recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else receiving.title()
 
             title = f"{warning}**{ship_p} ➔ {recv_p} ({actual_multiplier:g}x)**"
-            await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail(Cr)", "Need(Cr)"], title)
+            await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail", "Need"], title)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
