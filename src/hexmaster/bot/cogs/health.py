@@ -107,7 +107,7 @@ class HealthCog(commands.Cog):
             "• `/help`: Show this help message.\n\n"
             "**Stockpiles**\n"
             "• `/report [image] [town] [name]`: File an Intelligence Report (upload screenshot).\n"
-            "• `/manifest [town] [filter]`: View the Shipping Manifest for a town.\n"
+            "• `/inventory [town] [stockpile]`: View the Inventory for a town.\n"
             "• `/locate [item] [from_town]`: Perform Reconnaissance to locate assets globally.\n"
             "• `/requisition [shipping] [receiving]`: Calculate a Requisition Order to fill gaps.\n\n"
             "**Maintenance**\n"

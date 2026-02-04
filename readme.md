@@ -35,7 +35,7 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 | Command | Description |
 | --- | --- |
 | `/report` | **File an Intelligence Report** by uploading a stockpile screenshot. |
-| `/manifest` | **View the Shipping Manifest** for a specific town or base. |
+| `/inventory` | **View the Inventory** for a specific town or base. |
 | `/locate` | **Perform Reconnaissance** to find an item's location across the map. |
 | `/requisition` | **Calculate a Requisition Order** to identify supply gaps between hubs. |
 | `/help` | Display the command list and immersive lore information. |

@@ -165,9 +165,9 @@ class StockpileCog(commands.Cog):
         #     return []
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
-    @app_commands.command(name="manifest", description="View the Shipping Manifest for a specific town")
+    @app_commands.command(name="inventory", description="View the Inventory for a specific town")
     @app_commands.describe(town="Town name", stockpile="Optional stockpile name")
-    async def view_manifest(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
+    async def view_inventory(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
         town_input = (town or "").strip()
         if not town_input:
             return await interaction.response.send_message("Town is required.", ephemeral=True)
@@ -180,7 +180,12 @@ class StockpileCog(commands.Cog):
         table_rows = []
         for r in rows:
             qty_crates = self._get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
-            table_rows.append([r["item_name"], f"{round(qty_crates, 1):g}"])
+            
+            # Clarity improvement: append status to item name
+            status = "(Cr)" if r["is_crated"] else "(Lo)"
+            item_display = f"{r['item_name']} {status}"
+            
+            table_rows.append([item_display, f"{round(qty_crates, 1):g}"])
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         title = f"**{pretty_name}**"
@@ -189,8 +194,8 @@ class StockpileCog(commands.Cog):
 
         await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty(Cr)"], title)
 
-    @view_manifest.autocomplete("town")
-    async def manifest_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+    @view_inventory.autocomplete("town")
+    async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
@@ -396,7 +401,7 @@ class StockpileCog(commands.Cog):
             processed_results.sort(key=lambda x: x["Dist"])
 
             # 3. Format table
-            headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist"]
+            headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist(Hex)"]
             table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
 
             title = f"**Available Hubs for `{item}`**"
