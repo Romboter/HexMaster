@@ -82,7 +82,7 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     df = pd.read_csv(csv_path)
-    priority_data = []
+    priority_map = {}
     for _, row in df.iterrows():
         # Handle empty Min For Base (crates)
         min_crates = row.get("Min For Base (crates)")
@@ -91,14 +91,16 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         else:
             min_crates = int(min_crates)
 
-        priority_data.append({
-            "codename": str(row["CodeName"]).strip(),
+        codename = str(row["CodeName"]).strip()
+        priority_map[codename] = {
+            "codename": codename,
             "name": str(row["Name"]).strip(),
             "qty_per_crate": int(row["Qty per Crate"]),
             "min_for_base_crates": min_crates,
             "priority": float(row["Priority"])
-        })
+        }
 
+    priority_data = list(priority_map.values())
     if not priority_data:
         return
 
@@ -123,14 +125,16 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         return
 
     df = pd.read_csv(csv_path)
-    regions_data = []
+    regions_map = {}
     for _, row in df.iterrows():
-        regions_data.append({
-            "name": str(row["Region"]).strip().lower(),
+        name = str(row["Region"]).strip().lower()
+        regions_map[name] = {
+            "name": name,
             "q": float(row["raw q"]),
             "r": float(row["raw r"])
-        })
+        }
 
+    regions_data = list(regions_map.values())
     if not regions_data:
         return
 
