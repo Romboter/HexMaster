@@ -231,8 +231,13 @@ class StockpileCog(commands.Cog):
                 warning = f"⚠️ **Warning**: `{shipping_hub}` is a `{ship_snap['struct_type']}`, not a Hub (Storage Warehouse/Seaport).\n"
 
             comparison_data = []
+            handled_codenames = set()
+
+            # 4. Process Priority Items
             for p in priority_list:
                 codename = p["codename"]
+                handled_codenames.add(codename)
+                
                 qty_per_crate = p["qty_per_crate"] or 1
                 base_min_crates = p["min_for_base_crates"] or 0
                 target_min_crates = base_min_crates * (min_multiplier if is_recv_hub else 1.0)
@@ -250,14 +255,44 @@ class StockpileCog(commands.Cog):
                     
                     comparison_data.append({
                         "Item": p["name"],
-                        "Need": f"{lacking_crates:g}", # :g removes trailing .0 or unnecessary decimals
-                        "Avail": f"{avail_crates:g}"
+                        "Need": f"{round(lacking_crates, 1):g}", 
+                        "Avail": f"{round(avail_crates, 1):g}"
                     })
+
+            # 5. Process Non-Priority Items (Items in inventories but not on the list)
+            # We combine keys from both inventories that haven't been handled
+            all_inventory_codenames = set(recv_total_map.keys()) | set(ship_total_map.keys())
+            non_priority_codenames = all_inventory_codenames - handled_codenames
+
+            # We need the display names for these codenames. 
+            # We can use the ship_items/recv_items to find them.
+            codename_to_name = {}
+            for item in ship_items + recv_items:
+                codename_to_name[item["code_name"]] = item["item_name"]
+
+            # Sort non-priority items alphabetically for consistency
+            for codename in sorted(non_priority_codenames, key=lambda c: codename_to_name.get(c, c)):
+                # Non-priority items have no target, so Need is 0.
+                # However, if it's on the shipping hub, it might be useful to show?
+                # The user said "allow items... but after". 
+                # Usually we only show items if they are relevant.
+                ship_total = ship_total_map.get(codename, 0)
+                # We need qty_per_crate. Try to get it from items.
+                item_ref = next((i for i in ship_items + recv_items if i["code_name"] == codename), None)
+                qpc = item_ref["per_crate"] if item_ref and item_ref["per_crate"] else 1
+                
+                avail_crates = ship_total / qpc
+                
+                comparison_data.append({
+                    "Item": codename_to_name.get(codename, codename),
+                    "Need": "0",  # No defined minimum requirement
+                    "Avail": f"{round(avail_crates, 1):g}"
+                })
 
             if not comparison_data:
                 return await interaction.followup.send(f"{warning}✅ `{receiving}` meets all priority minimums!")
 
-            # 4. Format table
+            # 6. Format table
             headers = ["Item", "Need", "Avail"]
             table_rows = [[d["Item"], d["Need"], d["Avail"]] for d in comparison_data]
             
@@ -273,9 +308,8 @@ class StockpileCog(commands.Cog):
                     current_rows = current_rows[:-1]
                 lines = render_table(current_rows) + "\n... (truncated)"
 
-            title = f"**Comparison: {shipping_hub} ➔ {receiving}**"
-            mode_str = f"Mode: {'Hub' if is_recv_hub else 'Base'} ({min_multiplier}x Multiplier)"
-            msg = f"{warning}{title}\n{mode_str}\n```\n{lines}\n```"
+            title = f"**{shipping_hub}[{ship_snap['struct_type'] if ship_snap else 'Unknown'}] ➔ {receiving}[{recv_snap['struct_type']}] {min_multiplier if is_recv_hub else 1.0:g}x**"
+            msg = f"{warning}{title}\n```\n{lines}\n```"
             await interaction.followup.send(msg)
 
         except Exception as e:
