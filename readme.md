@@ -8,20 +8,20 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ## What HexMaster Does (MVP)
 
-### 1. Stockpile Ingestion (OCR)
+### 1. Intelligence Reporting
 
-- **Automatic Scanning**: Users upload screenshots of stockpiles via a slash command.
+- **Filing Reports**: Users file intelligence reports by uploading screenshots of stockpiles via the `/report` slash command.
 - **Deep Processing**: The bot uses an OCR service to transcribe item codes, names, total quantities, and crate statuses.
 - **Historical snapshots**: Every import creates a new time-stamped record for trend analysis.
 
-### 2. Intelligent Comparison (`/compare`)
+### 2. Requisition Orders
 
 - **Supply Chain Decisioning**: Compare a "Shipping Hub" (e.g., Seaport/Warehouse) against a "Receiving Town/Base".
 - **Hub Detection**: Automatically detects Seaports and Storage Warehouses to apply a **4x requirement multiplier**.
 - **Crate-First Units**: All quantities are standardized to "Crates" for easy logistics math.
 - **Priority Logic**: Sorts items by mission-critical importance and highlights shortages.
 
-### 3. Cross-Map Discovery (`/find`)
+### 3. Strategic Reconnaissance
 
 - **Global Search**: Find which stockpiles currently hold a specific item across the entire World Conquest map.
 - **Accurate Hex Math**: Uses a custom **Cartesian-Staggered** coordinate system to calculate distances in physical hex units.
@@ -47,7 +47,7 @@ While the core logic is now stable, the following UI and feature enhancements ar
 
 - **Dynamic Inventory Cleanup**: Automatically remove or "grey out" inventories for Seaports or Storage Warehouses that the WarAPI reports as **Destroyed** or **Captured** by the enemy.
 - **Faction Tracking**: Only show inventories that belong to the bot-owner's faction (Colonials/Wardens) in real-time.
-- **Logistics Threat Mapping**: Overlay current "Front Line" map data to warn logistics drivers if a `/find` result requires driving through contested or enemy-held territory.
+- **Logistics Threat Mapping**: Overlay current "Front Line" map data to warn logistics drivers if a `/locate` result requires driving through contested or enemy-held territory.
 - **Supply Drop Alerts**: Automated pings when a critical frontline base (based on WarAPI status) is low on Soldier Supplies or AT weapons.
 
 ### **Interactive Visualization & Web UI**
