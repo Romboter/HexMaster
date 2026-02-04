@@ -106,6 +106,9 @@ class StockpileRepository:
                 .order_by(StockpileSnapshot.stockpile_name, desc(SnapshotItem.is_crated), desc(SnapshotItem.quantity))
             )
 
+            result = await conn.execute(stmt)
+            return result.mappings().all()
+
     async def get_priority_list(self) -> list[dict]:
         """Fetches the full priority list from the DB."""
         async with self.engine.connect() as conn:
