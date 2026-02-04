@@ -279,7 +279,7 @@ class StockpileCog(commands.Cog):
                 ship_total = ship_total_map.get(codename, 0)
                 # We need qty_per_crate. Try to get it from items.
                 item_ref = next((i for i in ship_items + recv_items if i["code_name"] == codename), None)
-                qpc = item_ref["per_crate"] if item_ref and item_ref["per_crate"] else 1
+                qpc = item_ref["catalog_qpc"] if item_ref and item_ref["catalog_qpc"] else (item_ref["per_crate"] if item_ref and item_ref["per_crate"] else 1)
                 
                 avail_crates = ship_total / qpc
                 
@@ -363,7 +363,8 @@ class StockpileCog(commands.Cog):
                     dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
                 
                 # Qty in crates
-                qpc = r["per_crate"] if r["per_crate"] else 1
+                # Prioritize canonical catalog qpc, then snapshot metadata, then 1
+                qpc = r["catalog_qpc"] if r["catalog_qpc"] else (r["per_crate"] if r["per_crate"] else 1)
                 qty_crates = r["total"] / qpc
 
                 processed_results.append({

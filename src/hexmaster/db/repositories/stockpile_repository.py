@@ -106,9 +106,11 @@ class StockpileRepository:
                     SnapshotItem.code_name,
                     SnapshotItem.quantity,
                     SnapshotItem.is_crated,
-                    SnapshotItem.total
+                    SnapshotItem.total,
+                    CatalogItem.quantitypercrate.label("catalog_qpc")
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
+                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
                 .where(StockpileSnapshot.id.in_(subq))
                 .order_by(StockpileSnapshot.stockpile_name, desc(SnapshotItem.is_crated), desc(SnapshotItem.quantity))
             )
@@ -143,7 +145,14 @@ class StockpileRepository:
             
             # Fetch all items from these latest snapshots
             stmt_items = (
-                select(SnapshotItem)
+                select(
+                    SnapshotItem.code_name,
+                    SnapshotItem.item_name,
+                    SnapshotItem.total,
+                    SnapshotItem.per_crate,
+                    CatalogItem.quantitypercrate.label("catalog_qpc")
+                )
+                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
                 .where(SnapshotItem.snapshot_id.in_(subq))
             )
             items_res = await conn.execute(stmt_items)
@@ -185,6 +194,7 @@ class StockpileRepository:
                     SnapshotItem.is_crated,
                     SnapshotItem.per_crate,
                     SnapshotItem.total,
+                    CatalogItem.quantitypercrate.label("catalog_qpc"),
                     Town.x,
                     Town.y,
                     Region.q,
@@ -195,6 +205,8 @@ class StockpileRepository:
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 # Join regions to get q, r
                 .join(Region, Region.id == Town.region_id)
+                # Join catalog to get canonical crate size
+                .join(CatalogItem, (CatalogItem.codename == SnapshotItem.code_name) & (CatalogItem.displayname == SnapshotItem.item_name))
                 .where(StockpileSnapshot.id.in_(subq))
                 .where(SnapshotItem.item_name == item_name)
                 .order_by(Town.name)
