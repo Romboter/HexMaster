@@ -25,6 +25,57 @@ class StockpileCog(commands.Cog):
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
         self._autocomplete_cache: dict[str, tuple[float, list[str]]] = {}
 
+    def _calculate_distance(self, ref_town: dict, target_town: dict) -> float:
+        """Calculates distance between two towns using Cartesian-Staggered formula."""
+        if not all(k in ref_town for k in ('q', 'r', 'x', 'y')) or \
+                not all(k in target_town for k in ('q', 'r', 'x', 'y')):
+            return 0.0
+
+        # SQRT3 ~= 1.73205
+        SQRT3 = 1.73205
+        x1 = ref_town["q"] * 1.5 + (ref_town["x"] - 0.5) * 2.0
+        y1 = ref_town["r"] * SQRT3 + (ref_town["y"] - 0.5) * SQRT3
+
+        x2 = target_town["q"] * 1.5 + (target_town["x"] - 0.5) * 2.0
+        y2 = target_town["r"] * SQRT3 + (target_town["y"] - 0.5) * SQRT3
+
+        return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+    def _get_qty_crates(self, total: float, catalog_qpc: int | None, per_crate: int | None) -> float:
+        """Calculates quantity in crates based on available metadata."""
+        qpc = catalog_qpc or per_crate or 1
+        return total / qpc
+
+    async def _render_and_truncate_table(
+            self,
+            interaction: discord.Interaction,
+            rows: list[list],
+            headers: list[str],
+            title: str,
+            ephemeral: bool = False
+    ) -> None:
+        """Renders a table with tabulate and handles Discord character limit truncation."""
+
+        def render(data):
+            return tabulate(data, headers=headers, tablefmt="simple")
+
+        lines = render(rows)
+        limit = DISCORD_CHARACTER_LIMIT - 300  # Buffer for title and code blocks
+
+        if len(lines) > limit:
+            current_rows = rows
+            while len(render(current_rows)) > limit and current_rows:
+                current_rows = current_rows[:-1]
+
+            hidden_count = len(rows) - len(current_rows)
+            lines = render(current_rows) + f"\n(+ {hidden_count} items hidden)"
+
+        msg = f"{title}\n```\n{lines}\n```"
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=ephemeral)
+        else:
+            await interaction.response.send_message(msg, ephemeral=ephemeral)
+
     async def cog_load(self) -> None:
         """Called when the cog is loaded. Pre-fills the town cache immediately."""
         try:
@@ -115,7 +166,7 @@ class StockpileCog(commands.Cog):
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
     @app_commands.command(name="manifest", description="View the Shipping Manifest for a specific town")
-    @app_commands.describe(town="Town name", stockpile="Optional specific stockpile filter")
+    @app_commands.describe(town="Town name", stockpile="Optional stockpile name")
     async def view_manifest(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
         town_input = (town or "").strip()
         if not town_input:
@@ -128,32 +179,15 @@ class StockpileCog(commands.Cog):
         # Process data into table rows
         table_rows = []
         for r in rows:
-            # Qty in crates
-            qpc = r["catalog_qpc"] if r["catalog_qpc"] else (r["per_crate"] if r["per_crate"] else 1)
-            qty_crates = r["total"] / qpc
-            table_rows.append([r["item_name"], f"{qty_crates:g}"])
+            qty_crates = self._get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
+            table_rows.append([r["item_name"], f"{round(qty_crates, 1):g}"])
 
-        headers = ["Item", "Qty(Cr)"]
-
-        def get_table(data_list):
-            return tabulate(data_list, headers=headers, showindex=False, tablefmt="simple")
-
-        # Discord message limit handling
-        max_rows = 40
-        display_rows = table_rows[:max_rows]
-        lines = get_table(display_rows)
-        
-        if len(table_rows) > max_rows:
-            hidden_count = len(table_rows) - max_rows
-            lines += f"\n... (+ {hidden_count} items hidden)"
-
-        # Standardized header using pretty town name from DB
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         title = f"**{pretty_name}**"
         if stockpile:
             title += f" (Filter: {stockpile})"
-            
-        await interaction.response.send_message(f"{title}\n```\n{lines}\n```", ephemeral=False)
+
+        await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty(Cr)"], title)
 
     @view_manifest.autocomplete("town")
     async def manifest_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
@@ -195,11 +229,11 @@ class StockpileCog(commands.Cog):
         return snapshot_id, len(items), struct_type
 
 
-    @app_commands.command(name="requisition", description="Calculate Requisition Order (compare hubs)")
+    @app_commands.command(name="requisition", description="Requisition Order")
     @app_commands.describe(
-        shipping_hub="The hub with available supplies",
-        receiving="The hub or base that needs supplies",
-        min_multiplier="Multiplier for hub minimums (default 4)"
+        shipping_hub="The shipping hub",
+        receiving="The receiving hub/base",
+        min_multiplier="Hub Target Multiplier (Default: 4.0x)"
     )
     async def requisition(
             self,
@@ -233,7 +267,7 @@ class StockpileCog(commands.Cog):
                 recv_total_map[item["code_name"]] = recv_total_map.get(item["code_name"], 0) + item["total"]
 
             # 3. Determine types
-            hubs = ["Storage Warehouse", "Storage Depot", "Seaport"]
+            hubs = ["Storage Depot", "Seaport"]
             is_recv_hub = any(h in recv_snap["struct_type"] for h in hubs)
             is_ship_hub = any(h in ship_snap["struct_type"] for h in hubs) if ship_snap else False
 
@@ -291,13 +325,11 @@ class StockpileCog(commands.Cog):
                 ship_total = ship_total_map.get(codename, 0)
                 # Instant O(1) lookup
                 item_ref = item_details_map.get(codename)
-                qpc = item_ref["catalog_qpc"] if item_ref and item_ref["catalog_qpc"] else (item_ref["per_crate"] if item_ref and item_ref["per_crate"] else 1)
-                
-                avail_crates = ship_total / qpc
+                qty_crates = self._get_qty_crates(ship_total, item_ref.get("catalog_qpc") if item_ref else None, item_ref.get("per_crate") if item_ref else None)
                 
                 comparison_data.append({
                     "Item": codename_to_name.get(codename, codename),
-                    "Avail": f"{round(avail_crates, 1):g}",
+                    "Avail": f"{round(qty_crates, 1):g}",
                     "Need": "0"  # No defined minimum requirement
                 })
 
@@ -305,28 +337,13 @@ class StockpileCog(commands.Cog):
                 return await interaction.followup.send(f"{warning}✅ `{receiving}` meets all priority minimums!")
 
             # 6. Format table
-            headers = ["Item", "Avail", "Need"]
             table_rows = [[d["Item"], d["Avail"], d["Need"]] for d in comparison_data]
             
-            def render_table(rows):
-                return tabulate(rows, headers=headers, tablefmt="simple")
-
-            lines = render_table(table_rows)
-            
-            # Truncate if too long
-            if len(lines) > DISCORD_CHARACTER_LIMIT - 300:
-                current_rows = table_rows
-                while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
-                    current_rows = current_rows[:-1]
-                hidden_count = len(table_rows) - len(current_rows)
-                lines = render_table(current_rows) + f"\n... (+ {hidden_count} items hidden)"
-
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
             recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else receiving.title()
 
-            title = f"**{ship_p} ➔ {recv_p} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
-            msg = f"{warning}{title}\n```\n{lines}\n```"
-            await interaction.followup.send(msg)
+            title = f"{warning}**{ship_p} ➔ {recv_p} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
+            await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail(Cr)", "Need(Cr)"], title)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
@@ -341,10 +358,10 @@ class StockpileCog(commands.Cog):
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
-    @app_commands.command(name="locate", description="Perform Reconnaissance (locate assets globally)")
+    @app_commands.command(name="locate", description="Locate an item")
     @app_commands.describe(
-        item="The item to search for",
-        from_town="Reference town for distance calculation"
+        item="Item name",
+        from_town="Requesting town"
     )
     async def locate(self, interaction: discord.Interaction, item: str, from_town: str) -> None:
         await interaction.response.defer(ephemeral=False)
@@ -353,7 +370,7 @@ class StockpileCog(commands.Cog):
             # 1. Fetch town and item data
             ref_town = await self.repo.get_town_data(from_town)
             if not ref_town:
-                return await interaction.followup.send(f"❌ Reference town `{from_town}` not found.")
+                return await interaction.followup.send(f"❌ Town `{from_town}` not found.")
 
             results = await self.repo.search_item_across_stockpiles(item)
             if not results:
@@ -364,30 +381,14 @@ class StockpileCog(commands.Cog):
             for r in results:
                 town_name = r["town"]
                 
-                dist = 0.0
-                if r["q"] is not None and r["r"] is not None:
-                    # Cartesian-Staggered Distance Formula
-                    # q, r are the staggered axial-like centers
-                    # SQRT3 ~= 1.73205
-                    SQRT3 = 1.73205
-                    x2 = r["q"] * 1.5 + (r["x"] - 0.5) * 2.0
-                    y2 = r["r"] * SQRT3 + (r["y"] - 0.5) * SQRT3
-                    
-                    x1 = ref_town["q"] * 1.5 + (ref_town["x"] - 0.5) * 2.0
-                    y1 = ref_town["r"] * SQRT3 + (ref_town["y"] - 0.5) * SQRT3
-                    
-                    dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                
-                # Qty in crates
-                # Prioritize canonical catalog qpc, then snapshot metadata, then 1
-                qpc = r["catalog_qpc"] if r["catalog_qpc"] else (r["per_crate"] if r["per_crate"] else 1)
-                qty_crates = r["total"] / qpc
+                dist = self._calculate_distance(ref_town, r)
+                qty_crates = self._get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
 
                 processed_results.append({
                     "Town": town_name,
                     "Stockpile": r["stockpile_name"],
                     "Type": r["struct_type"],
-                    "Qty": f"{qty_crates:g}",
+                    "Qty": f"{round(qty_crates, 1):g}",
                     "Dist": dist
                 })
 
@@ -398,24 +399,11 @@ class StockpileCog(commands.Cog):
             headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist"]
             table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
 
-            def render_table(rows):
-                return tabulate(rows, headers=headers, tablefmt="simple")
-
-            lines = render_table(table_rows)
-
-            # character limit handling
-            if len(lines) > DISCORD_CHARACTER_LIMIT - 300:
-                current_rows = table_rows
-                while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
-                    current_rows = current_rows[:-1]
-                hidden_count = len(table_rows) - len(current_rows)
-                lines = render_table(current_rows) + f"\n... (+ {hidden_count} findings hidden)"
-
-            title = f"**Findings for `{item}`**"
+            title = f"**Available Hubs for `{item}`**"
             if ref_town and ref_town.get("name"):
-                title += f" (Referenced from `{ref_town['name']}`)"
+                title += f" Request from `{ref_town['name']}`"
                 
-            await interaction.followup.send(f"{title}\n```\n{lines}\n```")
+            await self._render_and_truncate_table(interaction, table_rows, headers, title)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during search:** {str(e)}")

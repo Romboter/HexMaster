@@ -15,32 +15,56 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
+    def _normalize_name(self, name: str) -> str:
+        """Helper to normalize town/stockpile names."""
+        return name.strip().lower() if name else ""
+
+    def _latest_snapshots_subquery(self, town: str = None, stockpile: str = None):
+        """Helper to find the most recent snapshot IDs for unique (town, struct, stockpile) tuples."""
+        subq = (
+            select(StockpileSnapshot.id)
+            .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
+            .order_by(
+                StockpileSnapshot.town,
+                StockpileSnapshot.struct_type,
+                StockpileSnapshot.stockpile_name,
+                desc(StockpileSnapshot.captured_at),
+                desc(StockpileSnapshot.id)
+            )
+        )
+        if town:
+            subq = subq.where(StockpileSnapshot.town == self._normalize_name(town))
+        if stockpile:
+            subq = subq.where(StockpileSnapshot.stockpile_name == stockpile.strip())
+        return subq
+
     async def get_towns_with_snapshots(self) -> list[str]:
-        """Fetches unique town names that already have snapshots in the DB."""
+        """Fetches unique pretty town names that already have snapshots in the DB."""
         async with self.engine.connect() as conn:
             stmt = (
-                select(StockpileSnapshot.town)
+                select(Town.name)
                 .distinct()
-                .order_by(StockpileSnapshot.town)
+                .join(StockpileSnapshot, text("LOWER(towns.name) = stockpile_snapshots.town"))
+                .order_by(Town.name)
             )
             result = await conn.execute(stmt)
-            return [row[0] for row in result.all() if row[0]]
+            return [row[0] for row in result.all()]
 
     async def get_towns_with_hub_snapshots(self) -> list[str]:
-        """Fetches towns that have at least one Seaport or Storage Warehouse snapshot."""
+        """Fetches pretty town names that have at least one Seaport or Storage Depot snapshot."""
         async with self.engine.connect() as conn:
             stmt = (
-                select(StockpileSnapshot.town)
+                select(Town.name)
                 .distinct()
+                .join(StockpileSnapshot, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(
-                    (StockpileSnapshot.struct_type.ilike("%Storage Warehouse%")) |
                     (StockpileSnapshot.struct_type.ilike("%Storage Depot%")) |
                     (StockpileSnapshot.struct_type.ilike("%Seaport%"))
                 )
-                .order_by(StockpileSnapshot.town)
+                .order_by(Town.name)
             )
             result = await conn.execute(stmt)
-            return [row[0] for row in result.all() if row[0]]
+            return [row[0] for row in result.all()]
 
     async def get_catalog_items(self) -> set[tuple[str, str]]:
         """Fetches codename/displayname pairs for validation."""
@@ -54,7 +78,7 @@ class StockpileRepository:
         async with self.engine.begin() as conn:
             # 1. Insert the snapshot header
             # Normalize names to avoid duplicates due to casing/spaces
-            norm_town = town.strip().lower()
+            norm_town = self._normalize_name(town)
             norm_struct = struct_type.strip()
             norm_stockpile = stockpile_name.strip()
 
@@ -80,22 +104,7 @@ class StockpileRepository:
     async def get_latest_inventory(self, town: str, stockpile: str = None):
         """Fetches the latest item counts for a specific town."""
         async with self.engine.connect() as conn:
-            norm_town = town.strip().lower()
-            subq = (
-                select(StockpileSnapshot.id)
-                .where(StockpileSnapshot.town == norm_town)
-                .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
-                .order_by(
-                    StockpileSnapshot.town,
-                    StockpileSnapshot.struct_type,
-                    StockpileSnapshot.stockpile_name,
-                    desc(StockpileSnapshot.captured_at),
-                    desc(StockpileSnapshot.id)
-                )
-            )
-
-            if stockpile:
-                subq = subq.where(StockpileSnapshot.stockpile_name == stockpile.strip())
+            subq = self._latest_snapshots_subquery(town=town, stockpile=stockpile)
 
             # Join with SnapshotItem and Town to get actual inventory with pretty names
             stmt = (
@@ -130,20 +139,9 @@ class StockpileRepository:
     async def get_latest_snapshot_for_town(self, town: str):
         """Fetches the latest snapshot and its items for a specific town across ALL stockpiles."""
         async with self.engine.connect() as conn:
-            norm_town = town.strip().lower()
+            norm_town = self._normalize_name(town)
             # Find the latest snapshot IDs for each unique stockpile in this town
-            subq = (
-                select(StockpileSnapshot.id)
-                .where(StockpileSnapshot.town == norm_town)
-                .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
-                .order_by(
-                    StockpileSnapshot.town,
-                    StockpileSnapshot.struct_type,
-                    StockpileSnapshot.stockpile_name,
-                    desc(StockpileSnapshot.captured_at),
-                    desc(StockpileSnapshot.id)
-                )
-            )
+            subq = self._latest_snapshots_subquery(town=town)
             
             # Fetch all items from these latest snapshots
             stmt_items = (
@@ -176,17 +174,7 @@ class StockpileRepository:
     async def search_item_across_stockpiles(self, item_name: str):
         """Finds all latest instances of an item across all towns with pretty town names."""
         async with self.engine.connect() as conn:
-            subq = (
-                select(StockpileSnapshot.id)
-                .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
-                .order_by(
-                    StockpileSnapshot.town,
-                    StockpileSnapshot.struct_type,
-                    StockpileSnapshot.stockpile_name,
-                    desc(StockpileSnapshot.captured_at),
-                    desc(StockpileSnapshot.id)
-                )
-            )
+            subq = self._latest_snapshots_subquery()
 
             stmt = (
                 select(
@@ -225,7 +213,7 @@ class StockpileRepository:
             stmt = (
                 select(Town.name, Town.x, Town.y, Region.q, Region.r)
                 .join(Region, Region.id == Town.region_id)
-                .where(func.lower(Town.name) == town_name.strip().lower())
+                .where(func.lower(Town.name) == self._normalize_name(town_name))
             )
             res = await conn.execute(stmt)
             return res.mappings().first()
