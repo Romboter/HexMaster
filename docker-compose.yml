@@ -26,11 +26,11 @@ services:
     env_file:
       - .env
     environment:
-      # This overrides the local localhost URL for internal container networking
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=${DATABASE_URL}
       - OCR_URL=${OCR_URL}
     volumes:
       - shared_data:/app/shared
+    network_mode: host
 
 volumes:
   pgdata:
