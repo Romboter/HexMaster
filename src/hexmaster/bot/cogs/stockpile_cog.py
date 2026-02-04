@@ -182,7 +182,7 @@ class StockpileCog(commands.Cog):
             qty_crates = self._get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
             
             # Clarity improvement: append status to item name
-            status = "(Cr)" if r["is_crated"] else "(Lo)"
+            status = "(Cr)" if r["is_crated"] else "(itm)"
             item_display = f"{r['item_name']} {status}"
             
             table_rows.append([item_display, f"{round(qty_crates, 1):g}"])
@@ -192,7 +192,7 @@ class StockpileCog(commands.Cog):
         if stockpile:
             title += f" (Filter: {stockpile})"
 
-        await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty(Cr)"], title)
+        await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title)
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
@@ -238,14 +238,14 @@ class StockpileCog(commands.Cog):
     @app_commands.describe(
         shipping_hub="The shipping hub",
         receiving="The receiving hub/base",
-        min_multiplier="Hub Target Multiplier (Default: 4.0x)"
+        min_multiplier="Target Multiplier (Default: Hub 4.0x, Base 1.0x)"
     )
     async def requisition(
             self,
             interaction: discord.Interaction,
             shipping_hub: str,
             receiving: str,
-            min_multiplier: float = 4.0
+            min_multiplier: float | None = None
     ) -> None:
         await interaction.response.defer(ephemeral=False)
 
@@ -276,6 +276,12 @@ class StockpileCog(commands.Cog):
             is_recv_hub = any(h in recv_snap["struct_type"] for h in hubs)
             is_ship_hub = any(h in ship_snap["struct_type"] for h in hubs) if ship_snap else False
 
+            # Use dynamic defaults if not provided
+            if min_multiplier is None:
+                actual_multiplier = 4.0 if is_recv_hub else 1.0
+            else:
+                actual_multiplier = min_multiplier
+
             warning = ""
             if ship_snap and not is_ship_hub:
                 warning = f"⚠️ **Warning**: `{shipping_hub}` is a `{ship_snap['struct_type']}`, not a Hub (Storage Warehouse/Seaport).\n"
@@ -290,7 +296,7 @@ class StockpileCog(commands.Cog):
                 
                 qty_per_crate = p["qty_per_crate"] or 1
                 base_min_crates = p["min_for_base_crates"] or 0
-                target_min_crates = base_min_crates * (min_multiplier if is_recv_hub else 1.0)
+                target_min_crates = base_min_crates * actual_multiplier
 
                 # Total held at receiving, converted to crates
                 recv_total_items = recv_total_map.get(codename, 0)
@@ -347,7 +353,7 @@ class StockpileCog(commands.Cog):
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
             recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else receiving.title()
 
-            title = f"{warning}**{ship_p} ➔ {recv_p} ({min_multiplier if is_recv_hub else 1.0:g}x)**"
+            title = f"{warning}**{ship_p} ➔ {recv_p} ({actual_multiplier:g}x)**"
             await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail(Cr)", "Need(Cr)"], title)
 
         except Exception as e:
@@ -369,7 +375,7 @@ class StockpileCog(commands.Cog):
         from_town="Requesting town"
     )
     async def locate(self, interaction: discord.Interaction, item: str, from_town: str) -> None:
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
 
         try:
             # 1. Fetch town and item data
@@ -401,7 +407,7 @@ class StockpileCog(commands.Cog):
             processed_results.sort(key=lambda x: x["Dist"])
 
             # 3. Format table
-            headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist(Hex)"]
+            headers = ["Town", "Stockpile", "Type", "Qty", "Dist"]
             table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
 
             title = f"**Available Stockpiles for `{item}`**"
