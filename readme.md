@@ -30,6 +30,18 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ---
 
+## Quick Reference 🚀
+
+| Command | Description |
+| --- | --- |
+| `/report` | **File an Intelligence Report** by uploading a stockpile screenshot. |
+| `/manifest` | **View the Shipping Manifest** for a specific town or base. |
+| `/locate` | **Perform Reconnaissance** to find an item's location across the map. |
+| `/requisition` | **Calculate a Requisition Order** to identify supply gaps between hubs. |
+| `/help` | Display the command list and immersive lore information. |
+
+---
+
 ## Architecture
 
 - **Discord Bot**: Built with `discord.py` and `SQLAlchemy`.
@@ -43,23 +55,11 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 While the core logic is now stable, the following UI and feature enhancements are planned:
 
-### **Live War Intelligence (WarAPI integration)**
-
 - **Dynamic Inventory Cleanup**: Automatically remove or "grey out" inventories for Seaports or Storage Warehouses that the WarAPI reports as **Destroyed** or **Captured** by the enemy.
 - **Faction Tracking**: Only show inventories that belong to the bot-owner's faction (Colonials/Wardens) in real-time.
 - **Logistics Threat Mapping**: Overlay current "Front Line" map data to warn logistics drivers if a `/locate` result requires driving through contested or enemy-held territory.
 - **Supply Drop Alerts**: Automated pings when a critical frontline base (based on WarAPI status) is low on Soldier Supplies or AT weapons.
-
-### **Interactive Visualization & Web UI**
-
-- **Stockpiles at a Glance**: A browser-based dashboard to view all current inventories without checking Discord.
-- **Shortage Heatmap**: Visual representation of which regions are currently under-supplied.
 - **Trend Charts**: Visual graphs of stockpile changes over the last 24-48 hours.
-
-### **Advanced Logistics Tools**
-
-- **Optimal Route Finder**: Suggest the fastest/safest path between a Shipping Hub and a frontline base, accounting for current road connectivity and bridge status.
-- **Delivery Tracker**: Tooling for users to mark "Incoming" supplies to prevent over-shipping to a single base.
 
 ---
 
@@ -69,6 +69,7 @@ While the core logic is now stable, the following UI and feature enhancements ar
 
 - Docker & Docker Compose
 - Discord Bot Token
+- **Headless FIR Service**: A running instance of the [FIR (Headless Fork)](https://github.com/garykuepper/fir).
 
 ### 2) Environment Setup
 
@@ -86,6 +87,51 @@ Start the bot and database:
 
 ```bash
 docker compose up --build -d
+```
+
+### 4) Deployment Reference
+
+For transparency, here is the `docker-compose.yml` used to orchestrate the containers:
+
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    container_name: hexmaster_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  hexmaster_bot:
+    build: .
+    container_name: hexmaster_bot
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - OCR_URL=${OCR_URL}
+    volumes:
+      - shared_data:/app/shared
+    network_mode: host
+
+volumes:
+  pgdata:
+  shared_data:
+
 ```
 
 ---
@@ -106,7 +152,7 @@ This is handled automatically during setup.
 
 HexMaster relies on several critical community-maintained tools and APIs:
 
-- **FIR (Foxhole Inventory Reporter)**: All OCR and screenshot-to-data logic is powered by [FIR](https://github.com/GICodeWarrior/fir). This project uses the fir-ocr methodology for its ingestion pipeline.
+- **FIR (Foxhole Inventory Reporter)**: All OCR and screenshot-to-data logic is powered by the [Headless FIR Fork](https://github.com/garykuepper/fir) (originally by GICodeWarrior).
 - **Foxhole WarAPI**: Live town data, map status, and hex regions are provided by the official [WarAPI](https://github.com/clapfoot/warapi) maintained by Clapfoot/Siege Camp.
 - **Discord.py**: High-level Discord API wrapper.
 - **SQLAlchemy & asyncpg**: Database abstraction and performance.
