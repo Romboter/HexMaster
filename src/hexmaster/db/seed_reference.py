@@ -155,7 +155,7 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         print(f"✅ Priority list seeded ({len(priority_data)} entries).")
 
 
-async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
+async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path, force: bool = False) -> None:
     """Seeds the regions table from sample_data/Regions.csv."""
     if not csv_path.exists():
         return
@@ -181,13 +181,28 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
     async with engine.begin() as conn:
         count = await conn.scalar(select(func.count()).select_from(Region))
-        if count > 0:
+        if count > 0 and not force:
             print(f"✅ Regions table already populated ({count} entries). skipping seeding.")
             return
 
         # 1. UPSERT all regions from CSV
         stmt = insert(Region).values(regions_data)
-        stmt = stmt.on_conflict_do_nothing(index_elements=[Region.name])
+        if force:
+            # Update these columns if name already exists
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[Region.name],
+                set_={
+                    "q": stmt.excluded.q,
+                    "r": stmt.excluded.r,
+                    "raw_r": stmt.excluded.raw_r,
+                }
+            )
+        else:
+            stmt = stmt.on_conflict_do_nothing(index_elements=[Region.name])
+            
         await conn.execute(stmt)
         
-        print(f"✅ Region reference seeded ({len(regions_data)} entries).")
+        if force:
+            print(f"✅ Region reference updated/synced ({len(regions_data)} entries).")
+        else:
+            print(f"✅ Region reference seeded ({len(regions_data)} entries).")

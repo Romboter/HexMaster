@@ -404,7 +404,7 @@ class StockpileCog(commands.Cog):
             headers = ["Town", "Stockpile", "Type", "Qty(Cr)", "Dist(Hex)"]
             table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
 
-            title = f"**Available Hubs for `{item}`**"
+            title = f"**Available Stockpiles for `{item}`**"
             if ref_town and ref_town.get("name"):
                 title += f" Request from `{ref_town['name']}`"
                 
