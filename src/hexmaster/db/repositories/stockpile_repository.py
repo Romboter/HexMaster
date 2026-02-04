@@ -1,7 +1,7 @@
 from sqlalchemy import select, insert, desc
 from sqlalchemy.ext.asyncio import AsyncEngine
 from datetime import datetime, timezone
-from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem, Town, Priority
+from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem, Town, Priority, Region
 
 
 class StockpileRepository:
@@ -139,3 +139,65 @@ class StockpileRepository:
             )
             items_res = await conn.execute(stmt_items)
             return snapshot, items_res.mappings().all()
+
+    async def search_item_across_stockpiles(self, item_name: str):
+        """Finds all latest instances of an item across all towns."""
+        async with self.engine.connect() as conn:
+            # Subquery to find the IDs of the latest snapshots for all towns
+            subq = (
+                select(StockpileSnapshot.id)
+                .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
+                .order_by(
+                    StockpileSnapshot.town,
+                    StockpileSnapshot.struct_type,
+                    StockpileSnapshot.stockpile_name,
+                    desc(StockpileSnapshot.captured_at),
+                    desc(StockpileSnapshot.id)
+                )
+            )
+
+            stmt = (
+                select(
+                    StockpileSnapshot.town,
+                    StockpileSnapshot.struct_type,
+                    StockpileSnapshot.stockpile_name,
+                    SnapshotItem.quantity,
+                    SnapshotItem.is_crated,
+                    SnapshotItem.per_crate,
+                    SnapshotItem.total
+                )
+                .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
+                .where(StockpileSnapshot.id.in_(subq))
+                .where(SnapshotItem.item_name == item_name)
+                .order_by(StockpileSnapshot.town)
+            )
+
+            result = await conn.execute(stmt)
+            return result.mappings().all()
+
+    async def get_town_data(self, town_name: str):
+        """Fetches coordinates and region offsets for a specific town."""
+        async with self.engine.connect() as conn:
+            stmt = (
+                select(Town.name, Town.x, Town.y, Region.q, Region.r)
+                .join(Region, Region.name == Town.region)
+                .where(Town.name == town_name)
+            )
+            res = await conn.execute(stmt)
+            return res.mappings().first()
+
+    async def get_all_catalog_item_names(self) -> list[str]:
+        """Fetches all item names from the catalog for autocomplete."""
+        async with self.engine.connect() as conn:
+            # Use DISTINCT on item_name from SnapshotItem or displayname from CatalogItem
+            # CatalogItem is more robust for autocomplete
+            stmt = select(CatalogItem.displayname).distinct().order_by(CatalogItem.displayname)
+            result = await conn.execute(stmt)
+            return [row[0] for row in result.all()]
+
+    async def get_items_in_stockpiles(self) -> list[str]:
+        """Fetches unique item names that are currently present in at least one stockpile snapshot."""
+        async with self.engine.connect() as conn:
+            stmt = select(SnapshotItem.item_name).distinct().order_by(SnapshotItem.item_name)
+            result = await conn.execute(stmt)
+            return [row[0] for row in result.all() if row[0]]

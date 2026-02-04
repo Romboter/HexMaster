@@ -1,4 +1,5 @@
 import time
+import math
 import pandas as pd
 import discord
 import inspect
@@ -324,6 +325,91 @@ class StockpileCog(commands.Cog):
     async def compare_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
+
+    @app_commands.command(name="find", description="Find an item across all stockpiles and show distance")
+    @app_commands.describe(
+        item="The item to search for",
+        from_town="Reference town for distance calculation"
+    )
+    async def find_item(self, interaction: discord.Interaction, item: str, from_town: str) -> None:
+        await interaction.response.defer(ephemeral=False)
+
+        try:
+            # 1. Fetch town and item data
+            ref_town = await self.repo.get_town_data(from_town)
+            if not ref_town:
+                return await interaction.followup.send(f"❌ Reference town `{from_town}` not found.")
+
+            results = await self.repo.search_item_across_stockpiles(item)
+            if not results:
+                return await interaction.followup.send(f"❌ `{item}` is not in any stockpile.")
+
+            # 2. Calculate distances and format data
+            processed_results = []
+            for r in results:
+                town_name = r["town"]
+                target_town = await self.repo.get_town_data(town_name)
+                
+                dist = 0.0
+                if target_town:
+                    # Cartesian-Staggered Distance Formula
+                    # q, r are the staggered axial-like centers
+                    # SQRT3 ~= 1.73205
+                    SQRT3 = 1.73205
+                    x2 = target_town["q"] * 1.5 + (target_town["x"] - 0.5) * 2.0
+                    y2 = target_town["r"] * SQRT3 + (target_town["y"] - 0.5) * SQRT3
+                    
+                    x1 = ref_town["q"] * 1.5 + (ref_town["x"] - 0.5) * 2.0
+                    y1 = ref_town["r"] * SQRT3 + (ref_town["y"] - 0.5) * SQRT3
+                    
+                    dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                
+                # Qty in crates
+                qpc = r["per_crate"] if r["per_crate"] else 1
+                qty_crates = r["total"] / qpc
+
+                processed_results.append({
+                    "Town": town_name,
+                    "Snapshot": f"{r['stockpile_name']} ({r['struct_type']})",
+                    "Qty": f"{qty_crates:g}",
+                    "Dist": dist
+                })
+
+            # Sort by distance
+            processed_results.sort(key=lambda x: x["Dist"])
+
+            # 3. Format table
+            headers = ["Town", "Snapshot", "Qty(Cr)", "Dist"]
+            table_rows = [[d["Town"], d["Snapshot"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
+
+            def render_table(rows):
+                return tabulate(rows, headers=headers, tablefmt="simple")
+
+            lines = render_table(table_rows)
+
+            # character limit handling
+            if len(lines) > DISCORD_CHARACTER_LIMIT - 300:
+                current_rows = table_rows
+                while len(render_table(current_rows)) > DISCORD_CHARACTER_LIMIT - 300:
+                    current_rows = current_rows[:-1]
+                lines = render_table(current_rows) + "\n... (truncated)"
+
+            title = f"**Findings for `{item}`** (Referenced from `{from_town}`)"
+            await interaction.followup.send(f"{title}\n```\n{lines}\n```")
+
+        except Exception as e:
+            await interaction.followup.send(f"❌ **Error during search:** {str(e)}")
+
+    @find_item.autocomplete("item")
+    async def find_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+        app_commands.Choice[str]]:
+        return await self._get_cached_town_choices(current, "stockpile_items", self.repo.get_items_in_stockpiles)
+
+    @find_item.autocomplete("from_town")
+    async def find_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[
+        app_commands.Choice[str]]:
+        # Use all valid towns for reference, not just ones with snapshots
+        return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -64,7 +64,14 @@ class Town(Base):
     __tablename__ = "towns"
 
     name: Mapped[str] = mapped_column(String, primary_key=True)
-    region: Mapped[str] = mapped_column(String, index=True)
+    region: Mapped[str] = mapped_column(String, ForeignKey("regions.name"), index=True)
     x: Mapped[float] = mapped_column(Float)
     y: Mapped[float] = mapped_column(Float)
     marker_type: Mapped[str] = mapped_column(String)
+
+class Region(Base):
+    __tablename__ = "regions"
+
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    q: Mapped[float] = mapped_column(Float)
+    r: Mapped[float] = mapped_column(Float)

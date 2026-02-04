@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
-from hexmaster.db.models import Town, CatalogItem, Priority
+from hexmaster.db.models import Town, CatalogItem, Priority, Region
 
 
 async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
@@ -18,7 +18,7 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
             name = row["Town"].strip()
             towns_dict[name] = {
                 "name": name,
-                "region": row["Region"].strip(),
+                "region": row["Region"].strip().lower(),
                 "x": float(row["x"]) if row.get("x") else 0.0,
                 "y": float(row["y"]) if row.get("y") else 0.0,
                 "marker_type": row.get("MarkerType", "Unknown").strip()
@@ -115,3 +115,33 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         )
         await conn.execute(stmt)
         print(f"✅ Priority list seeded ({len(priority_data)} entries).")
+
+
+async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
+    """Seeds the regions table from sample_data/Regions.csv."""
+    if not csv_path.exists():
+        return
+
+    df = pd.read_csv(csv_path)
+    regions_data = []
+    for _, row in df.iterrows():
+        regions_data.append({
+            "name": str(row["Region"]).strip().lower(),
+            "q": float(row["raw q"]),
+            "r": float(row["raw r"])
+        })
+
+    if not regions_data:
+        return
+
+    async with engine.begin() as conn:
+        stmt = insert(Region).values(regions_data)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[Region.name],
+            set_={
+                "q": stmt.excluded.q,
+                "r": stmt.excluded.r
+            }
+        )
+        await conn.execute(stmt)
+        print(f"✅ Region reference seeded ({len(regions_data)} entries).")
