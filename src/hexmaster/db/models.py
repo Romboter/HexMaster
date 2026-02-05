@@ -33,6 +33,7 @@ class StockpileSnapshot(Base):
     town: Mapped[str] = mapped_column(String(100), index=True)
     struct_type: Mapped[str] = mapped_column(String(100))
     stockpile_name: Mapped[str] = mapped_column(String(255))
+    war_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     captured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc)

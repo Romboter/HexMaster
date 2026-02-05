@@ -20,6 +20,7 @@ class StockpileCog(commands.Cog):
         # Grab global services from the bot instance
         self.ocr_service: OCRService = getattr(bot, "ocr_service")
         self.repo: StockpileRepository = getattr(bot, "repo")
+        self.war_service = getattr(bot, "war_service", None)
         self.settings = getattr(bot, "settings")
 
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
@@ -148,8 +149,14 @@ class StockpileCog(commands.Cog):
         await interaction.response.defer(ephemeral=False)
         try:
             image_bytes = await image.read()
+            
+            # Fetch current war number
+            war_number = None
+            if self.war_service:
+                war_number = await self.war_service.get_current_war_number()
+
             snapshot_id, count, struct_type = await self.process_remote_and_ingest(
-                image_bytes, town, stockpile_name
+                image_bytes, town, stockpile_name, war_number
             )
             await interaction.followup.send(
                 f"✅ **Success!** Imported {count} items for `{stockpile_name}` ({struct_type}) in `{town}`.\n"
@@ -188,9 +195,24 @@ class StockpileCog(commands.Cog):
             table_rows.append([item_display, f"{round(qty_crates, 1):g}"])
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
+        war_num = rows[0].get("war_number")
+        
+        # Check if data is from a past war
+        past_war_warning = ""
+        if self.war_service:
+            current_war = await self.war_service.get_current_war_number()
+            if war_num and current_war and war_num < current_war:
+                past_war_warning = f"\n⚠️ **Warning: Data from past war (War {war_num})**"
+
         title = f"**{pretty_name}**"
+        if war_num and not past_war_warning:
+             title += f" (War {war_num})"
+        
         if stockpile:
             title += f" (Filter: {stockpile})"
+        
+        if past_war_warning:
+            title += past_war_warning
 
         await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title)
 
@@ -199,7 +221,7 @@ class StockpileCog(commands.Cog):
         app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
-    async def process_remote_and_ingest(self, image_bytes: bytes, town: str, stockpile_name: str):
+    async def process_remote_and_ingest(self, image_bytes: bytes, town: str, stockpile_name: str, war_number: int | None = None):
         """Coordinates the OCR process and database ingestion."""
         try:
             df = await self.ocr_service.process_image(image_bytes, town, stockpile_name)
@@ -229,8 +251,8 @@ class StockpileCog(commands.Cog):
                     "total": int(r["Total"]) if pd.notna(r.get("Total")) else 0,
                     "description": str(r.get("Description", "")).strip()
                 })
-
-        snapshot_id = await self.repo.ingest_snapshot(town, struct_type, stockpile_name, items)
+ 
+        snapshot_id = await self.repo.ingest_snapshot(town, struct_type, stockpile_name, items, war_number)
         return snapshot_id, len(items), struct_type
 
 

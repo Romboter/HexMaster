@@ -15,6 +15,7 @@ from hexmaster.db.seed_reference import (
 
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
 from hexmaster.services.ocr_service import OCRService
+from hexmaster.services.war_service import WarService
 
 
 class HexMasterBot(commands.Bot):
@@ -28,6 +29,7 @@ class HexMasterBot(commands.Bot):
         # Dependency Injection: Initialize once, use everywhere
         self.repo = StockpileRepository(self.engine)
         self.ocr_service = OCRService(settings.ocr_url)
+        self.war_service = WarService()
 #
     async def setup_hook(self):
         # 1. Ensure DB schema is created (Replaces manual SQL files)
