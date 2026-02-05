@@ -6,7 +6,7 @@ from pathlib import Path
 # Configuration
 WARAPI_BASE_URL = "https://war-service-live-2.foxholeservices.com/api"
 WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
-REGIONS_CSV = Path("sample_data/Regions.csv")
+REGIONS_CSV = Path("data/Regions.csv")
 
 # Manual overrides for regions that have different names in WarAPI vs In-Game
 NAME_OVERRIDES = {

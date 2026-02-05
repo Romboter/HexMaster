@@ -21,7 +21,7 @@ def clean_region_name(name: str) -> str:
 
 
 async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
-    """Seeds the towns table from sample_data/Towns.csv."""
+    """Seeds the towns table from data/Towns.csv."""
     if not csv_path.exists():
         return
 
@@ -72,7 +72,7 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
 
 async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
-    """Seeds the catalog_items table from sample_data/catalog.csv."""
+    """Seeds the catalog_items table from data/catalog.csv."""
     if not csv_path.exists():
         return
 
@@ -116,7 +116,7 @@ async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
 
 async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
-    """Seeds the priority table from sample_data/Priority.csv."""
+    """Seeds the priority table from data/Priority.csv."""
     if not csv_path.exists():
         return
 
@@ -156,7 +156,7 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
 
 async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path, force: bool = False) -> None:
-    """Seeds the regions table from sample_data/Regions.csv."""
+    """Seeds the regions table from data/Regions.csv."""
     if not csv_path.exists():
         return
 

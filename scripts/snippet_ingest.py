@@ -160,9 +160,9 @@ async def main() -> None:
     town = "Tine"
 
     # Calculate the path relative to this script's location
-    # This script is in /scripts, so we go up one level and then into /sample_data
+    # This script is in /scripts, so we go up one level and then into /data
     script_dir = Path(__file__).parent
-    tsv_path = script_dir.parent / "sample_data" / f"Foxhole Logi Tool - {town}.tsv"
+    tsv_path = script_dir.parent / "data" / f"Foxhole Logi Tool - {town}.tsv"
 
     if not tsv_path.exists():
         print(f"Error: TSV file not found at: {tsv_path.absolute()}")

@@ -4,6 +4,7 @@ import pandas as pd
 import discord
 import inspect
 import asyncio
+import datetime
 from discord import app_commands
 from discord.ext import commands
 from tabulate import tabulate
@@ -25,6 +26,29 @@ class StockpileCog(commands.Cog):
 
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
         self._autocomplete_cache: dict[str, tuple[float, list[str]]] = {}
+
+    def _get_age_str(self, captured_at: datetime.datetime | None) -> str:
+        """Returns a human-readable age string for a timestamp."""
+        if not captured_at:
+            return "unknown"
+        
+        # Ensure captured_at is offset-aware UTC if it isn't
+        if captured_at.tzinfo is None:
+            captured_at = captured_at.replace(tzinfo=datetime.timezone.utc)
+            
+        now = datetime.datetime.now(datetime.timezone.utc)
+        diff = now - captured_at
+        seconds = int(diff.total_seconds())
+        
+        if seconds < 0:
+            return "just now"
+        if seconds < 60:
+            return f"{seconds}s ago"
+        if seconds < 3600:
+            return f"{seconds // 60}m ago"
+        if seconds < 86400:
+            return f"{seconds // 3600}h ago"
+        return f"{seconds // 86400}d ago"
 
     def _calculate_distance(self, ref_town: dict, target_town: dict) -> float:
         """Calculates distance between two towns using Cartesian-Staggered formula."""
@@ -204,10 +228,13 @@ class StockpileCog(commands.Cog):
             if war_num and current_war and war_num < current_war:
                 past_war_warning = f"\n⚠️ **Warning: Data from past war (War {war_num})**"
 
-        title = f"**{pretty_name}**"
+        # Calculate overall staleness (oldest snapshot in the view)
+        oldest_snapshot = min(r["captured_at"] for r in rows if r.get("captured_at"))
+        age_str = self._get_age_str(oldest_snapshot)
+        
+        title = f"**{pretty_name}** ({age_str})"
         if war_num and not past_war_warning:
              title += f" (War {war_num})"
-        
         if stockpile:
             title += f" (Filter: {stockpile})"
         
@@ -374,8 +401,11 @@ class StockpileCog(commands.Cog):
             
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
             recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else receiving.title()
+            
+            ship_age = f" ({self._get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
+            recv_age = f" ({self._get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
 
-            title = f"{warning}**{ship_p} ➔ {recv_p} ({actual_multiplier:g}x)**"
+            title = f"{warning}**{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({actual_multiplier:g}x)**"
             await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail", "Need"], title)
 
         except Exception as e:
@@ -422,15 +452,19 @@ class StockpileCog(commands.Cog):
                     "Stockpile": r["stockpile_name"],
                     "Type": r["struct_type"],
                     "Qty": f"{round(qty_crates, 1):g}",
-                    "Dist": dist
+                    "Dist": dist,
+                    "Age": self._get_age_str(r.get("captured_at"))
                 })
 
             # Sort by distance
             processed_results.sort(key=lambda x: x["Dist"])
 
             # 3. Format table
-            headers = ["Town", "Stockpile", "Type", "Qty", "Dist"]
-            table_rows = [[d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}"] for d in processed_results]
+            headers = ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"]
+            table_rows = [
+                [d["Town"], d["Stockpile"], d["Type"], d["Qty"], f"{d['Dist']:.1f}", d["Age"]] 
+                for d in processed_results
+            ]
 
             title = f"**Available Stockpiles for `{item}`**"
             if ref_town and ref_town.get("name"):

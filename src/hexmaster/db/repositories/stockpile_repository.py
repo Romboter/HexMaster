@@ -119,7 +119,8 @@ class StockpileRepository:
                     SnapshotItem.total,
                     StockpileSnapshot.war_number,
                     CatalogItem.quantitypercrate.label("catalog_qpc"),
-                    Town.name.label("pretty_town")
+                    Town.name.label("pretty_town"),
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
@@ -166,7 +167,8 @@ class StockpileRepository:
                     StockpileSnapshot.struct_type, 
                     StockpileSnapshot.stockpile_name, 
                     StockpileSnapshot.war_number,
-                    Town.name.label("pretty_town")
+                    Town.name.label("pretty_town"),
+                    StockpileSnapshot.captured_at
                 )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
@@ -196,7 +198,8 @@ class StockpileRepository:
                     Town.x,
                     Town.y,
                     Region.q,
-                    Region.r
+                    Region.r,
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 # Join towns to get the pretty name and x, y

@@ -50,8 +50,8 @@ if __name__ == "__main__":
     project_root = os.path.dirname(script_dir)
 
     # 3. Construct the absolute path to the image
-    # Note: your project view shows "sample_data", not "sample_pictures"
-    image_path = os.path.join(project_root, "sample_data", image_file)
+    # Note: your project view shows "data", not "sample_pictures"
+    image_path = os.path.join(project_root, "data", image_file)
 
     if os.path.exists(image_path):
         df = get_stockpile_df_from_server(SERVER_IP, image_path, town)
