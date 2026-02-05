@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import re
 
-REGIONS_CSV = "sample_data/Regions.csv"
+REGIONS_CSV = "data/Regions.csv"
 WARAPI_MAPS_URL = "https://war-service-live-2.foxholeservices.com/api/worldconquest/maps"
 
 def clean_region_name(name):

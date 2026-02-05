@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 
-CATALOG_PATH = Path("../sample_data/catalog.json")
+CATALOG_PATH = Path("../data/catalog.json")
 
 def normalize_faction(value) -> str:
     if isinstance(value, str):
