@@ -1,10 +1,14 @@
 import pandas as pd
 import requests
 import re
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
-WARAPI_BASE_URL = "https://war-service-live-2.foxholeservices.com/api"
+WARAPI_BASE_URL = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
 WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
 REGIONS_CSV = Path("data/Regions.csv")
 

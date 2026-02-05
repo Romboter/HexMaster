@@ -16,7 +16,8 @@ load_dotenv()
 class Settings:
     database_url: str
     discord_token: str
-    ocr_url: str  # 1. Add this field here
+    ocr_url: str
+    warapi_base_url: str
 
     @staticmethod
     def load() -> "Settings":
@@ -26,14 +27,16 @@ class Settings:
 
         database_url = os.getenv("DATABASE_URL")
         discord_token = os.getenv("DISCORD_TOKEN")
-        ocr_url = os.getenv("OCR_URL", "http://localhost:8000")  # 2. Extract it to a variable
+        ocr_url = os.getenv("OCR_URL", "http://localhost:8000")
+        warapi_base_url = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
 
         missing = [
             name
             for name, value in (
                 ("DATABASE_URL", database_url),
                 ("DISCORD_TOKEN", discord_token),
-                ("OCR_URL", ocr_url)  # 3. Optional: add to validation
+                ("OCR_URL", ocr_url),
+                ("WARAPI_BASE_URL", warapi_base_url)
             )
             if not value
         ]
@@ -52,11 +55,12 @@ class Settings:
                 "Example .env:\n"
                 'DATABASE_URL="<your async SQLAlchemy URL>"\n'
                 'DISCORD_TOKEN="<your discord bot token>"\n'
+                'WARAPI_BASE_URL="https://war-service-live.foxholeservices.com/api"\n'
             )
 
         return Settings(
             database_url=database_url,
             discord_token=discord_token,
-            ocr_url=ocr_url,  # Default to localhost if not set
-
+            ocr_url=ocr_url,
+            warapi_base_url=warapi_base_url
         )

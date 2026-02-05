@@ -1,9 +1,14 @@
 import pandas as pd
 import requests
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 REGIONS_CSV = "data/Regions.csv"
-WARAPI_MAPS_URL = "https://war-service-live-2.foxholeservices.com/api/worldconquest/maps"
+WARAPI_BASE_URL = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
+WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
 
 def clean_region_name(name):
     # Remove "hex" or " hex" suffix (case-insensitive)
