@@ -117,7 +117,8 @@ class StockpileRepository:
                     SnapshotItem.is_crated,
                     SnapshotItem.total,
                     CatalogItem.quantitypercrate.label("catalog_qpc"),
-                    Town.name.label("pretty_town")
+                    Town.name.label("pretty_town"),
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
@@ -160,7 +161,7 @@ class StockpileRepository:
             
             # Return any snapshot header as a reference, with pretty town name
             latest_snap_stmt = (
-                select(StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name, Town.name.label("pretty_town"))
+                select(StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name, Town.name.label("pretty_town"), StockpileSnapshot.captured_at)
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
                 .order_by(desc(StockpileSnapshot.captured_at))
@@ -189,7 +190,8 @@ class StockpileRepository:
                     Town.x,
                     Town.y,
                     Region.q,
-                    Region.r
+                    Region.r,
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 # Join towns to get the pretty name and x, y
