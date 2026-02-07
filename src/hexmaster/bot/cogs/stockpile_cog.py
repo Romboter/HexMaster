@@ -108,7 +108,7 @@ class StockpileCog(commands.Cog):
         if not image.content_type or not image.content_type.startswith("image/"):
             return await interaction.response.send_message("Please upload a valid image file.", ephemeral=True)
 
-        await interaction.response.defer(ephemeral=False)
+        await interaction.response.defer(ephemeral=True)
         try:
             image_bytes = await image.read()
             war_number = await self.war_service.get_current_war_number() if self.war_service else None
