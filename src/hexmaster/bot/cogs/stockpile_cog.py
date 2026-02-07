@@ -130,8 +130,8 @@ class StockpileCog(commands.Cog):
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
     @app_commands.command(name="inventory", description="View the Inventory for a specific town")
-    @app_commands.describe(town="Town name", struct_type="Specific structure type", stockpile="Optional stockpile name")
-    async def view_inventory(self, interaction: discord.Interaction, town: str, struct_type: str | None = None, stockpile: str | None = None) -> None:
+    @app_commands.describe(town="Town name", struct_type="Specific structure type", stockpile="Specific stockpile name")
+    async def view_inventory(self, interaction: discord.Interaction, town: str, struct_type: str, stockpile: str) -> None:
         town_input = (town or "").strip()
         if not town_input:
             return await interaction.response.send_message("Town is required.", ephemeral=True)
@@ -186,24 +186,25 @@ class StockpileCog(commands.Cog):
     @app_commands.command(name="requisition", description="Requisition Order")
     @app_commands.describe(
         shipping_hub="The shipping hub", 
-        receiving="The receiving hub/base", 
-        min_multiplier="Target Multiplier",
         ship_struct="Specific shipping structure",
         ship_stockpile="Specific shipping stockpile",
+        receiving="The receiving hub/base", 
         recv_struct="Specific receiving structure",
-        recv_stockpile="Specific receiving stockpile"
+        recv_stockpile="Specific receiving stockpile",
+        min_multiplier="Target Multiplier"
     )
     async def requisition(
         self, 
         interaction: discord.Interaction, 
         shipping_hub: str, 
+        ship_struct: str,
+        ship_stockpile: str,
         receiving: str, 
-        min_multiplier: float | None = None,
-        ship_struct: str | None = None,
-        ship_stockpile: str | None = None,
-        recv_struct: str | None = None,
-        recv_stockpile: str | None = None
+        recv_struct: str,
+        recv_stockpile: str,
+        min_multiplier: float | None = None
     ) -> None:
+
         await interaction.response.defer(ephemeral=True)
 
         try:
