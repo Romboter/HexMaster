@@ -15,6 +15,7 @@ from hexmaster.db.seed_reference import (
 
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
 from hexmaster.services.ocr_service import OCRService
+from hexmaster.services.war_service import WarService
 
 
 class HexMasterBot(commands.Bot):
@@ -28,6 +29,7 @@ class HexMasterBot(commands.Bot):
         # Dependency Injection: Initialize once, use everywhere
         self.repo = StockpileRepository(self.engine)
         self.ocr_service = OCRService(settings.ocr_url)
+        self.war_service = WarService(settings.warapi_base_url)
 #
     async def setup_hook(self):
         # 1. Ensure DB schema is created (Replaces manual SQL files)
@@ -40,7 +42,7 @@ class HexMasterBot(commands.Bot):
 
         if town_count == 0:
             print("🌱 Seeding database...")
-            data_dir = Path("sample_data")
+            data_dir = Path("data")
             await seed_regions_from_csv(self.engine, data_dir / "Regions.csv")
             await seed_towns_from_csv(self.engine, data_dir / "Towns.csv")
             await seed_catalog_from_csv(self.engine, data_dir / "catalog.csv")

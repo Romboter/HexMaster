@@ -12,7 +12,7 @@ async def seed_catalog():
     engine = create_async_engine(settings.database_url)
 
     # Read the CSV (assuming it has columns: codename, displayname)
-    df = pd.read_csv("sample_data/catalog.csv")
+    df = pd.read_csv("data/catalog.csv")
 
     # Transform into dictionary list for bulk insert
     items = df.to_dict(orient="records")

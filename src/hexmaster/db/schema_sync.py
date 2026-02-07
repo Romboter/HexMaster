@@ -21,6 +21,9 @@ async def sync_schema(conn: AsyncConnection) -> None:
 
         # Towns Table
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS region_id INTEGER REFERENCES regions(id) ON DELETE CASCADE"),
+        ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS x FLOAT"),
+        ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS y FLOAT"),
+        ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS marker_type VARCHAR"),
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS global_q FLOAT"),
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS global_r FLOAT"),
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS town_type VARCHAR"),
@@ -28,6 +31,7 @@ async def sync_schema(conn: AsyncConnection) -> None:
         
         # Stockpile Snapshots Table
         ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS guild_id BIGINT"),
+        ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS war_number INTEGER"),
         
         # Snapshot Items Table (Ensuring primary key is correct is harder, but we can ensure columns)
         ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS code_name VARCHAR"),

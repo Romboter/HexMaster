@@ -73,7 +73,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return {(row.codename, row.displayname) for row in result}
 
-    async def ingest_snapshot(self, town: str, struct_type: str, stockpile_name: str, items_data: list[dict]):
+    async def ingest_snapshot(self, town: str, struct_type: str, stockpile_name: str, items_data: list[dict], war_number: int | None = None):
         """Creates a new snapshot and inserts its items in a single transaction."""
         async with self.engine.begin() as conn:
             # 1. Insert the snapshot header
@@ -86,6 +86,7 @@ class StockpileRepository:
                 town=norm_town,
                 struct_type=norm_struct,
                 stockpile_name=norm_stockpile,
+                war_number=war_number,
                 captured_at=datetime.now(timezone.utc)
             ).returning(StockpileSnapshot.id)
 
@@ -116,8 +117,10 @@ class StockpileRepository:
                     SnapshotItem.quantity,
                     SnapshotItem.is_crated,
                     SnapshotItem.total,
+                    StockpileSnapshot.war_number,
                     CatalogItem.quantitypercrate.label("catalog_qpc"),
-                    Town.name.label("pretty_town")
+                    Town.name.label("pretty_town"),
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
@@ -160,7 +163,13 @@ class StockpileRepository:
             
             # Return any snapshot header as a reference, with pretty town name
             latest_snap_stmt = (
-                select(StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name, Town.name.label("pretty_town"))
+                select(
+                    StockpileSnapshot.struct_type, 
+                    StockpileSnapshot.stockpile_name, 
+                    StockpileSnapshot.war_number,
+                    Town.name.label("pretty_town"),
+                    StockpileSnapshot.captured_at
+                )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
                 .order_by(desc(StockpileSnapshot.captured_at))
@@ -189,7 +198,8 @@ class StockpileRepository:
                     Town.x,
                     Town.y,
                     Region.q,
-                    Region.r
+                    Region.r,
+                    StockpileSnapshot.captured_at
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 # Join towns to get the pretty name and x, y

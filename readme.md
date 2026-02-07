@@ -141,10 +141,16 @@ volumes:
 To update town data or region offsets manually:
 
 ```bash
-python -m scripts.seed_and_sync
+python -m scripts.sync_regions
 ```
 
-This is handled automatically during setup.
+---
+
+## Technical Reference
+
+- **Bot Implementation**: `src/hexmaster/bot/main.py`
+- **Database Schema**: `src/hexmaster/db/schema.sql` (managed automatically via `init_db`)
+- **Reference Data**: Located in `data/` (Towns, Regions, Catalog)
 
 ---
 

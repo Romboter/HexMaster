@@ -29,10 +29,26 @@ DROP TABLE IF EXISTS stockpile_snapshots;
 
 CREATE TABLE IF NOT EXISTS stockpile_snapshots (
   id             BIGSERIAL PRIMARY KEY,
+  guild_id       BIGINT,
   town           TEXT NOT NULL,
   struct_type    TEXT NOT NULL,
   stockpile_name TEXT NOT NULL DEFAULT 'Public',
+  war_number     INTEGER,
   captured_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Towns table
+CREATE TABLE IF NOT EXISTS towns (
+  id           SERIAL PRIMARY KEY,
+  region_id    INTEGER NOT NULL,
+  name         TEXT NOT NULL UNIQUE,
+  x            FLOAT,
+  y            FLOAT,
+  marker_type  TEXT,
+  global_q     FLOAT,
+  global_r     FLOAT,
+  town_type    TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE snapshot_items (

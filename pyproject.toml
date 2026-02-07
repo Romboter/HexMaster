@@ -10,6 +10,7 @@ dependencies = [
   "tabulate",
   "pandas",
   "aiohttp",
+  "requests",
 ]
 
 [tool.setuptools]

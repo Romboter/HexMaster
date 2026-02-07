@@ -8,8 +8,8 @@ async def main():
     settings = Settings.load()
     engine = create_async_engine(settings.database_url)
     
-    print("🔄 Forcing region update from sample_data/Regions.csv...")
-    csv_path = Path("sample_data/Regions.csv")
+    print("🔄 Forcing region update from data/Regions.csv...")
+    csv_path = Path("data/Regions.csv")
     
     await seed_regions_from_csv(engine, csv_path, force=True)
     
