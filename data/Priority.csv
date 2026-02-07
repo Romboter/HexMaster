@@ -32,7 +32,7 @@ Tremola Grenade GPb-1,HELaunchedGrenade,20,2,4.12
 20 Neville Anti-Tank Rifle,ATRifleW,3,5,5.00
 Booker Greyhound Model 910,ATRifleAutomaticW,3,5,5.01
 228 Satterley Heavy Storm Rifle,ATRifleAssaultW,5,5,5.02
-20mm,AircraftAmmo,5,4,5.03
+14.5mm,ATRifleAmmo,5,4,5.03
 Fiddler Submachine Gun Model 868,SMGW,20,3,5.04
 9mm,SMGAmmo,40,4,5.05
 Abisme AT-99 Mine,TankMine,10,,5.06
