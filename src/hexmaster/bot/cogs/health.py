@@ -9,12 +9,16 @@ from discord.ext import commands
 from sqlalchemy import text, select, func
 from tabulate import tabulate
 
-DISCORD_CHARACTER_LIMIT = 2000
+from hexmaster.utils.datetime_utils import get_age_str
+from hexmaster.utils.discord_utils import render_and_truncate_table
+
+
 
 
 class HealthCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.repo = getattr(bot, "repo")
 
     @app_commands.command(name="ping", description="Healthcheck and DB connectivity test.")
     @app_commands.default_permissions(administrator=True)
@@ -98,6 +102,35 @@ class HealthCog(commands.Cog):
             ephemeral=True
         )
 
+    @app_commands.command(name="snapshots", description="View recently uploaded snapshots")
+    @app_commands.describe(limit="Number of snapshots to show (default 10, max 25)")
+    @app_commands.default_permissions(administrator=True)
+    async def view_snapshots(self, interaction: discord.Interaction, limit: int = 10) -> None:
+        limit = max(1, min(limit, 25))
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            results = await self.repo.get_latest_snapshots_summary(limit)
+            if not results:
+                return await interaction.followup.send("No snapshots found in the database.")
+
+            table_rows = []
+            for r in results:
+                age = get_age_str(r["captured_at"])
+                table_rows.append([
+                    r["id"],
+                    r["pretty_town"],
+                    r["struct_type"],
+                    r["stockpile_name"],
+                    age
+                ])
+
+            title = f"**Latest {len(results)} Snapshots**"
+            await render_and_truncate_table(interaction, table_rows, ["ID", "Town", "Type", "Stockpile", "Age"], title)
+
+        except Exception as e:
+            await interaction.followup.send(f"❌ **Error fetching snapshots:** {str(e)}")
+
     @app_commands.command(name="help", description="List all available commands and their usage.")
     async def help(self, interaction: discord.Interaction) -> None:
         """Shows help information for the bot."""
@@ -113,6 +146,7 @@ class HealthCog(commands.Cog):
             "**Maintenance**\n"
             "• `/ping`: Check bot and database health (Admin only).\n"
             "• `/db_stats`: Show database statistics (Admin only).\n"
+            "• `/snapshots`: View recently uploaded snapshots (Admin only).\n"
             "• `/check_towns`: Debug current town seeding status (Admin only).\n"
             "• `/check_regions`: Debug current region seeding status (Admin only).\n"
             "• `/check_priority`: Debug current priority list status (Admin only)."

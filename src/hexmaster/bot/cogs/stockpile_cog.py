@@ -10,8 +10,7 @@ from tabulate import tabulate
 
 from hexmaster.services.stockpile_service import StockpileService
 from hexmaster.utils.datetime_utils import get_age_str
-
-DISCORD_CHARACTER_LIMIT = 2000
+from hexmaster.utils.discord_utils import render_and_truncate_table
 
 
 class StockpileCog(commands.Cog):
@@ -33,35 +32,6 @@ class StockpileCog(commands.Cog):
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
         self._autocomplete_cache: dict[str, tuple[float, list[str]]] = {}
 
-    async def _render_and_truncate_table(
-            self,
-            interaction: discord.Interaction,
-            rows: list[list],
-            headers: list[str],
-            title: str,
-            ephemeral: bool = True
-    ) -> None:
-        """Renders a table with tabulate and handles Discord character limit truncation."""
-
-        def render(data):
-            return tabulate(data, headers=headers, tablefmt="simple")
-
-        lines = render(rows)
-        limit = DISCORD_CHARACTER_LIMIT - 300  # Buffer for title and code blocks
-
-        if len(lines) > limit:
-            current_rows = rows
-            while len(render(current_rows)) > limit and current_rows:
-                current_rows = current_rows[:-1]
-
-            hidden_count = len(rows) - len(current_rows)
-            lines = render(current_rows) + f"\n(+ {hidden_count} items hidden)"
-            
-        msg = f"{title}\n```\n{lines}\n```"
-        if interaction.response.is_done():
-            await interaction.followup.send(msg, ephemeral=ephemeral)
-        else:
-            await interaction.response.send_message(msg, ephemeral=ephemeral)
 
     async def cog_load(self) -> None:
         """Called when the cog is loaded. Pre-fills the town cache immediately."""
@@ -102,6 +72,38 @@ class StockpileCog(commands.Cog):
             print(f"Autocomplete error for {cache_key}: {e}")
             return []
 
+    async def _get_cached_choices(self, current: str, cache_key: str, fetch_func, *args) -> list[app_commands.Choice[str]]:
+        """Helper to handle caching and filtering for general autocomplete."""
+        now = time.time()
+        # Decorate cache key with args if any
+        full_cache_key = f"{cache_key}:{':'.join(map(str, args))}" if args else cache_key
+        
+        try:
+            if full_cache_key in self._autocomplete_cache:
+                timestamp, cached_items = self._autocomplete_cache[full_cache_key]
+                if now - timestamp < 30: # Shorter cache for town-specific items
+                    items = cached_items
+                else:
+                    items = await (fetch_func(*args) if inspect.iscoroutinefunction(fetch_func) else asyncio.to_thread(fetch_func, *args))
+                    self._autocomplete_cache[full_cache_key] = (now, items)
+            else:
+                items = await (fetch_func(*args) if inspect.iscoroutinefunction(fetch_func) else asyncio.to_thread(fetch_func, *args))
+                self._autocomplete_cache[full_cache_key] = (now, items)
+
+            search = current.lower().strip()
+            choices = []
+
+            for item in items:
+                if not item: continue
+                item_name = str(item)
+                if not search or search in item_name.lower():
+                    choices.append(app_commands.Choice(name=item_name[:100], value=item_name[:100]))
+                if len(choices) >= 25: break
+            return choices
+        except Exception as e:
+            print(f"Autocomplete error for {full_cache_key}: {e}")
+            return []
+
     @app_commands.command(name="report", description="File an Intelligence Report (upload screenshot)")
     @app_commands.describe(image="Stockpile screenshot", town="Town name", stockpile_name="Optional specific stockpile name")
     async def report(self, interaction: discord.Interaction, image: discord.Attachment, town: str, stockpile_name: str = "Public") -> None:
@@ -128,15 +130,16 @@ class StockpileCog(commands.Cog):
         return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
     @app_commands.command(name="inventory", description="View the Inventory for a specific town")
-    @app_commands.describe(town="Town name", stockpile="Optional stockpile name")
-    async def view_inventory(self, interaction: discord.Interaction, town: str, stockpile: str | None = None) -> None:
+    @app_commands.describe(town="Town name", struct_type="Specific structure type", stockpile="Optional stockpile name")
+    async def view_inventory(self, interaction: discord.Interaction, town: str, struct_type: str | None = None, stockpile: str | None = None) -> None:
         town_input = (town or "").strip()
         if not town_input:
             return await interaction.response.send_message("Town is required.", ephemeral=True)
 
-        rows = await self.repo.get_latest_inventory(town_input, stockpile)
+        rows = await self.repo.get_latest_inventory(town_input, struct_type, stockpile)
         if not rows:
-            return await interaction.response.send_message(f"No snapshots found for `{town_input}`.", ephemeral=True)
+            filter_msg = f" (filtered by `{struct_type}`/`{stockpile}`)" if struct_type or stockpile else ""
+            return await interaction.response.send_message(f"No snapshots found for `{town_input}`{filter_msg}.", ephemeral=True)
 
         table_rows = []
         for r in rows:
@@ -161,19 +164,58 @@ class StockpileCog(commands.Cog):
         if stockpile: title += f" (Filter: {stockpile})"
         if past_war_warning: title += past_war_warning
 
-        await self._render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title)
+        await render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title)
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
 
+    @view_inventory.autocomplete("struct_type")
+    async def inventory_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.town
+        if not town: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+
+    @view_inventory.autocomplete("stockpile")
+    async def inventory_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.town
+        struct = interaction.namespace.struct_type
+        if not town: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
+
     @app_commands.command(name="requisition", description="Requisition Order")
-    @app_commands.describe(shipping_hub="The shipping hub", receiving="The receiving hub/base", min_multiplier="Target Multiplier")
-    async def requisition(self, interaction: discord.Interaction, shipping_hub: str, receiving: str, min_multiplier: float | None = None) -> None:
+    @app_commands.describe(
+        shipping_hub="The shipping hub", 
+        receiving="The receiving hub/base", 
+        min_multiplier="Target Multiplier",
+        ship_struct="Specific shipping structure",
+        ship_stockpile="Specific shipping stockpile",
+        recv_struct="Specific receiving structure",
+        recv_stockpile="Specific receiving stockpile"
+    )
+    async def requisition(
+        self, 
+        interaction: discord.Interaction, 
+        shipping_hub: str, 
+        receiving: str, 
+        min_multiplier: float | None = None,
+        ship_struct: str | None = None,
+        ship_stockpile: str | None = None,
+        recv_struct: str | None = None,
+        recv_stockpile: str | None = None
+    ) -> None:
         await interaction.response.defer(ephemeral=True)
 
         try:
-            result = await self.service.get_requisition_comparison(shipping_hub, receiving, min_multiplier)
+            result = await self.service.get_requisition_comparison(
+                shipping_hub, 
+                receiving, 
+                min_multiplier,
+                ship_struct,
+                ship_stockpile,
+                recv_struct,
+                recv_stockpile
+            )
             
             comparison_data = result["comparison_data"]
             if not comparison_data:
@@ -188,8 +230,16 @@ class StockpileCog(commands.Cog):
             ship_age = f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
             recv_age = f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
 
-            title = f"{result['warning']}**{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({result['actual_multiplier']:g}x)**"
-            await self._render_and_truncate_table(interaction, table_rows, ["Item", "Avail", "Need"], title)
+            # Enhance title with filters
+            filter_info = ""
+            if any([ship_struct, ship_stockpile, recv_struct, recv_stockpile]):
+                filters = []
+                if ship_struct or ship_stockpile: filters.append(f"Ship: {ship_struct or ''} {ship_stockpile or ''}")
+                if recv_struct or recv_stockpile: filters.append(f"Recv: {recv_struct or ''} {recv_stockpile or ''}")
+                filter_info = f"\nFilters: { ' | '.join(filters) }"
+
+            title = f"{result['warning']}**{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({result['actual_multiplier']:g}x)**{filter_info}"
+            await render_and_truncate_table(interaction, table_rows, ["Item", "Avail", "Need"], title)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
@@ -198,9 +248,35 @@ class StockpileCog(commands.Cog):
     async def requisition_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots)
 
+    @requisition.autocomplete("ship_struct")
+    async def requisition_ship_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.shipping_hub
+        if not town: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+
+    @requisition.autocomplete("ship_stockpile")
+    async def requisition_ship_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.shipping_hub
+        struct = interaction.namespace.ship_struct
+        if not town: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
+
     @requisition.autocomplete("receiving")
     async def requisition_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
+
+    @requisition.autocomplete("recv_struct")
+    async def requisition_recv_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.receiving
+        if not town: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+
+    @requisition.autocomplete("recv_stockpile")
+    async def requisition_recv_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        town = interaction.namespace.receiving
+        struct = interaction.namespace.recv_struct
+        if not town: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
 
     @app_commands.command(name="locate", description="Locate an item")
     @app_commands.describe(item="Item name", from_town="Requesting town")
@@ -221,7 +297,7 @@ class StockpileCog(commands.Cog):
             if ref_town and ref_town.get("name"):
                 title += f" Request from `{ref_town['name']}`"
                 
-            await self._render_and_truncate_table(interaction, table_rows, ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"], title)
+            await render_and_truncate_table(interaction, table_rows, ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"], title)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error during search:** {str(e)}")
