@@ -1,7 +1,11 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from hexmaster.utils.discord_utils import render_and_truncate_table
+from hexmaster.utils.discord_utils import (
+    render_and_truncate_table,
+    send_success,
+    send_error
+)
 
 class PriorityCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -29,9 +33,15 @@ class PriorityCog(commands.Cog):
                 [item["name"], f"{item['qty_per_crate']}", f"{item['min_for_base_crates'] or 0}", f"{item['priority']:g}"]
                 for item in items
             ]
-            await render_and_truncate_table(interaction, table_rows, ["Item", "QPC", "Min", "Prio"], "**Current Priority List**")
+            await render_and_truncate_table(
+                interaction, 
+                table_rows, 
+                ["Item", "QPC", "Min", "Prio"], 
+                "Current Priority List",
+                as_embed=True
+            )
         except Exception as e:
-            await interaction.followup.send(f"❌ Error listing priority: {e}")
+            await send_error(interaction, f"Error listing priority: {e}")
 
     @priority_group.command(name="add", description="Add or update an item in the priority list")
     @app_commands.describe(
@@ -44,7 +54,7 @@ class PriorityCog(commands.Cog):
         try:
             catalog_item = await self.repo.get_catalog_item_by_name(item)
             if not catalog_item:
-                return await interaction.followup.send(f"❌ Item `{item}` not found in catalog.")
+                return await send_error(interaction, f"Item `{item}` not found in catalog.")
             
             await self.repo.upsert_priority_item(
                 codename=catalog_item.codename,
@@ -53,9 +63,9 @@ class PriorityCog(commands.Cog):
                 min_for_base_crates=min_crates,
                 priority=priority
             )
-            await interaction.followup.send(f"✅ Updated priority for **{catalog_item.displayname}**.")
+            await send_success(interaction, f"Updated priority for **{catalog_item.displayname}**.")
         except Exception as e:
-            await interaction.followup.send(f"❌ Error updating priority: {e}")
+            await send_error(interaction, f"Error updating priority: {e}")
 
     @add_priority.autocomplete("item")
     async def add_priority_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -75,12 +85,12 @@ class PriorityCog(commands.Cog):
             matched = next((p for p in priority_list if p["name"] == item), None)
             
             if not matched:
-                return await interaction.followup.send(f"❌ Item `{item}` not found in priority list.")
+                return await send_error(interaction, f"Item `{item}` not found in priority list.")
 
             await self.repo.delete_priority_item(matched["codename"])
-            await interaction.followup.send(f"✅ Removed **{item}** from priority list.")
+            await send_success(interaction, f"Removed **{item}** from priority list.")
         except Exception as e:
-            await interaction.followup.send(f"❌ Error removing priority: {e}")
+            await send_error(interaction, f"Error removing priority: {e}")
 
     @remove_priority.autocomplete("item")
     async def remove_priority_autocomplete(self, interaction: discord.Interaction, current: str):

@@ -10,7 +10,13 @@ from sqlalchemy import text, select, func
 from tabulate import tabulate
 
 from hexmaster.utils.datetime_utils import get_age_str
-from hexmaster.utils.discord_utils import render_and_truncate_table
+from hexmaster.utils.discord_utils import (
+    render_and_truncate_table, 
+    send_success, 
+    send_error, 
+    send_response,
+    EMBED_COLOR_INFO
+)
 
 
 
@@ -23,9 +29,11 @@ class HealthCog(commands.Cog):
     @app_commands.command(name="ping", description="Healthcheck and DB connectivity test.")
     @app_commands.default_permissions(administrator=True)
     async def ping(self, interaction: discord.Interaction) -> None:
+        start_time = time.time()
         async with self.bot.engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        await interaction.response.send_message("Pong. DB OK.", ephemeral=True)
+        latency = (time.time() - start_time) * 1000
+        await send_success(interaction, f"Database connectivity active.\nLatency: `{latency:.1f}ms`", title="Pong", ephemeral=True)
 
     @app_commands.command(name="db_stats", description="Show system database statistics.")
     @app_commands.default_permissions(administrator=True)
@@ -34,13 +42,11 @@ class HealthCog(commands.Cog):
             snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
             items = await conn.scalar(text("SELECT COUNT(*) FROM snapshot_items"))
 
-        stats = [
+        table_rows = [
             ["Snapshots", snapshots or 0],
             ["Items", items or 0]
         ]
-        table = tabulate(stats, headers=["Stat", "Value"], tablefmt="simple")
-        
-        await interaction.response.send_message(f"**System Stats**\n```\n{table}\n```", ephemeral=True)
+        await render_and_truncate_table(interaction, table_rows, ["Stat", "Value"], "**System Database Statistics**", as_embed=True)
 
     @app_commands.command(name="check_towns", description="Verify the towns table content.")
     @app_commands.default_permissions(administrator=True)
@@ -58,12 +64,15 @@ class HealthCog(commands.Cog):
             total = await conn.scalar(text("SELECT COUNT(*) FROM towns"))
 
         if not rows:
-            return await interaction.response.send_message("❌ The `towns` table is empty!", ephemeral=True)
+            return await send_error(interaction, "The `towns` table is empty!")
 
-        table = tabulate(rows, headers=["Town", "Region"], tablefmt="simple")
-        await interaction.response.send_message(
-            f"✅ **Towns Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 alphabetically.*",
-            ephemeral=True
+        table_rows = [[r[0], r[1]] for r in rows]
+        await render_and_truncate_table(
+            interaction, 
+            table_rows, 
+            ["Town", "Region"], 
+            f"**Towns Preview (Total: {total})**", 
+            as_embed=True
         )
 
     @app_commands.command(name="check_regions", description="Verify the regions table content.")
@@ -76,12 +85,15 @@ class HealthCog(commands.Cog):
             total = await conn.scalar(text("SELECT COUNT(*) FROM regions"))
 
         if not rows:
-            return await interaction.response.send_message("❌ The `regions` table is empty!", ephemeral=True)
+            return await send_error(interaction, "The `regions` table is empty!")
 
-        table = tabulate(rows, headers=["Region", "Q", "R"], tablefmt="simple")
-        await interaction.response.send_message(
-            f"✅ **Regions Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 alphabetically.*",
-            ephemeral=True
+        table_rows = [[r[0], r[1], r[2]] for r in rows]
+        await render_and_truncate_table(
+            interaction, 
+            table_rows, 
+            ["Region", "Q", "R"], 
+            f"**Regions Preview (Total: {total})**", 
+            as_embed=True
         )
 
     @app_commands.command(name="check_priority", description="Verify the priority table content.")
@@ -94,12 +106,15 @@ class HealthCog(commands.Cog):
             total = await conn.scalar(text("SELECT COUNT(*) FROM priority"))
 
         if not rows:
-            return await interaction.response.send_message("❌ The `priority` table is empty!", ephemeral=True)
+            return await send_error(interaction, "The `priority` table is empty!")
 
-        table = tabulate(rows, headers=["Item", "Codename", "Priority"], tablefmt="simple")
-        await interaction.response.send_message(
-            f"✅ **Priority Preview (Total: {total})**\n```\n{table}\n```\n*Showing first 10 by priority.*",
-            ephemeral=True
+        table_rows = [[r[0], r[1], f"{r[2]:g}"] for r in rows]
+        await render_and_truncate_table(
+            interaction, 
+            table_rows, 
+            ["Item", "Codename", "Priority"], 
+            f"**Priority Preview (Total: {total})**", 
+            as_embed=True
         )
 
     @app_commands.command(name="snapshots", description="View recently uploaded snapshots")
@@ -125,33 +140,96 @@ class HealthCog(commands.Cog):
                     age
                 ])
 
-            title = f"**Latest {len(results)} Snapshots**"
-            await render_and_truncate_table(interaction, table_rows, ["ID", "Town", "Type", "Stockpile", "Age"], title)
+            title = f"Latest {len(results)} Snapshots"
+            await render_and_truncate_table(interaction, table_rows, ["ID", "Town", "Type", "Stockpile", "Age"], title, as_embed=True)
 
         except Exception as e:
             await interaction.followup.send(f"❌ **Error fetching snapshots:** {str(e)}")
 
+    @app_commands.command(name="system_status", description="Comprehensive system health overview.")
+    @app_commands.default_permissions(administrator=True)
+    async def system_status(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer(ephemeral=True)
+        
+        embed = discord.Embed(title="🌐 HexMaster System Status", color=EMBED_COLOR_INFO)
+        
+        # 1. Database Status
+        try:
+            async with self.bot.engine.connect() as conn:
+                snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
+                items = await conn.scalar(text("SELECT COUNT(*) FROM snapshot_items"))
+                db_status = "✅ Connected"
+        except Exception:
+            db_status = "❌ Disconnected"
+            snapshots, items = 0, 0
+            
+        embed.add_field(name="🗄️ Database", value=f"**Status:** {db_status}\n**Snapshots:** {snapshots}\n**Items:** {items}", inline=True)
+        
+        # 2. War API Status
+        war_status = "Unknown"
+        war_num = "N/A"
+        if hasattr(self.bot, "war_service"):
+            try:
+                war_data = await self.bot.war_service.get_war_status()
+                war_num = war_data.get("warNumber", "Unknown")
+                war_status = "✅ Online"
+            except Exception:
+                war_status = "❌ Offline"
+        
+        embed.add_field(name="⚔️ War API", value=f"**Status:** {war_status}\n**Current War:** {war_num}", inline=True)
+        
+        # 3. Bot Status
+        latency = round(self.bot.latency * 1000, 1)
+        uptime = "N/A" # Could track this in bot.py if needed
+        embed.add_field(name="🤖 Bot", value=f"**Latency:** {latency}ms\n**Guilds:** {len(self.bot.guilds)}", inline=True)
+        
+        embed.set_footer(text=f"Requested by {interaction.user}", icon_url=interaction.user.display_avatar.url)
+        embed.timestamp = discord.utils.utcnow()
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
     @app_commands.command(name="help", description="List all available commands and their usage.")
     async def help(self, interaction: discord.Interaction) -> None:
-        """Shows help information for the bot."""
-        help_text = (
-            "### 🛠️ HexMaster Commands\n"
-            "**General**\n"
-            "• `/help`: Show this help message.\n\n"
-            "**Stockpiles**\n"
+        """Shows help information for the bot, dynamically filtered by permissions."""
+        is_admin = interaction.permissions.administrator
+        
+        embed = discord.Embed(
+            title="🛠️ HexMaster Command Reference", 
+            description="Use these commands to manage and locate stockpile assets.",
+            color=EMBED_COLOR_INFO
+        )
+        
+        # General Commands
+        general_cmds = "• `/help`: Show this help message.\n"
+        embed.add_field(name="📦 General", value=general_cmds, inline=False)
+        
+        # Logistics Commands
+        logistics_cmds = (
             "• `/report [image] [town] [name]`: File an Intelligence Report (upload screenshot).\n"
             "• `/inventory [town] [stockpile]`: View the Inventory for a town.\n"
             "• `/locate [item] [from_town]`: Perform Reconnaissance to locate assets globally.\n"
-            "• `/requisition [shipping] [receiving]`: Calculate a Requisition Order to fill gaps.\n\n"
-            "**Maintenance**\n"
-            "• `/ping`: Check bot and database health (Admin only).\n"
-            "• `/db_stats`: Show database statistics (Admin only).\n"
-            "• `/snapshots`: View recently uploaded snapshots (Admin only).\n"
-            "• `/check_towns`: Debug current town seeding status (Admin only).\n"
-            "• `/check_regions`: Debug current region seeding status (Admin only).\n"
-            "• `/check_priority`: Debug current priority list status (Admin only)."
+            "• `/requisition [shipping] [receiving]`: Calculate a Requisition Order to fill gaps."
         )
-        await interaction.response.send_message(help_text, ephemeral=True)
+        embed.add_field(name="🚛 Logistics", value=logistics_cmds, inline=False)
+
+        # Admin Commands (only show if admin)
+        if is_admin:
+            admin_cmds = (
+                "• `/system_status`: Comprehensive system health overview.\n"
+                "• `/snapshots [limit]`: View recently uploaded snapshots.\n"
+                "• `/priority list`: List items in the priority list.\n"
+                "• `/priority add [item] [min] [prio]`: Add/Update priority item.\n"
+                "• `/priority remove [item]`: Remove priority item.\n"
+                "• `/ping`: Check DB connectivity.\n"
+                "• `/db_stats`: Show database statistics.\n"
+                "• `/check_towns`: Debug town seeding.\n"
+                "• `/check_regions`: Debug region seeding.\n"
+                "• `/check_priority`: Debug priority list seeding."
+            )
+            embed.add_field(name="🛡️ Administration", value=admin_cmds, inline=False)
+        
+        embed.set_footer(text="HexMaster Logistics Bot • Helping you deliver more.")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 

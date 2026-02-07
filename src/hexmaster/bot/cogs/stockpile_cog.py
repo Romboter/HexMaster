@@ -10,7 +10,11 @@ from tabulate import tabulate
 
 from hexmaster.services.stockpile_service import StockpileService
 from hexmaster.utils.datetime_utils import get_age_str
-from hexmaster.utils.discord_utils import render_and_truncate_table
+from hexmaster.utils.discord_utils import (
+    render_and_truncate_table,
+    send_success,
+    send_error
+)
 
 
 class StockpileCog(commands.Cog):
@@ -108,7 +112,7 @@ class StockpileCog(commands.Cog):
     @app_commands.describe(image="Stockpile screenshot", town="Town name", stockpile_name="Optional specific stockpile name")
     async def report(self, interaction: discord.Interaction, image: discord.Attachment, town: str, stockpile_name: str = "Public") -> None:
         if not image.content_type or not image.content_type.startswith("image/"):
-            return await interaction.response.send_message("Please upload a valid image file.", ephemeral=True)
+            return await send_error(interaction, "Please upload a valid image file.")
 
         await interaction.response.defer(ephemeral=True)
         try:
@@ -118,12 +122,12 @@ class StockpileCog(commands.Cog):
             snapshot_id, count, struct_type = await self.service.process_remote_and_ingest(
                 image_bytes, town, stockpile_name, war_number
             )
-            await interaction.followup.send(
-                f"✅ **Success!** Imported {count} items for `{stockpile_name}` ({struct_type}) in `{town}`.\n"
-                f"Snapshot ID: `{snapshot_id}`"
+            await send_success(
+                interaction, 
+                f"Imported {count} items for `{stockpile_name}` ({struct_type}) in `{town}`.\nSnapshot ID: `{snapshot_id}`"
             )
         except Exception as e:
-            await interaction.followup.send(f"❌ **Error during upload:** {str(e)}")
+            await send_error(interaction, f"Error during upload: {str(e)}")
 
     @report.autocomplete("town")
     async def report_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -134,12 +138,12 @@ class StockpileCog(commands.Cog):
     async def view_inventory(self, interaction: discord.Interaction, town: str, struct_type: str, stockpile: str) -> None:
         town_input = (town or "").strip()
         if not town_input:
-            return await interaction.response.send_message("Town is required.", ephemeral=True)
+            return await send_error(interaction, "Town is required.")
 
         rows = await self.repo.get_latest_inventory(town_input, struct_type, stockpile)
         if not rows:
             filter_msg = f" (filtered by `{struct_type}`/`{stockpile}`)" if struct_type or stockpile else ""
-            return await interaction.response.send_message(f"No snapshots found for `{town_input}`{filter_msg}.", ephemeral=True)
+            return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
 
         table_rows = []
         for r in rows:
@@ -159,12 +163,12 @@ class StockpileCog(commands.Cog):
         oldest_snapshot = min(r["captured_at"] for r in rows if r.get("captured_at"))
         age_str = get_age_str(oldest_snapshot)
         
-        title = f"**{pretty_name}** ({age_str})"
+        title = f"{pretty_name} ({age_str})"
         if war_num and not past_war_warning: title += f" (War {war_num})"
         if stockpile: title += f" (Filter: {stockpile})"
         if past_war_warning: title += past_war_warning
 
-        await render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title)
+        await render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title, as_embed=True)
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -220,7 +224,9 @@ class StockpileCog(commands.Cog):
             
             comparison_data = result["comparison_data"]
             if not comparison_data:
-                return await interaction.followup.send(f"{result['warning']}✅ `{receiving}` meets all priority minimums!")
+                msg = f"✅ `{receiving}` meets all priority minimums!"
+                if result.get("warning"): msg = f"{result['warning']}\n{msg}"
+                return await send_success(interaction, msg, title="Requisition Order Complete")
 
             table_rows = [[d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"] for d in comparison_data]
             
@@ -239,11 +245,19 @@ class StockpileCog(commands.Cog):
                 if recv_struct or recv_stockpile: filters.append(f"Recv: {recv_struct or ''} {recv_stockpile or ''}")
                 filter_info = f"\nFilters: { ' | '.join(filters) }"
 
-            title = f"{result['warning']}**{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({result['actual_multiplier']:g}x)**{filter_info}"
-            await render_and_truncate_table(interaction, table_rows, ["Item", "Avail", "Need"], title)
+            title = f"{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({result['actual_multiplier']:g}x)"
+            if filter_info: title += f"\n{filter_info}"
+            
+            await render_and_truncate_table(
+                interaction, 
+                table_rows, 
+                ["Item", "Avail", "Need"], 
+                title, 
+                as_embed=True
+            )
 
         except Exception as e:
-            await interaction.followup.send(f"❌ **Error during comparison:** {str(e)}")
+            await send_error(interaction, f"Error during comparison: {str(e)}")
 
     @requisition.autocomplete("shipping_hub")
     async def requisition_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -287,21 +301,27 @@ class StockpileCog(commands.Cog):
         try:
             results, ref_town = await self.service.locate_item(item, from_town)
             if not results:
-                return await interaction.followup.send(f"❌ `{item}` is not in any stockpile.")
+                return await send_error(interaction, f"`{item}` is not in any stockpile.")
 
             table_rows = [
                 [d["Town"], d["Stockpile"], d["Type"], f"{round(d['Qty'], 1):g}", f"{d['Dist']:.1f}", get_age_str(d["captured_at"])] 
                 for d in results
             ]
 
-            title = f"**Available Stockpiles for `{item}`**"
+            title = f"Available Stockpiles for {item}"
             if ref_town and ref_town.get("name"):
-                title += f" Request from `{ref_town['name']}`"
+                title += f" (Ref: {ref_town['name']})"
                 
-            await render_and_truncate_table(interaction, table_rows, ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"], title)
+            await render_and_truncate_table(
+                interaction, 
+                table_rows, 
+                ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"], 
+                title,
+                as_embed=True
+            )
 
         except Exception as e:
-            await interaction.followup.send(f"❌ **Error during search:** {str(e)}")
+            await send_error(interaction, f"Error during search: {str(e)}")
 
     @locate.autocomplete("item")
     async def locate_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
