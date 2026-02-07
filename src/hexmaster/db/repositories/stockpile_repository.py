@@ -302,3 +302,39 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 
+    async def upsert_priority_item(self, codename: str, name: str, qty_per_crate: int, min_for_base_crates: int | None, priority: float):
+        """Adds or updates an item in the priority list."""
+        async with self.engine.begin() as conn:
+            from sqlalchemy.dialects.postgresql import insert
+            stmt = insert(Priority).values(
+                codename=codename,
+                name=name,
+                qty_per_crate=qty_per_crate,
+                min_for_base_crates=min_for_base_crates,
+                priority=priority
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[Priority.codename],
+                set_={
+                    "name": name,
+                    "qty_per_crate": qty_per_crate,
+                    "min_for_base_crates": min_for_base_crates,
+                    "priority": priority
+                }
+            )
+            await conn.execute(stmt)
+
+    async def delete_priority_item(self, codename: str):
+        """Removes an item from the priority list."""
+        async with self.engine.begin() as conn:
+            from sqlalchemy import delete
+            stmt = delete(Priority).where(Priority.codename == codename)
+            await conn.execute(stmt)
+
+    async def get_catalog_item_by_name(self, displayname: str):
+        """Fetches a catalog item by its display name."""
+        async with self.engine.connect() as conn:
+            stmt = select(CatalogItem).where(CatalogItem.displayname == displayname)
+            res = await conn.execute(stmt)
+            return res.mappings().first()
+

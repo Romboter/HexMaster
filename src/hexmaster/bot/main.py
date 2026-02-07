@@ -53,6 +53,7 @@ class HexMasterBot(commands.Bot):
         # 3.
         await self.load_extension("hexmaster.bot.cogs.stockpile_cog")
         await self.load_extension("hexmaster.bot.cogs.health")
+        await self.load_extension("hexmaster.bot.cogs.priority_cog")
 
 
         # 4. Syncing on every boot
