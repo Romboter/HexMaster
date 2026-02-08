@@ -145,11 +145,17 @@ class StockpileCog(commands.Cog):
             filter_msg = f" (filtered by `{struct_type}`/`{stockpile}`)" if struct_type or stockpile else ""
             return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
 
-        # Sort rows alphabetically by item name
-        rows.sort(key=lambda x: (x.get("item_name") or "").lower())
-
         priority_list = await self.repo.get_priority_list()
         priority_map = {p["codename"]: p for p in priority_list}
+
+        # Sort rows: priority (asc), then qty (desc), then name (asc)
+        def sort_key(r):
+            p_data = priority_map.get(r["code_name"])
+            priority_val = p_data["priority"] if p_data else 9999
+            qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
+            return (priority_val, -qty_crates, (r.get("item_name") or "").lower())
+
+        rows.sort(key=sort_key)
         table_rows = []
         for r in rows:
             qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
