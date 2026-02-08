@@ -147,32 +147,29 @@ class StockpileCog(commands.Cog):
 
         priority_list = await self.repo.get_priority_list()
         priority_map = {p["codename"]: p for p in priority_list}
-
         table_rows = []
-        row_colors = []
         for r in rows:
             qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
             
             p_data = priority_map.get(r["code_name"])
+            status = " " # Default empty
             min_val = 0
-            color = "" # Default
             
             if p_data:
                 min_val = p_data.get("min_for_base_crates") or 0
                 if qty_crates < min_val:
-                    color = "31" # Red
+                    status = "🔴"
                 else:
-                    color = "32" # Green
+                    status = "🟢"
 
-            need_val = max(0, min_val - qty_crates)
-            need_val = max(0, min_val - qty_crates)
+            need_val = max(0, min_val - qty_crates) if p_data else 0
             crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
             table_rows.append([
+                status,
                 f"{r['item_name']} {crated_tag}", 
                 f"{round(qty_crates, 1):g}",
                 f"{round(need_val, 1):g}" if need_val > 0 else "-"
             ])
-            row_colors.append(color)
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         war_num = rows[0].get("war_number")
@@ -194,10 +191,9 @@ class StockpileCog(commands.Cog):
         await render_and_truncate_table(
             interaction, 
             table_rows, 
-            ["Item", "Qty", "Need"], 
+            ["S", "Item", "Qty", "Need"], 
             title, 
-            as_embed=True,
-            row_colors=row_colors
+            as_embed=True
         )
 
     @view_inventory.autocomplete("town")
@@ -259,15 +255,14 @@ class StockpileCog(commands.Cog):
                 return await send_success(interaction, msg, title="Requisition Order Complete")
 
             table_rows = []
-            row_colors = []
             for d in comparison_data:
-                table_rows.append([d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
                 if d["Avail"] <= 0:
-                    row_colors.append("31") # Red (None avail)
+                    status = "🔴"
                 elif d["Avail"] < d["Need"]:
-                    row_colors.append("33") # Yellow (Some avail but not enough)
+                    status = "🟡"
                 else:
-                    row_colors.append("32") # Green (Enough avail)
+                    status = "🟢"
+                table_rows.append([status, d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
             
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
@@ -290,10 +285,9 @@ class StockpileCog(commands.Cog):
             await render_and_truncate_table(
                 interaction, 
                 table_rows, 
-                ["Item", "Avail", "Need"], 
+                ["S", "Item", "Avail", "Need"], 
                 title, 
-                as_embed=True,
-                row_colors=row_colors
+                as_embed=True
             )
 
         except Exception as e:
@@ -344,24 +338,24 @@ class StockpileCog(commands.Cog):
                 return await send_error(interaction, f"`{item}` is not in any stockpile.")
 
             table_rows = []
-            row_colors = []
             for d in results:
                 qty = d["Qty"]
+                if qty >= 50:
+                    status = "🟢"
+                elif qty < 10:
+                    status = "🔴"
+                else:
+                    status = "🟡"
+
                 table_rows.append([
-                    d["Town"][:15], 
-                    d["Stockpile"][:12], 
-                    d["Type"][:10], 
+                    status,
+                    d["Town"][:12], 
+                    d["Stockpile"][:10], 
+                    d["Type"][:6], 
                     f"{round(qty, 1):g}", 
-                    f"{d['Dist']:.1f}", 
+                    f"{d['Dist']:.1f}",
                     get_age_str(d["captured_at"])
                 ])
-                
-                if qty >= 50:
-                    row_colors.append("32") # Green
-                elif qty < 10:
-                    row_colors.append("31") # Red
-                else:
-                    row_colors.append("33") # Yellow
 
             title = f"Available Stockpiles for {item}"
             if ref_town and ref_town.get("name"):
@@ -370,10 +364,9 @@ class StockpileCog(commands.Cog):
             await render_and_truncate_table(
                 interaction, 
                 table_rows, 
-                ["Town", "Stockpile", "Type", "Qty", "Km", "Age"], 
+                ["S", "Town", "Stockp", "Type", "Qty", "Km", "Age"], 
                 title,
-                as_embed=True,
-                row_colors=row_colors
+                as_embed=True
             )
 
         except Exception as e:
