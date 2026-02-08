@@ -164,11 +164,13 @@ class StockpileCog(commands.Cog):
                 else:
                     color = "32" # Green
 
+            need_val = max(0, min_val - qty_crates)
+            need_val = max(0, min_val - qty_crates)
             crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
             table_rows.append([
                 f"{r['item_name']} {crated_tag}", 
                 f"{round(qty_crates, 1):g}",
-                f"{round(min_val, 1):g}" if min_val > 0 else "-"
+                f"{round(need_val, 1):g}" if need_val > 0 else "-"
             ])
             row_colors.append(color)
 
@@ -192,7 +194,7 @@ class StockpileCog(commands.Cog):
         await render_and_truncate_table(
             interaction, 
             table_rows, 
-            ["Item", "Qty", "Min"], 
+            ["Item", "Qty", "Need"], 
             title, 
             as_embed=True,
             row_colors=row_colors
@@ -341,10 +343,25 @@ class StockpileCog(commands.Cog):
             if not results:
                 return await send_error(interaction, f"`{item}` is not in any stockpile.")
 
-            table_rows = [
-                [d["Town"], d["Stockpile"], d["Type"], f"{round(d['Qty'], 1):g}", f"{d['Dist']:.1f}", get_age_str(d["captured_at"])] 
-                for d in results
-            ]
+            table_rows = []
+            row_colors = []
+            for d in results:
+                qty = d["Qty"]
+                table_rows.append([
+                    d["Town"][:15], 
+                    d["Stockpile"][:12], 
+                    d["Type"][:10], 
+                    f"{round(qty, 1):g}", 
+                    f"{d['Dist']:.1f}", 
+                    get_age_str(d["captured_at"])
+                ])
+                
+                if qty >= 50:
+                    row_colors.append("32") # Green
+                elif qty < 10:
+                    row_colors.append("31") # Red
+                else:
+                    row_colors.append("33") # Yellow
 
             title = f"Available Stockpiles for {item}"
             if ref_town and ref_town.get("name"):
@@ -353,9 +370,10 @@ class StockpileCog(commands.Cog):
             await render_and_truncate_table(
                 interaction, 
                 table_rows, 
-                ["Town", "Stockpile", "Type", "Qty", "Dist", "Age"], 
+                ["Town", "Stockpile", "Type", "Qty", "Km", "Age"], 
                 title,
-                as_embed=True
+                as_embed=True,
+                row_colors=row_colors
             )
 
         except Exception as e:
