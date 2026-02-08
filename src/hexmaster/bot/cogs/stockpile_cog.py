@@ -145,6 +145,9 @@ class StockpileCog(commands.Cog):
             filter_msg = f" (filtered by `{struct_type}`/`{stockpile}`)" if struct_type or stockpile else ""
             return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
 
+        # Sort rows alphabetically by item name
+        rows.sort(key=lambda x: (x.get("item_name") or "").lower())
+
         priority_list = await self.repo.get_priority_list()
         priority_map = {p["codename"]: p for p in priority_list}
         table_rows = []
@@ -165,10 +168,10 @@ class StockpileCog(commands.Cog):
             need_val = max(0, min_val - qty_crates) if p_data else 0
             crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
             table_rows.append([
-                status,
                 f"{r['item_name']} {crated_tag}", 
                 f"{round(qty_crates, 1):g}",
-                f"{round(need_val, 1):g}" if need_val > 0 else "-"
+                f"{round(need_val, 1):g}" if need_val > 0 else "-",
+                status
             ])
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
@@ -191,7 +194,7 @@ class StockpileCog(commands.Cog):
         await render_and_truncate_table(
             interaction, 
             table_rows, 
-            ["S", "Item", "Qty", "Need"], 
+            ["Item", "Qty", "Need", "S"], 
             title, 
             as_embed=True
         )
@@ -262,7 +265,7 @@ class StockpileCog(commands.Cog):
                     status = "🟡"
                 else:
                     status = "🟢"
-                table_rows.append([status, d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
+                table_rows.append([d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
             
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
@@ -285,7 +288,7 @@ class StockpileCog(commands.Cog):
             await render_and_truncate_table(
                 interaction, 
                 table_rows, 
-                ["S", "Item", "Avail", "Need"], 
+                ["Item", "Avail", "Need", "S"], 
                 title, 
                 as_embed=True
             )
@@ -348,13 +351,13 @@ class StockpileCog(commands.Cog):
                     status = "🟡"
 
                 table_rows.append([
-                    status,
                     d["Town"][:12], 
                     d["Stockpile"][:10], 
                     d["Type"][:6], 
                     f"{round(qty, 1):g}", 
                     f"{d['Dist']:.1f}",
-                    get_age_str(d["captured_at"])
+                    get_age_str(d["captured_at"]),
+                    status
                 ])
 
             title = f"Available Stockpiles for {item}"
@@ -364,7 +367,7 @@ class StockpileCog(commands.Cog):
             await render_and_truncate_table(
                 interaction, 
                 table_rows, 
-                ["S", "Town", "Stockp", "Type", "Qty", "Km", "Age"], 
+                ["Town", "Stockp", "Type", "Qty", "Hex", "Age", "S"], 
                 title,
                 as_embed=True
             )

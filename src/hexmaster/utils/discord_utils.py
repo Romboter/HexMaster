@@ -7,6 +7,56 @@ EMBED_COLOR_SUCCESS = 0x2ECC71 # Green
 EMBED_COLOR_ERROR = 0xE74C3C   # Red
 EMBED_COLOR_INFO = 0x3498DB    # Blue
 
+class PaginatorView(discord.ui.View):
+    def __init__(
+        self, 
+        pages: List[str], 
+        title: str, 
+        color: int, 
+        ephemeral: bool,
+        interaction: discord.Interaction
+    ):
+        super().__init__(timeout=300)
+        self.pages = pages
+        self.title = title
+        self.color = color
+        self.ephemeral = ephemeral
+        self.interaction = interaction
+        self.current_page = 0
+        
+        # Update button states
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.previous_button.disabled = (self.current_page == 0)
+        self.next_button.disabled = (self.current_page == len(self.pages) - 1)
+
+    async def update_message(self, interaction: discord.Interaction):
+        embed = self.create_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    def create_embed(self) -> discord.Embed:
+        page_indicator = f" (Page {self.current_page + 1}/{len(self.pages)})" if len(self.pages) > 1 else ""
+        embed = discord.Embed(
+            title=f"{self.title}{page_indicator}",
+            description=f"```ansi\n{self.pages[self.current_page]}\n```",
+            color=self.color
+        )
+        return embed
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.gray)
+    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page -= 1
+        self.update_buttons()
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.gray)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page += 1
+        self.update_buttons()
+        await self.update_message(interaction)
+
+
 async def render_and_truncate_table(
         interaction: discord.Interaction,
         rows: List[List[Any]],
@@ -18,75 +68,80 @@ async def render_and_truncate_table(
         row_colors: Optional[List[str]] = None
 ) -> None:
     """
-    Renders a table using ANSI colors in a monospaced code block.
-    row_colors: List of ANSI color codes (e.g., "31" for red, "32" for green)
+    Renders a table using ANSI colors in a monospaced code block with pagination.
     """
     if not rows:
         return await send_success(interaction, "No data to display.", title=title, ephemeral=ephemeral)
 
-    def render(data, is_ansi=False):
-        table_str = tabulate(data, headers=headers, tablefmt="simple")
-        if not is_ansi:
-            return table_str
-        
-        # Split into lines to apply colors
-        lines = table_str.split("\n")
-        # lines[0] is headers, lines[1] is separator, lines[2:] are data
-        header_lines = lines[:2]
-        data_lines = lines[2:]
-        
-        colored_lines = []
-        # Bold headers
-        for line in header_lines:
-            colored_lines.append(f"\u001b[1;37m{line}\u001b[0m")
+    # Discord Description Limit is 4096. 
+    # Use 3800 to be safe with code block markers and titles.
+    DESC_LIMIT = 3800
+
+    # Tabulate everything once to get consistent column widths
+    full_table_str = tabulate(rows, headers=headers, tablefmt="simple")
+    lines = full_table_str.split("\n")
+    header_lines = lines[:2]
+    data_lines = lines[2:]
+
+    header_str = "\n".join([f"\u001b[1;37m{l}\u001b[0m" for l in header_lines]) + "\n"
+    
+    pages = []
+    current_page_lines = []
+    current_len = len(header_str)
+    
+    for i, line in enumerate(data_lines):
+        # Apply color logic
+        colored_line = line
+        if row_colors and i < len(row_colors) and row_colors[i]:
+            colored_line = f"\u001b[0;{row_colors[i]}m{line}\u001b[0m"
             
-        for i, line in enumerate(data_lines):
-            if row_colors and i < len(row_colors) and row_colors[i]:
-                colored_lines.append(f"\u001b[0;{row_colors[i]}m{line}\u001b[0m")
-            else:
-                colored_lines.append(line)
+        line_len = len(colored_line) + 1 # +1 for newline
         
-        return "\n".join(colored_lines)
+        if current_len + line_len > DESC_LIMIT and current_page_lines:
+            pages.append(header_str + "\n".join(current_page_lines))
+            current_page_lines = [colored_line]
+            current_len = len(header_str) + line_len
+        else:
+            current_page_lines.append(colored_line)
+            current_len += line_len
+            
+    if current_page_lines:
+        pages.append(header_str + "\n".join(current_page_lines))
 
-    # Estimate overhead for ANSI blocks
-    # ANSI blocks add ~15 chars per row. 
-    overhead = 400 
-    limit = DISCORD_CHARACTER_LIMIT - overhead
-
-    current_rows = rows
-    # Truncation logic uses raw length (without ANSI codes) for simplicity,
-    # then we wrap it.
-    while len(tabulate(current_rows, headers=headers, tablefmt="simple")) > limit and current_rows:
-        current_rows = current_rows[:-1]
-
-    ansi_content = render(current_rows, is_ansi=True)
-    if len(current_rows) < len(rows):
-        hidden_count = len(rows) - len(current_rows)
-        ansi_content += f"\n\u001b[0;33m(+ {hidden_count} items hidden)\u001b[0m"
-
-    content = f"```ansi\n{ansi_content}\n```"
+    target_color = color or EMBED_COLOR_INFO
 
     if as_embed:
-        embed = discord.Embed(
-            title=title.replace("**", "").replace("__", ""),
-            description=content,
-            color=color or EMBED_COLOR_INFO
-        )
-        await send_response(interaction, embed=embed, ephemeral=ephemeral)
+        view = None
+        if len(pages) > 1:
+            view = PaginatorView(pages, title, target_color, ephemeral, interaction)
+            embed = view.create_embed()
+        else:
+            embed = discord.Embed(
+                title=title.replace("**", "").replace("__", ""),
+                description=f"```ansi\n{pages[0]}\n```",
+                color=target_color
+            )
+        
+        await send_response(interaction, embed=embed, view=view, ephemeral=ephemeral)
     else:
-        msg = f"{title}\n{content}"
+        # Fallback for non-embed (rarely used here)
+        msg = f"**{title}**\n```ansi\n{pages[0]}\n```"
+        if len(pages) > 1:
+            msg += f"\n*(Showing page 1/{len(pages)} - use embed view for pagination)*"
         await send_response(interaction, content=msg, ephemeral=ephemeral)
 
 async def send_response(
     interaction: discord.Interaction, 
     content: Optional[str] = None, 
     embed: Optional[discord.Embed] = None, 
+    view: Optional[discord.ui.View] = None,
     ephemeral: bool = True
 ) -> None:
     """Helper to handle response vs followup."""
     kwargs = {"ephemeral": ephemeral}
     if content: kwargs["content"] = content
     if embed: kwargs["embed"] = embed
+    if view: kwargs["view"] = view
 
     if interaction.response.is_done():
         await interaction.followup.send(**kwargs)
