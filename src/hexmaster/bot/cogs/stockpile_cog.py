@@ -173,8 +173,14 @@ class StockpileCog(commands.Cog):
 
             need_val = max(0, min_val - qty_crates) if p_data else 0
             crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
+            
+            # Truncate item name to 20 chars
+            base_name = r['item_name'] or "Unknown"
+            if len(base_name) > 20:
+                base_name = base_name[:20].strip() + "..."
+            
             table_rows.append([
-                f"{r['item_name']} {crated_tag}", 
+                f"{base_name} {crated_tag}", 
                 f"{round(qty_crates, 1):g}",
                 f"{round(need_val, 1):g}" if need_val > 0 else "-",
                 status
@@ -271,7 +277,13 @@ class StockpileCog(commands.Cog):
                     status = "🟡"
                 else:
                     status = "🟢"
-                table_rows.append([d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
+                
+                # Truncate item name for requisition (20 chars)
+                item_name = d["Item"] or "Unknown"
+                if len(item_name) > 20:
+                    item_name = item_name[:20].strip() + "..."
+                    
+                table_rows.append([item_name, f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
             
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else ship_town.title()
