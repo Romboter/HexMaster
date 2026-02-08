@@ -13,44 +13,69 @@ async def render_and_truncate_table(
         headers: List[str],
         title: str,
         ephemeral: bool = True,
-        as_embed: bool = False,
+        as_embed: bool = True,
         color: Optional[int] = None
 ) -> None:
     """
-    Renders a table with tabulate and handles Discord character limit truncation.
-    Optionally wraps it in a Discord Embed.
+    Renders a table using Discord Embed fields for a rich experience.
+    Falls back to a code block if there are too many rows or fields.
     """
+    if not rows:
+        return await send_success(interaction, "No data to display.", title=title, ephemeral=ephemeral)
 
-    def render(data):
-        return tabulate(data, headers=headers, tablefmt="simple")
+    # Discord limit: 25 fields per embed. 
+    # If we have 3 columns, we can show ~8 rows.
+    # For logistics, we often have many rows, so we might need a mix or a fallback.
+    
+    # Let's try to find if we can use fields for "Item", "Qty", "Status"
+    num_cols = len(headers)
+    max_fields = 25
+    max_rows_for_fields = max_fields // num_cols
 
-    # Estimate overhead
-    overhead = 300 # Buffer for titles, code blocks, and "hidden" message
-    limit = DISCORD_CHARACTER_LIMIT - overhead
-
-    current_rows = rows
-    lines = render(current_rows)
-
-    if len(lines) > limit:
-        # Binary search or iterative reduction? Iterative is simpler for now
-        while len(render(current_rows)) > limit and current_rows:
-            current_rows = current_rows[:-1]
-        
-        hidden_count = len(rows) - len(current_rows)
-        lines = render(current_rows) + f"\n(+ {hidden_count} items hidden)"
-
-    content = f"```\n{lines}\n```"
-
-    if as_embed:
+    if as_embed and len(rows) <= max_rows_for_fields:
         embed = discord.Embed(
-            title=title.replace("**", "").replace("__", ""), # Clean up markdown for embed title
-            description=content,
+            title=title.replace("**", "").replace("__", ""),
             color=color or EMBED_COLOR_INFO
         )
+        for i, header in enumerate(headers):
+            col_vals = []
+            for row in rows:
+                val = str(row[i])
+                col_vals.append(val)
+            
+            embed.add_field(name=header, value="\n".join(col_vals), inline=True)
+        
         await send_response(interaction, embed=embed, ephemeral=ephemeral)
     else:
-        msg = f"{title}\n{content}"
-        await send_response(interaction, content=msg, ephemeral=ephemeral)
+        # Fallback to tabulate in a code block for larger datasets
+        def render(data):
+            return tabulate(data, headers=headers, tablefmt="simple")
+
+        overhead = 300 
+        limit = DISCORD_CHARACTER_LIMIT - overhead
+
+        current_rows = rows
+        lines = render(current_rows)
+
+        if len(lines) > limit:
+            while len(render(current_rows)) > limit and current_rows:
+                current_rows = current_rows[:-1]
+            
+            hidden_count = len(rows) - len(current_rows)
+            lines = render(current_rows) + f"\n(+ {hidden_count} items hidden)"
+
+        content = f"```\n{lines}\n```"
+
+        if as_embed:
+            embed = discord.Embed(
+                title=title.replace("**", "").replace("__", ""),
+                description=content,
+                color=color or EMBED_COLOR_INFO
+            )
+            await send_response(interaction, embed=embed, ephemeral=ephemeral)
+        else:
+            msg = f"{title}\n{content}"
+            await send_response(interaction, content=msg, ephemeral=ephemeral)
 
 async def send_response(
     interaction: discord.Interaction, 

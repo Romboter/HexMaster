@@ -145,11 +145,24 @@ class StockpileCog(commands.Cog):
             filter_msg = f" (filtered by `{struct_type}`/`{stockpile}`)" if struct_type or stockpile else ""
             return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
 
+        priority_list = await self.repo.get_priority_list()
+        priority_map = {p["codename"]: p for p in priority_list}
+
         table_rows = []
         for r in rows:
             qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
-            status = "(Cr)" if r["is_crated"] else "(itm)"
-            table_rows.append([f"{r['item_name']} {status}", f"{round(qty_crates, 1):g}"])
+            status_tag = ""
+            
+            p_data = priority_map.get(r["code_name"])
+            if p_data:
+                min_crates = p_data.get("min_for_base_crates") or 0
+                if qty_crates < min_crates:
+                    status_tag = "🔴 "
+                else:
+                    status_tag = "🟢 "
+
+            crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
+            table_rows.append([f"{status_tag}{r['item_name']} {crated_tag}", f"{round(qty_crates, 1):g}"])
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         war_num = rows[0].get("war_number")
@@ -228,7 +241,12 @@ class StockpileCog(commands.Cog):
                 if result.get("warning"): msg = f"{result['warning']}\n{msg}"
                 return await send_success(interaction, msg, title="Requisition Order Complete")
 
-            table_rows = [[d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"] for d in comparison_data]
+            table_rows = []
+            for d in comparison_data:
+                # Requisition shows items that are NEEDED, so they are by definition "below target"
+                # but we can show status based on current Avail vs Need
+                status = "🔴" if d["Avail"] < d["Need"] else "🟡"
+                table_rows.append([f"{status} {d['Item']}", f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
             
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
