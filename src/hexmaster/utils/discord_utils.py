@@ -65,10 +65,12 @@ async def render_and_truncate_table(
         ephemeral: bool = True,
         as_embed: bool = True,
         color: Optional[int] = None,
-        row_colors: Optional[List[str]] = None
+        row_colors: Optional[List[str]] = None,
+        max_rows: int = 20
 ) -> None:
     """
     Renders a table using ANSI colors in a monospaced code block with pagination.
+    max_rows: Maximum rows per page (default 20).
     """
     if not rows:
         return await send_success(interaction, "No data to display.", title=title, ephemeral=ephemeral)
@@ -88,6 +90,7 @@ async def render_and_truncate_table(
     pages = []
     current_page_lines = []
     current_len = len(header_str)
+    current_row_count = 0
     
     for i, line in enumerate(data_lines):
         # Apply color logic
@@ -97,13 +100,23 @@ async def render_and_truncate_table(
             
         line_len = len(colored_line) + 1 # +1 for newline
         
-        if current_len + line_len > DESC_LIMIT and current_page_lines:
+        # Check if we should start a new page (character limit OR row limit)
+        should_split = False
+        if current_page_lines:
+            if current_len + line_len > DESC_LIMIT:
+                should_split = True
+            elif current_row_count >= max_rows:
+                should_split = True
+
+        if should_split:
             pages.append(header_str + "\n".join(current_page_lines))
             current_page_lines = [colored_line]
             current_len = len(header_str) + line_len
+            current_row_count = 1
         else:
             current_page_lines.append(colored_line)
             current_len += line_len
+            current_row_count += 1
             
     if current_page_lines:
         pages.append(header_str + "\n".join(current_page_lines))
