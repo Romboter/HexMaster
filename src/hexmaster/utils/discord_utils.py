@@ -14,68 +14,68 @@ async def render_and_truncate_table(
         title: str,
         ephemeral: bool = True,
         as_embed: bool = True,
-        color: Optional[int] = None
+        color: Optional[int] = None,
+        row_colors: Optional[List[str]] = None
 ) -> None:
     """
-    Renders a table using Discord Embed fields for a rich experience.
-    Falls back to a code block if there are too many rows or fields.
+    Renders a table using ANSI colors in a monospaced code block.
+    row_colors: List of ANSI color codes (e.g., "31" for red, "32" for green)
     """
     if not rows:
         return await send_success(interaction, "No data to display.", title=title, ephemeral=ephemeral)
 
-    # Discord limit: 25 fields per embed. 
-    # If we have 3 columns, we can show ~8 rows.
-    # For logistics, we often have many rows, so we might need a mix or a fallback.
-    
-    # Let's try to find if we can use fields for "Item", "Qty", "Status"
-    num_cols = len(headers)
-    max_fields = 25
-    max_rows_for_fields = max_fields // num_cols
+    def render(data, is_ansi=False):
+        table_str = tabulate(data, headers=headers, tablefmt="simple")
+        if not is_ansi:
+            return table_str
+        
+        # Split into lines to apply colors
+        lines = table_str.split("\n")
+        # lines[0] is headers, lines[1] is separator, lines[2:] are data
+        header_lines = lines[:2]
+        data_lines = lines[2:]
+        
+        colored_lines = []
+        # Bold headers
+        for line in header_lines:
+            colored_lines.append(f"\u001b[1;37m{line}\u001b[0m")
+            
+        for i, line in enumerate(data_lines):
+            if row_colors and i < len(row_colors) and row_colors[i]:
+                colored_lines.append(f"\u001b[0;{row_colors[i]}m{line}\u001b[0m")
+            else:
+                colored_lines.append(line)
+        
+        return "\n".join(colored_lines)
 
-    if as_embed and len(rows) <= max_rows_for_fields:
+    # Estimate overhead for ANSI blocks
+    # ANSI blocks add ~15 chars per row. 
+    overhead = 400 
+    limit = DISCORD_CHARACTER_LIMIT - overhead
+
+    current_rows = rows
+    # Truncation logic uses raw length (without ANSI codes) for simplicity,
+    # then we wrap it.
+    while len(tabulate(current_rows, headers=headers, tablefmt="simple")) > limit and current_rows:
+        current_rows = current_rows[:-1]
+
+    ansi_content = render(current_rows, is_ansi=True)
+    if len(current_rows) < len(rows):
+        hidden_count = len(rows) - len(current_rows)
+        ansi_content += f"\n\u001b[0;33m(+ {hidden_count} items hidden)\u001b[0m"
+
+    content = f"```ansi\n{ansi_content}\n```"
+
+    if as_embed:
         embed = discord.Embed(
             title=title.replace("**", "").replace("__", ""),
+            description=content,
             color=color or EMBED_COLOR_INFO
         )
-        for i, header in enumerate(headers):
-            col_vals = []
-            for row in rows:
-                val = str(row[i])
-                col_vals.append(val)
-            
-            embed.add_field(name=header, value="\n".join(col_vals), inline=True)
-        
         await send_response(interaction, embed=embed, ephemeral=ephemeral)
     else:
-        # Fallback to tabulate in a code block for larger datasets
-        def render(data):
-            return tabulate(data, headers=headers, tablefmt="simple")
-
-        overhead = 300 
-        limit = DISCORD_CHARACTER_LIMIT - overhead
-
-        current_rows = rows
-        lines = render(current_rows)
-
-        if len(lines) > limit:
-            while len(render(current_rows)) > limit and current_rows:
-                current_rows = current_rows[:-1]
-            
-            hidden_count = len(rows) - len(current_rows)
-            lines = render(current_rows) + f"\n(+ {hidden_count} items hidden)"
-
-        content = f"```\n{lines}\n```"
-
-        if as_embed:
-            embed = discord.Embed(
-                title=title.replace("**", "").replace("__", ""),
-                description=content,
-                color=color or EMBED_COLOR_INFO
-            )
-            await send_response(interaction, embed=embed, ephemeral=ephemeral)
-        else:
-            msg = f"{title}\n{content}"
-            await send_response(interaction, content=msg, ephemeral=ephemeral)
+        msg = f"{title}\n{content}"
+        await send_response(interaction, content=msg, ephemeral=ephemeral)
 
 async def send_response(
     interaction: discord.Interaction, 

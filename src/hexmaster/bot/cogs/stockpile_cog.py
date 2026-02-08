@@ -149,20 +149,28 @@ class StockpileCog(commands.Cog):
         priority_map = {p["codename"]: p for p in priority_list}
 
         table_rows = []
+        row_colors = []
         for r in rows:
             qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
-            status_tag = ""
             
             p_data = priority_map.get(r["code_name"])
+            min_val = 0
+            color = "" # Default
+            
             if p_data:
-                min_crates = p_data.get("min_for_base_crates") or 0
-                if qty_crates < min_crates:
-                    status_tag = "🔴 "
+                min_val = p_data.get("min_for_base_crates") or 0
+                if qty_crates < min_val:
+                    color = "31" # Red
                 else:
-                    status_tag = "🟢 "
+                    color = "32" # Green
 
             crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
-            table_rows.append([f"{status_tag}{r['item_name']} {crated_tag}", f"{round(qty_crates, 1):g}"])
+            table_rows.append([
+                f"{r['item_name']} {crated_tag}", 
+                f"{round(qty_crates, 1):g}",
+                f"{round(min_val, 1):g}" if min_val > 0 else "-"
+            ])
+            row_colors.append(color)
 
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         war_num = rows[0].get("war_number")
@@ -181,7 +189,14 @@ class StockpileCog(commands.Cog):
         if stockpile: title += f" (Filter: {stockpile})"
         if past_war_warning: title += past_war_warning
 
-        await render_and_truncate_table(interaction, table_rows, ["Item", "Qty"], title, as_embed=True)
+        await render_and_truncate_table(
+            interaction, 
+            table_rows, 
+            ["Item", "Qty", "Min"], 
+            title, 
+            as_embed=True,
+            row_colors=row_colors
+        )
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -242,11 +257,15 @@ class StockpileCog(commands.Cog):
                 return await send_success(interaction, msg, title="Requisition Order Complete")
 
             table_rows = []
+            row_colors = []
             for d in comparison_data:
-                # Requisition shows items that are NEEDED, so they are by definition "below target"
-                # but we can show status based on current Avail vs Need
-                status = "🔴" if d["Avail"] < d["Need"] else "🟡"
-                table_rows.append([f"{status} {d['Item']}", f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
+                table_rows.append([d["Item"], f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}"])
+                if d["Avail"] <= 0:
+                    row_colors.append("31") # Red (None avail)
+                elif d["Avail"] < d["Need"]:
+                    row_colors.append("33") # Yellow (Some avail but not enough)
+                else:
+                    row_colors.append("32") # Green (Enough avail)
             
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else shipping_hub.title()
@@ -271,7 +290,8 @@ class StockpileCog(commands.Cog):
                 table_rows, 
                 ["Item", "Avail", "Need"], 
                 title, 
-                as_embed=True
+                as_embed=True,
+                row_colors=row_colors
             )
 
         except Exception as e:
