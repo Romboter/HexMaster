@@ -1,4 +1,15 @@
 {
-    "venvPath": "c:/Users/gkuep/PycharmProjects/Hexmaster",
-    "venv": ".venv"
+    "venvPath": ".",
+    "venv": ".venv",
+    "extraPaths": [
+        "src"
+    ],
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".venv"
+    ]
 }
