@@ -12,7 +12,7 @@ class StockpileService:
         qpc = catalog_qpc or per_crate or 1
         return total / qpc
 
-    async def process_remote_and_ingest(self, image_bytes: bytes, town: str, stockpile_name: str, war_number: int | None = None):
+    async def process_remote_and_ingest(self, guild_id: int, image_bytes: bytes, town: str, stockpile_name: str, war_number: int | None = None):
         """Coordinates the OCR process and database ingestion."""
         try:
             df = await self.ocr_service.process_image(image_bytes, town, stockpile_name)
@@ -43,11 +43,12 @@ class StockpileService:
                     "description": str(r.get("Description", "")).strip()
                 })
  
-        snapshot_id = await self.repo.ingest_snapshot(town, struct_type, stockpile_name, items, war_number)
+        snapshot_id = await self.repo.ingest_snapshot(guild_id, town, struct_type, stockpile_name, items, war_number)
         return snapshot_id, len(items), struct_type
 
     async def get_requisition_comparison(
         self, 
+        guild_id: int,
         shipping_hub: str, 
         receiving: str, 
         min_multiplier: float | None = None,
@@ -57,12 +58,12 @@ class StockpileService:
         recv_stockpile: str | None = None
     ):
         """Calculates logic for comparing two towns for requisition."""
-        priority_list = await self.repo.get_priority_list()
+        priority_list = await self.repo.get_priority_list(guild_id)
         if not priority_list:
             raise ValueError("Priority list is empty.")
 
-        ship_snap, ship_items = await self.repo.get_latest_snapshot_for_town_filtered(shipping_hub, ship_struct, ship_stockpile)
-        recv_snap, recv_items = await self.repo.get_latest_snapshot_for_town_filtered(receiving, recv_struct, recv_stockpile)
+        ship_snap, ship_items = await self.repo.get_latest_snapshot_for_town_filtered(guild_id, shipping_hub, ship_struct, ship_stockpile)
+        recv_snap, recv_items = await self.repo.get_latest_snapshot_for_town_filtered(guild_id, receiving, recv_struct, recv_stockpile)
 
         if not recv_snap:
             raise ValueError(f"No snapshots found for receiving town `{receiving}`.")
@@ -141,13 +142,13 @@ class StockpileService:
         }
 
 
-    async def locate_item(self, item: str, from_town: str):
+    async def locate_item(self, guild_id: int, item: str, from_town: str):
         """Locates an item and calculates distances from a reference town."""
         ref_town = await self.repo.get_town_data(from_town)
         if not ref_town:
             raise ValueError(f"Town `{from_town}` not found.")
 
-        results = await self.repo.search_item_across_stockpiles(item)
+        results = await self.repo.search_item_across_stockpiles(guild_id, item)
         if not results:
             return None, ref_town
 

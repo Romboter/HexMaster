@@ -32,13 +32,34 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ## Quick Reference 🚀
 
-| Command | Description |
-| --- | --- |
-| `/report` | **File an Intelligence Report** by uploading a stockpile screenshot. |
-| `/inventory` | **View the Inventory** for a specific town or base. |
-| `/locate` | **Perform Reconnaissance** to find an item's location across the map. |
-| `/requisition` | **Calculate a Requisition Order** to identify supply gaps between hubs. |
-| `/help` | Display the command list and immersive lore information. |
+### User Commands
+
+| Command          | Description                                                           |
+| ---------------- | --------------------------------------------------------------------- |
+| `/report`        | **File an Intelligence Report** by uploading a stockpile screenshot.  |
+| `/inventory`     | **View the Inventory** for a specific town or base.                   |
+| `/locate`        | **Perform Reconnaissance** to find an item's location across the map. |
+| `/requisition`   | **Calculate a Requisition Order** to identify supply gaps.            |
+| `/priority list` | **View the Priority List** for your current server.                   |
+| `/help`          | Display the command list and lore.                                    |
+
+### Admin Commands (Administrator Permission Required)
+
+| Command             | Description                                         |
+| ------------------- | --------------------------------------------------- |
+| `/setup config`     | **Configure Server** settings (Faction, Shard).     |
+| `/setup priorities` | **Load Priority Templates** or clear existing ones. |
+| `/priority add`     | **Add/Update Item** in the priority list.           |
+| `/priority remove`  | **Remove Item** from the priority list.             |
+
+---
+
+## Server Setup (Admins Only)
+
+Once the bot is invited to your server, you **must** configure it before it can fetch accurate game data or track stockpiles:
+
+1. **Configure Faction & Shard**: Run `/setup config faction:[Colonial/Warden] shard:[Alpha/Bravo/Charlie]`. This tells the bot which WarAPI endpoint to use and which faction items to prioritize.
+2. **Initialize Priorities**: Run `/setup priorities template:standard` to load a default list of 60+ critical logistics items. You can further customize these with `/priority add` and `/priority remove`.
 
 ---
 
@@ -107,7 +128,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -131,7 +152,6 @@ services:
 volumes:
   pgdata:
   shared_data:
-
 ```
 
 ---

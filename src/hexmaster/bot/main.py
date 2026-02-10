@@ -16,6 +16,7 @@ from hexmaster.db.seed_reference import (
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
 from hexmaster.services.ocr_service import OCRService
 from hexmaster.services.war_service import WarService
+from hexmaster.db.repositories.settings_repository import SettingsRepository
 
 
 class HexMasterBot(commands.Bot):
@@ -28,6 +29,7 @@ class HexMasterBot(commands.Bot):
 
         # Dependency Injection: Initialize once, use everywhere
         self.repo = StockpileRepository(self.engine)
+        self.settings_repo = SettingsRepository(self.engine)
         self.ocr_service = OCRService(settings.ocr_url)
         self.war_service = WarService(settings.warapi_base_url)
 #
@@ -54,18 +56,12 @@ class HexMasterBot(commands.Bot):
         await self.load_extension("hexmaster.bot.cogs.stockpile_cog")
         await self.load_extension("hexmaster.bot.cogs.health")
         await self.load_extension("hexmaster.bot.cogs.priority_cog")
+        await self.load_extension("hexmaster.bot.cogs.setup_cog")
 
 
-        # 4. Syncing on every boot
-        guild_id = os.getenv("DISCORD_GUILD_ID")
-        if guild_id:
-            guild = discord.Object(id=int(guild_id))
-            self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            print(f"✅ Synced commands to guild {guild_id}")
-        else:
-            await self.tree.sync()
-            print("✅ Synced commands globally")
+        # 4. Syncing globally (Guild agnostic)
+        await self.tree.sync()
+        print("✅ Synced commands globally")
 
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")

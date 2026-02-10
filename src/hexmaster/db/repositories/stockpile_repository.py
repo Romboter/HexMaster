@@ -19,11 +19,12 @@ class StockpileRepository:
         """Helper to normalize town/stockpile names."""
         return name.strip().lower() if name else ""
 
-    def _latest_snapshots_subquery(self, town: str = None, struct_type: str = None, stockpile: str = None):
+    def _latest_snapshots_subquery(self, guild_id: int, town: str = None, struct_type: str = None, stockpile: str = None):
         """Helper to find the most recent snapshot IDs for unique (town, struct, stockpile) tuples."""
         subq = (
             select(StockpileSnapshot.id)
             .distinct(StockpileSnapshot.town, StockpileSnapshot.struct_type, StockpileSnapshot.stockpile_name)
+            .where(StockpileSnapshot.guild_id == guild_id)
             .order_by(
                 StockpileSnapshot.town,
                 StockpileSnapshot.struct_type,
@@ -40,36 +41,39 @@ class StockpileRepository:
             subq = subq.where(StockpileSnapshot.stockpile_name == stockpile.strip())
         return subq
 
-    async def get_towns_with_snapshots(self) -> list[str]:
-        """Fetches unique pretty town names that already have snapshots in the DB."""
+    async def get_towns_with_snapshots(self, guild_id: int) -> list[str]:
+        """Fetches unique pretty town names that already have snapshots in the DB for a guild."""
         async with self.engine.connect() as conn:
             stmt = (
                 select(Town.name)
                 .distinct()
                 .join(StockpileSnapshot, text("LOWER(towns.name) = stockpile_snapshots.town"))
+                .where(StockpileSnapshot.guild_id == guild_id)
                 .order_by(Town.name)
             )
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_struct_types_for_town(self, town: str) -> list[str]:
-        """Fetches unique structure types for a specific town."""
+    async def get_struct_types_for_town(self, guild_id: int, town: str) -> list[str]:
+        """Fetches unique structure types for a specific town and guild."""
         async with self.engine.connect() as conn:
             stmt = (
                 select(StockpileSnapshot.struct_type)
                 .distinct()
+                .where(StockpileSnapshot.guild_id == guild_id)
                 .where(StockpileSnapshot.town == self._normalize_name(town))
                 .order_by(StockpileSnapshot.struct_type)
             )
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_stockpile_names_for_town(self, town: str, struct_type: str = None) -> list[str]:
+    async def get_stockpile_names_for_town(self, guild_id: int, town: str, struct_type: str = None) -> list[str]:
         """Fetches unique stockpile names for a specific town and optional structure type."""
         async with self.engine.connect() as conn:
             stmt = (
                 select(StockpileSnapshot.stockpile_name)
                 .distinct()
+                .where(StockpileSnapshot.guild_id == guild_id)
                 .where(StockpileSnapshot.town == self._normalize_name(town))
             )
             if struct_type:
@@ -79,13 +83,14 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_towns_with_hub_snapshots(self) -> list[str]:
-        """Fetches pretty town names that have at least one Seaport or Storage Depot snapshot."""
+    async def get_towns_with_hub_snapshots(self, guild_id: int) -> list[str]:
+        """Fetches pretty town names that have at least one Seaport or Storage Depot snapshot for a guild."""
         async with self.engine.connect() as conn:
             stmt = (
                 select(Town.name)
                 .distinct()
                 .join(StockpileSnapshot, text("LOWER(towns.name) = stockpile_snapshots.town"))
+                .where(StockpileSnapshot.guild_id == guild_id)
                 .where(
                     (StockpileSnapshot.struct_type.ilike("%Storage Depot%")) |
                     (StockpileSnapshot.struct_type.ilike("%Seaport%"))
@@ -102,7 +107,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return {(row.codename, row.displayname) for row in result}
 
-    async def ingest_snapshot(self, town: str, struct_type: str, stockpile_name: str, items_data: list[dict], war_number: int | None = None):
+    async def ingest_snapshot(self, guild_id: int, town: str, struct_type: str, stockpile_name: str, items_data: list[dict], war_number: int | None = None):
         """Creates a new snapshot and inserts its items in a single transaction."""
         async with self.engine.begin() as conn:
             # 1. Insert the snapshot header
@@ -112,6 +117,7 @@ class StockpileRepository:
             norm_stockpile = stockpile_name.strip()
 
             stmt = insert(StockpileSnapshot).values(
+                guild_id=guild_id,
                 town=norm_town,
                 struct_type=norm_struct,
                 stockpile_name=norm_stockpile,
@@ -131,10 +137,10 @@ class StockpileRepository:
 
             return snapshot_id
 
-    async def get_latest_inventory(self, town: str, struct_type: str = None, stockpile: str = None):
-        """Fetches the latest item counts for a specific town."""
+    async def get_latest_inventory(self, guild_id: int, town: str, struct_type: str = None, stockpile: str = None):
+        """Fetches the latest item counts for a specific town and guild."""
         async with self.engine.connect() as conn:
-            subq = self._latest_snapshots_subquery(town=town, struct_type=struct_type, stockpile=stockpile)
+            subq = self._latest_snapshots_subquery(guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile)
 
             # Join with SnapshotItem and Town to get actual inventory with pretty names
             stmt = (
@@ -161,19 +167,19 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return result.mappings().all()
 
-    async def get_priority_list(self) -> list[dict]:
-        """Fetches the full priority list from the DB."""
+    async def get_priority_list(self, guild_id: int) -> list[dict]:
+        """Fetches the full priority list from the DB for a specific guild."""
         async with self.engine.connect() as conn:
-            stmt = select(Priority).order_by(Priority.priority)
+            stmt = select(Priority).where(Priority.guild_id == guild_id).order_by(Priority.priority)
             result = await conn.execute(stmt)
             return [dict(row) for row in result.mappings().all()]
 
-    async def get_latest_snapshot_for_town_filtered(self, town: str, struct_type: str = None, stockpile: str = None):
-        """Fetches the latest snapshot and its items for a specific town with optional filters."""
+    async def get_latest_snapshot_for_town_filtered(self, guild_id: int, town: str, struct_type: str = None, stockpile: str = None):
+        """Fetches the latest snapshot and its items for a specific town and guild with optional filters."""
         async with self.engine.connect() as conn:
             norm_town = self._normalize_name(town)
-            # Find the latest snapshot IDs for each unique (struct, stockpile) in this town
-            subq = self._latest_snapshots_subquery(town=town, struct_type=struct_type, stockpile=stockpile)
+            # Find the latest snapshot IDs for each unique (struct, stockpile) in this town/guild
+            subq = self._latest_snapshots_subquery(guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile)
             
             # Fetch all items from these latest snapshots
             stmt_items = (
@@ -201,6 +207,7 @@ class StockpileRepository:
                 )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
+                .where(StockpileSnapshot.guild_id == guild_id)
             )
             if struct_type:
                 latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.struct_type == struct_type.strip())
@@ -219,10 +226,10 @@ class StockpileRepository:
         Fetches the latest snapshot and its items for a specific town across ALL stockpiles."""
         return await self.get_latest_snapshot_for_town_filtered(town)
 
-    async def search_item_across_stockpiles(self, item_name: str):
-        """Finds all latest instances of an item across all towns with pretty town names."""
+    async def search_item_across_stockpiles(self, guild_id: int, item_name: str):
+        """Finds all latest instances of an item across all towns for a guild."""
         async with self.engine.connect() as conn:
-            subq = self._latest_snapshots_subquery()
+            subq = self._latest_snapshots_subquery(guild_id=guild_id)
 
             stmt = (
                 select(
@@ -255,8 +262,8 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return result.mappings().all()
 
-    async def get_latest_snapshots_summary(self, limit: int = 10):
-        """Fetches a summary of the most recent snapshots across all towns."""
+    async def get_latest_snapshots_summary(self, guild_id: int, limit: int = 10):
+        """Fetches a summary of the most recent snapshots across all towns for a guild."""
         async with self.engine.connect() as conn:
             stmt = (
                 select(
@@ -268,6 +275,7 @@ class StockpileRepository:
                     StockpileSnapshot.war_number
                 )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
+                .where(StockpileSnapshot.guild_id == guild_id)
                 .order_by(desc(StockpileSnapshot.captured_at))
                 .limit(limit)
             )
@@ -302,11 +310,12 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 
-    async def upsert_priority_item(self, codename: str, name: str, qty_per_crate: int, min_for_base_crates: int | None, priority: float):
-        """Adds or updates an item in the priority list."""
+    async def upsert_priority_item(self, guild_id: int, codename: str, name: str, qty_per_crate: int, min_for_base_crates: int | None, priority: float):
+        """Adds or updates an item in the priority list for a specific guild."""
         async with self.engine.begin() as conn:
             from sqlalchemy.dialects.postgresql import insert
             stmt = insert(Priority).values(
+                guild_id=guild_id,
                 codename=codename,
                 name=name,
                 qty_per_crate=qty_per_crate,
@@ -314,7 +323,7 @@ class StockpileRepository:
                 priority=priority
             )
             stmt = stmt.on_conflict_do_update(
-                index_elements=[Priority.codename],
+                index_elements=[Priority.guild_id, Priority.codename],
                 set_={
                     "name": name,
                     "qty_per_crate": qty_per_crate,
@@ -324,11 +333,18 @@ class StockpileRepository:
             )
             await conn.execute(stmt)
 
-    async def delete_priority_item(self, codename: str):
-        """Removes an item from the priority list."""
+    async def delete_priority_item(self, guild_id: int, codename: str):
+        """Removes an item from the priority list for a specific guild."""
         async with self.engine.begin() as conn:
             from sqlalchemy import delete
-            stmt = delete(Priority).where(Priority.codename == codename)
+            stmt = delete(Priority).where(Priority.guild_id == guild_id).where(Priority.codename == codename)
+            await conn.execute(stmt)
+
+    async def delete_all_priorities(self, guild_id: int):
+        """Clears all items from the priority list for a specific guild."""
+        async with self.engine.begin() as conn:
+            from sqlalchemy import delete
+            stmt = delete(Priority).where(Priority.guild_id == guild_id)
             await conn.execute(stmt)
 
     async def get_catalog_item_by_name(self, displayname: str):

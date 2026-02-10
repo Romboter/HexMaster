@@ -15,9 +15,22 @@ class CatalogItem(Base):
     factionvariant: Mapped[str] = mapped_column(String(20))
     quantitypercrate: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
+class GuildConfig(Base):
+    """Server-specific configuration for the bot."""
+    __tablename__ = "guild_configs"
+
+    guild_id: Mapped[int] = mapped_column(primary_key=True)
+    faction: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # Colonial / Warden
+    shard: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)    # Alpha / Bravo / Charlie
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
 class Priority(Base):
     __tablename__ = 'priority'
 
+    guild_id: Mapped[int] = mapped_column(primary_key=True)
     codename: Mapped[str] = mapped_column(String(100), primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
     qty_per_crate: Mapped[int] = mapped_column(Integer)

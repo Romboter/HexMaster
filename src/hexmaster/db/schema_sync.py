@@ -32,6 +32,19 @@ async def sync_schema(conn: AsyncConnection) -> None:
         # Stockpile Snapshots Table
         ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS guild_id BIGINT"),
         ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS war_number INTEGER"),
+
+        # Guild Configs Table
+        ("guild_configs", """
+            CREATE TABLE IF NOT EXISTS guild_configs (
+                guild_id BIGINT PRIMARY KEY,
+                faction VARCHAR(20),
+                shard VARCHAR(20),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+        """),
+
+        # Priority Table
+        ("priority", "ALTER TABLE priority ADD COLUMN IF NOT EXISTS guild_id BIGINT"),
         
         # Snapshot Items Table (Ensuring primary key is correct is harder, but we can ensure columns)
         ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS code_name VARCHAR"),

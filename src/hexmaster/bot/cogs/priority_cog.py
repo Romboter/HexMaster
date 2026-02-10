@@ -22,7 +22,11 @@ class PriorityCog(commands.Cog):
     async def list_priority(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         try:
-            items = await self.repo.get_priority_list()
+            guild_id = interaction.guild_id
+            if not guild_id:
+                return await interaction.followup.send("This command can only be used in a server.")
+            
+            items = await self.repo.get_priority_list(guild_id)
             if not items:
                 return await interaction.followup.send("The priority list is currently empty.")
 
@@ -52,11 +56,16 @@ class PriorityCog(commands.Cog):
     async def add_priority(self, interaction: discord.Interaction, item: str, min_crates: int, priority: float):
         await interaction.response.defer(ephemeral=True)
         try:
+            guild_id = interaction.guild_id
+            if not guild_id:
+                return await send_error(interaction, "This command can only be used in a server.")
+
             catalog_item = await self.repo.get_catalog_item_by_name(item)
             if not catalog_item:
                 return await send_error(interaction, f"Item `{item}` not found in catalog.")
             
             await self.repo.upsert_priority_item(
+                guild_id=guild_id,
                 codename=catalog_item.codename,
                 name=catalog_item.displayname,
                 qty_per_crate=catalog_item.quantitypercrate or 1,
@@ -69,6 +78,7 @@ class PriorityCog(commands.Cog):
 
     @add_priority.autocomplete("item")
     async def add_priority_autocomplete(self, interaction: discord.Interaction, current: str):
+        # Catalog is global, but we still use interaction
         names = await self.repo.get_all_catalog_item_names()
         choices = [
             app_commands.Choice(name=name[:100], value=name[:100])
@@ -81,20 +91,26 @@ class PriorityCog(commands.Cog):
     async def remove_priority(self, interaction: discord.Interaction, item: str):
         await interaction.response.defer(ephemeral=True)
         try:
-            priority_list = await self.repo.get_priority_list()
+            guild_id = interaction.guild_id
+            if not guild_id:
+                return await send_error(interaction, "This command can only be used in a server.")
+
+            priority_list = await self.repo.get_priority_list(guild_id)
             matched = next((p for p in priority_list if p["name"] == item), None)
             
             if not matched:
                 return await send_error(interaction, f"Item `{item}` not found in priority list.")
 
-            await self.repo.delete_priority_item(matched["codename"])
+            await self.repo.delete_priority_item(guild_id, matched["codename"])
             await send_success(interaction, f"Removed **{item}** from priority list.")
         except Exception as e:
             await send_error(interaction, f"Error removing priority: {e}")
 
     @remove_priority.autocomplete("item")
     async def remove_priority_autocomplete(self, interaction: discord.Interaction, current: str):
-        priority_list = await self.repo.get_priority_list()
+        guild_id = interaction.guild_id
+        if not guild_id: return []
+        priority_list = await self.repo.get_priority_list(guild_id)
         choices = [
             app_commands.Choice(name=p["name"][:100], value=p["name"][:100])
             for p in priority_list if current.lower() in p["name"].lower()

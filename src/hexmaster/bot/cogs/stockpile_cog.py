@@ -9,6 +9,7 @@ from discord.ext import commands
 from tabulate import tabulate
 
 from hexmaster.services.stockpile_service import StockpileService
+from hexmaster.db.repositories.settings_repository import SettingsRepository
 from hexmaster.utils.datetime_utils import get_age_str
 from hexmaster.utils.discord_utils import (
     render_and_truncate_table,
@@ -32,19 +33,22 @@ class StockpileCog(commands.Cog):
         
         self.war_service = self.service.war_service
         self.settings = getattr(bot, "settings")
+        self.settings_repo = SettingsRepository(self.repo.engine)
 
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
         self._autocomplete_cache: dict[str, tuple[float, list[str]]] = {}
 
+    async def _get_shard(self, guild_id: int | None) -> str | None:
+        """Fetches the configured shard for a guild."""
+        if not guild_id:
+            return None
+        config = await self.settings_repo.get_config(guild_id)
+        return config.shard if config else "Alpha"
+
 
     async def cog_load(self) -> None:
-        """Called when the cog is loaded. Pre-fills the town cache immediately."""
-        try:
-            # Trigger a cache fill with an empty search string
-            await self._get_cached_town_choices("", "all_towns", self.repo.get_all_towns)
-            print("✅ Town autocomplete cache warmed (853 entries).")
-        except Exception as e:
-            print(f"⚠️ Failed to warm autocomplete cache: {e}")
+        """Called when the cog is loaded."""
+        pass # Autocomplete warming is harder now due to guild_id being required
 
     async def _get_cached_town_choices(self, current: str, cache_key: str, fetch_func) -> list[
         app_commands.Choice[str]]:
@@ -111,16 +115,21 @@ class StockpileCog(commands.Cog):
     @app_commands.command(name="report", description="File an Intelligence Report (upload screenshot)")
     @app_commands.describe(image="Stockpile screenshot", town="Town Name", stockpile="Stockpile Name")
     async def report(self, interaction: discord.Interaction, image: discord.Attachment, town: str, stockpile: str = "Public") -> None:
+        guild_id = interaction.guild_id
+        if not guild_id:
+            return await send_error(interaction, "This command can only be used in a server.")
+
         if not image.content_type or not image.content_type.startswith("image/"):
             return await send_error(interaction, "Please upload a valid image file.")
 
         await interaction.response.defer(ephemeral=True)
         try:
             image_bytes = await image.read()
-            war_number = await self.war_service.get_current_war_number() if self.war_service else None
+            shard = await self._get_shard(guild_id)
+            war_number = await self.war_service.get_current_war_number(shard) if self.war_service else None
 
             snapshot_id, count, struct_type = await self.service.process_remote_and_ingest(
-                image_bytes, town, stockpile, war_number
+                guild_id, image_bytes, town, stockpile, war_number
             )
             await send_success(
                 interaction, 
@@ -135,17 +144,21 @@ class StockpileCog(commands.Cog):
 
     @app_commands.command(name="inventory", description="View the Inventory for a specific town")
     @app_commands.describe(town="Town Name", structure="Structure Type", stockpile="Stockpile Name")
-    async def view_inventory(self, interaction: discord.Interaction, town: str, structure: str, stockpile: str) -> None:
+    async def view_inventory(self, interaction: discord.Interaction, town: str, structure: str = None, stockpile: str = None) -> None:
+        guild_id = interaction.guild_id
+        if not guild_id:
+            return await send_error(interaction, "This command can only be used in a server.")
+
         town_input = (town or "").strip()
         if not town_input:
             return await send_error(interaction, "Town is required.")
 
-        rows = await self.repo.get_latest_inventory(town_input, structure, stockpile)
+        rows = await self.repo.get_latest_inventory(guild_id, town_input, structure, stockpile)
         if not rows:
             filter_msg = f" (filtered by `{structure}`/ `{stockpile}`)" if structure or stockpile else ""
             return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
 
-        priority_list = await self.repo.get_priority_list()
+        priority_list = await self.repo.get_priority_list(guild_id)
         priority_map = {p["codename"]: p for p in priority_list}
 
         # Sort rows: priority (asc), then qty (desc), then name (asc)
@@ -191,7 +204,8 @@ class StockpileCog(commands.Cog):
         
         past_war_warning = ""
         if self.war_service:
-            current_war = await self.war_service.get_current_war_number()
+            shard = await self._get_shard(guild_id)
+            current_war = await self.war_service.get_current_war_number(shard)
             if war_num and current_war and war_num < current_war:
                 past_war_warning = f"\n⚠️ **Warning: Data from past war (War {war_num})**"
 
@@ -213,20 +227,24 @@ class StockpileCog(commands.Cog):
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
+        guild_id = interaction.guild_id
+        if not guild_id: return []
+        return await self._get_cached_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots, guild_id)
 
     @view_inventory.autocomplete("structure")
     async def inventory_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.town
-        if not town: return []
-        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, guild_id, town)
 
     @view_inventory.autocomplete("stockpile")
     async def inventory_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.town
         struct = interaction.namespace.structure
-        if not town: return []
-        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, guild_id, town, struct)
 
     @app_commands.command(name="requisition", description="Requisition Order")
     @app_commands.describe(
@@ -242,18 +260,22 @@ class StockpileCog(commands.Cog):
         self, 
         interaction: discord.Interaction, 
         ship_town: str, 
-        ship_struct: str,
-        ship_stockpile: str,
         recv_town: str, 
-        recv_struct: str,
-        recv_stockpile: str,
+        ship_struct: str = None,
+        ship_stockpile: str = None,
+        recv_struct: str = None,
+        recv_stockpile: str = None,
         multiplier: float | None = None
     ) -> None:
+        guild_id = interaction.guild_id
+        if not guild_id:
+            return await send_error(interaction, "This command can only be used in a server.")
 
         await interaction.response.defer(ephemeral=True)
 
         try:
             result = await self.service.get_requisition_comparison(
+                guild_id,
                 ship_town, 
                 recv_town, 
                 multiplier,
@@ -316,45 +338,57 @@ class StockpileCog(commands.Cog):
 
     @requisition.autocomplete("ship_town")
     async def requisition_ship_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots)
+        guild_id = interaction.guild_id
+        if not guild_id: return []
+        return await self._get_cached_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots, guild_id)
 
     @requisition.autocomplete("ship_struct")
     async def requisition_ship_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.ship_town
-        if not town: return []
-        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, guild_id, town)
 
     @requisition.autocomplete("ship_stockpile")
     async def requisition_ship_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.ship_town
         struct = interaction.namespace.ship_struct
-        if not town: return []
-        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, guild_id, town, struct)
 
     @requisition.autocomplete("recv_town")
     async def requisition_recv_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots)
+        guild_id = interaction.guild_id
+        if not guild_id: return []
+        return await self._get_cached_choices(current, "snapshot_towns", self.repo.get_towns_with_snapshots, guild_id)
 
     @requisition.autocomplete("recv_struct")
     async def requisition_recv_struct_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.recv_town
-        if not town: return []
-        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, town)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "struct_types", self.repo.get_struct_types_for_town, guild_id, town)
 
     @requisition.autocomplete("recv_stockpile")
     async def requisition_recv_stockpile_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        guild_id = interaction.guild_id
         town = interaction.namespace.recv_town
         struct = interaction.namespace.recv_struct
-        if not town: return []
-        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, town, struct)
+        if not town or not guild_id: return []
+        return await self._get_cached_choices(current, "stockpile_names", self.repo.get_stockpile_names_for_town, guild_id, town, struct)
 
     @app_commands.command(name="locate", description="Locate an item")
     @app_commands.describe(item="Item Name", ref_town="Reference Town")
     async def locate(self, interaction: discord.Interaction, item: str, ref_town: str) -> None:
+        guild_id = interaction.guild_id
+        if not guild_id:
+            return await send_error(interaction, "This command can only be used in a server.")
+
         await interaction.response.defer(ephemeral=True)
 
         try:
-            results, ref_town_data = await self.service.locate_item(item, ref_town)
+            results, ref_town_data = await self.service.locate_item(guild_id, item, ref_town)
             if not results:
                 return await send_error(interaction, f"`{item}` is not in any stockpile.")
 
@@ -395,7 +429,9 @@ class StockpileCog(commands.Cog):
 
     @locate.autocomplete("item")
     async def locate_item_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(current, "stockpile_items", self.repo.get_items_in_stockpiles)
+        guild_id = interaction.guild_id
+        if not guild_id: return []
+        return await self._get_cached_choices(current, "stockpile_items", self.repo.get_items_in_stockpiles, guild_id)
 
     @locate.autocomplete("ref_town")
     async def locate_town_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
