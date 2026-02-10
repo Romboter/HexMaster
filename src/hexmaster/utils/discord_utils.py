@@ -36,7 +36,7 @@ class PaginatorView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
 
     def create_embed(self) -> discord.Embed:
-        page_indicator = f" (Page {self.current_page + 1}/{len(self.pages)})" if len(self.pages) > 1 else ""
+        page_indicator = f" {self.current_page + 1}/{len(self.pages)}" if len(self.pages) > 1 else ""
         embed = discord.Embed(
             title=f"{self.title}{page_indicator}",
             description=f"```ansi\n{self.pages[self.current_page]}\n```",

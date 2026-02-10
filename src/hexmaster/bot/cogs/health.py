@@ -125,7 +125,11 @@ class HealthCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         try:
-            results = await self.repo.get_latest_snapshots_summary(limit)
+            guild_id = interaction.guild_id
+            if not guild_id:
+                return await interaction.followup.send("This command can only be used in a server.")
+
+            results = await self.repo.get_latest_snapshots_summary(guild_id, limit)
             if not results:
                 return await interaction.followup.send("No snapshots found in the database.")
 

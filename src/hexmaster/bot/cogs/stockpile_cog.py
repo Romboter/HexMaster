@@ -223,10 +223,10 @@ class StockpileCog(commands.Cog):
         oldest_snapshot = min(r["captured_at"] for r in rows if r.get("captured_at"))
         age_str = get_age_str(oldest_snapshot)
         
-        title = f"{pretty_name} ({age_str})"
+        title = f"{pretty_name} [{age_str}]"
         if success_msg:
             title = f"{success_msg}\n{title}"
-        if war_num and not past_war_warning: title += f" (War {war_num})"
+        if war_num and not past_war_warning: title += f" War {war_num}"
         if stockpile: title += f" (Filter: {stockpile})"
         if past_war_warning: title += past_war_warning
 
@@ -324,8 +324,8 @@ class StockpileCog(commands.Cog):
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else ship_town.title()
             recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else recv_town.title()
             
-            ship_age = f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
-            recv_age = f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
+            ship_age = f" [{get_age_str(ship_snap['captured_at'])}]" if ship_snap else ""
+            recv_age = f" [{get_age_str(recv_snap['captured_at'])}]" if recv_snap else ""
 
             # Enhance title with filters
             filter_info = ""
