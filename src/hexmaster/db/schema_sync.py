@@ -54,6 +54,11 @@ async def sync_schema(conn: AsyncConnection) -> None:
         ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS per_crate INTEGER DEFAULT 0"),
         ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS total INTEGER DEFAULT 0"),
         ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS description TEXT"),
+
+        # BigInt Fixes for guild_id
+        ("guild_configs", "ALTER TABLE guild_configs ALTER COLUMN guild_id TYPE BIGINT"),
+        ("priority", "ALTER TABLE priority ALTER COLUMN guild_id TYPE BIGINT"),
+        ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ALTER COLUMN guild_id TYPE BIGINT"),
     ]
 
     for table, stmt in migrations:

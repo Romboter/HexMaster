@@ -95,5 +95,26 @@ class SetupCog(commands.Cog):
         except Exception as e:
             await send_error(interaction, f"Error loading priorities: {e}")
 
+    @setup_group.command(name="cleanup_commands", description="Clear legacy guild-specific commands")
+    async def cleanup_commands(self, interaction: discord.Interaction):
+        """Removes all commands synced specifically to this guild to resolve duplicates."""
+        await interaction.response.defer(ephemeral=True)
+        try:
+            guild = interaction.guild
+            if not guild:
+                return await send_error(interaction, "This command can only be used in a server.")
+            
+            # Clear guild-specific commands
+            self.bot.tree.clear_commands(guild=guild)
+            await self.bot.tree.sync(guild=guild)
+            
+            await send_success(
+                interaction, 
+                "Guild commands cleared. It may take a few minutes for Discord to update your UI. "
+                "Global commands will remain available."
+            )
+        except Exception as e:
+            await send_error(interaction, f"Error cleaning up commands: {e}")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(SetupCog(bot))
