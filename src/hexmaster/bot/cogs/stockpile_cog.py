@@ -132,10 +132,8 @@ class StockpileCog(commands.Cog):
             snapshot_id, count, struct_type = await self.service.process_remote_and_ingest(
                 guild_id, image_bytes, town, stockpile, war_number
             )
-            await send_success(
-                interaction, 
-                f"Imported {count} items for `{stockpile}` ({struct_type}) in `{town}`.\nSnapshot ID: `{snapshot_id}`"
-            )
+            # Show the inventory table immediately for feedback
+            await self._send_inventory_results(interaction, guild_id, town, struct_type, stockpile, success_msg=f"Imported {count} items. Snapshot ID: `{snapshot_id}`")
         except OCRServiceError as e:
             print(f"OCR Service Error: {e.message}\nDetails: {e.technical_details}")
             await send_error(
@@ -162,10 +160,14 @@ class StockpileCog(commands.Cog):
         if not town_input:
             return await send_error(interaction, "Town is required.")
 
-        rows = await self.repo.get_latest_inventory(guild_id, town_input, structure, stockpile)
+        await self._send_inventory_results(interaction, guild_id, town_input, structure, stockpile)
+
+    async def _send_inventory_results(self, interaction: discord.Interaction, guild_id: int, town_name: str, structure: str = None, stockpile: str = None, success_msg: str = None) -> None:
+        """Reusable helper to fetch inventory and render table."""
+        rows = await self.repo.get_latest_inventory(guild_id, town_name, structure, stockpile)
         if not rows:
             filter_msg = f" (filtered by `{structure}`/ `{stockpile}`)" if structure or stockpile else ""
-            return await send_error(interaction, f"No snapshots found for `{town_input}`{filter_msg}.")
+            return await send_error(interaction, f"No snapshots found for `{town_name}`{filter_msg}.")
 
         priority_list = await self.repo.get_priority_list(guild_id)
         priority_map = {p["codename"]: p for p in priority_list}
@@ -208,7 +210,7 @@ class StockpileCog(commands.Cog):
                 status
             ])
 
-        pretty_name = rows[0].get("pretty_town") or town_input.title()
+        pretty_name = rows[0].get("pretty_town") or town_name.title()
         war_num = rows[0].get("war_number")
         
         past_war_warning = ""
@@ -222,6 +224,8 @@ class StockpileCog(commands.Cog):
         age_str = get_age_str(oldest_snapshot)
         
         title = f"{pretty_name} ({age_str})"
+        if success_msg:
+            title = f"{success_msg}\n{title}"
         if war_num and not past_war_warning: title += f" (War {war_num})"
         if stockpile: title += f" (Filter: {stockpile})"
         if past_war_warning: title += past_war_warning

@@ -15,6 +15,7 @@ class StockpileService:
     async def process_remote_and_ingest(self, guild_id: int, image_bytes: bytes, town: str, stockpile_name: str, war_number: int | None = None):
         """Coordinates the OCR process and database ingestion."""
         try:
+            # town and stockpile_name passed here are used as fallbacks if FS fails to detect them
             df = await self.ocr_service.process_image(image_bytes, town, stockpile_name)
         except Exception as e:
             # Let OCRServiceError bubble up to the cog for better formatting
@@ -23,25 +24,44 @@ class StockpileService:
         if df.empty:
             raise ValueError("OCR returned no data from the image.")
 
-        struct_type = str(df.iloc[0].get("Structure Type", "Unknown")).strip()
-        if stockpile_name == "Public":
-            sheet_stockpile = str(df.iloc[0].get("Stockpile Name", "")).strip()
-            if sheet_stockpile:
-                stockpile_name = sheet_stockpile
+        # Extract metadata from the first row (populated by OCRService)
+        first_row = df.iloc[0]
+        struct_type = str(first_row.get("Structure Type", "Unknown")).strip()
+        
+        # Priority: OCR Detected Name > User Fallback (if default set to "Public")
+        detected_stockpile = str(first_row.get("Stockpile Name", "")).strip()
+        if detected_stockpile:
+             stockpile_name = detected_stockpile
 
-        valid_keys = await self.repo.get_catalog_items()
+        # --- UPDATED LOOKUP LOGIC ---
+        valid_pairs = await self.repo.get_catalog_items()
+        # Create a map of CodeName -> DisplayName
+        code_to_name = {c: n for c, n in valid_pairs}
+
         items = []
         for _, r in df.iterrows():
-            cname, iname = str(r.get("CodeName", "")).strip(), str(r.get("Name", "")).strip()
-            if (cname, iname) in valid_keys:
+            cname = str(r.get("CodeName", "")).strip()
+            
+            # If valid code, use the DB's pretty name. 
+            # If invalid code, skip it (it might be a modded item or OCR error)
+            if cname in code_to_name:
+                real_name = code_to_name[cname]
+                
+                qty = int(r["Quantity"]) if pd.notna(r.get("Quantity")) else 0
+                is_crated = str(r.get("Crated?", "")).upper() in ("TRUE", "YES", "T", "Y")
+                
+                # Calculate totals if not provided by OCR
+                # (FS usually provides raw quantity and crated status, not total items)
+                # We let the repo/view logic handle the crates-to-items math based on the catalog definition
+                
                 items.append({
                     "code_name": cname,
-                    "item_name": iname,
-                    "quantity": int(r["Quantity"]) if pd.notna(r.get("Quantity")) else 0,
-                    "is_crated": str(r.get("Crated?", "")).upper() in ("TRUE", "YES", "T", "Y"),
-                    "per_crate": int(r["Per Crate"]) if pd.notna(r.get("Per Crate")) else 0,
-                    "total": int(r["Total"]) if pd.notna(r.get("Total")) else 0,
-                    "description": str(r.get("Description", "")).strip()
+                    "item_name": real_name, # Use the clean name from DB
+                    "quantity": qty,
+                    "is_crated": is_crated,
+                    "per_crate": 0, # Will be filled by DB default on read if 0
+                    "total": qty,   # Temporarily store raw qty; detailed math happens on read
+                    "description": ""
                 })
  
         snapshot_id = await self.repo.ingest_snapshot(guild_id, town, struct_type, stockpile_name, items, war_number)
