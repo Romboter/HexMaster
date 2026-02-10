@@ -1,7 +1,20 @@
 import io
+import json
 import pandas as pd
 import aiohttp
 from typing import Optional
+
+
+class OCRServiceError(Exception):
+    """Custom exception for OCR Service failures."""
+    def __init__(self, status: int, message: str, technical_details: Optional[str] = None):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+        self.technical_details = technical_details
+
+    def __str__(self):
+        return f"{self.message} (Status: {self.status})"
 
 
 class OCRService:
@@ -22,10 +35,24 @@ class OCRService:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=data) as resp:
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    raise RuntimeError(f"OCR Service returned status {resp.status}: {error_text}")
+                return await self._handle_response(resp)
 
-                # Assuming FIR returns a TSV or JSON that pandas can read
-                content = await resp.text()
-                return pd.read_csv(io.StringIO(content), sep='\t')
+    async def _handle_response(self, resp: aiohttp.ClientResponse) -> pd.DataFrame:
+        """Internal helper to handle the OCR response."""
+        if resp.status != 200:
+            raw_error = await resp.text()
+            try:
+                error_json = json.loads(raw_error)
+                msg = error_json.get("error", "Unknown OCR error")
+                details = error_json.get("stderr_tail") or error_json.get("details")
+                
+                if "headless_process failed" in msg:
+                    msg = "OCR Service encountered a headless process crash. Transient failure likely."
+                
+                raise OCRServiceError(resp.status, msg, details)
+            except json.JSONDecodeError:
+                raise OCRServiceError(resp.status, f"OCR Service returned an error: {raw_error[:200]}")
+
+        # Assuming FIR returns a TSV or JSON that pandas can read
+        content = await resp.text()
+        return pd.read_csv(io.StringIO(content), sep='\t')

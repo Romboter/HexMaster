@@ -17,7 +17,8 @@ class StockpileService:
         try:
             df = await self.ocr_service.process_image(image_bytes, town, stockpile_name)
         except Exception as e:
-            raise RuntimeError(f"OCR Server Error: {e}")
+            # Let OCRServiceError bubble up to the cog for better formatting
+            raise
 
         if df.empty:
             raise ValueError("OCR returned no data from the image.")

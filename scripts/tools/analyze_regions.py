@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-REGIONS_CSV = "data/Regions.csv"
+REGIONS_CSV = "data/core/Regions.csv"
 WARAPI_BASE_URL = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
 WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
 

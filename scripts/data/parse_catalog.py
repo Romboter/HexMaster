@@ -75,7 +75,9 @@ def main() -> None:
 
     print(df.head())
     print(f"\nLoaded {len(df)} unique catalog items.")
-    df.to_csv("catalog.csv")
+    input_csv = "data/core/catalog.csv"
+    output_json = "data/core/catalog.json"
+    df.to_csv(input_csv)
 
 if __name__ == "__main__":
     main()

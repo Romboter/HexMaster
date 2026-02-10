@@ -11,7 +11,7 @@ async def main():
     print("🔄 Forcing region update from data/Regions.csv...")
     csv_path = Path("data/Regions.csv")
     
-    await seed_regions_from_csv(engine, csv_path, force=True)
+    await seed_regions_from_csv(engine, Path("data/core/Regions.csv"), force=True)
     
     await engine.dispose()
     print("✨ Region update complete.")

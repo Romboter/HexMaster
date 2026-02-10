@@ -10,7 +10,7 @@ load_dotenv()
 # Configuration
 WARAPI_BASE_URL = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
 WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
-REGIONS_CSV = Path("data/Regions.csv")
+REGIONS_CSV_PATH = Path("data/core/Regions.csv")
 
 # Manual overrides for regions that have different names in WarAPI vs In-Game
 NAME_OVERRIDES = {

@@ -303,10 +303,16 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_items_in_stockpiles(self) -> list[str]:
-        """Fetches unique item names that are currently present in at least one stockpile snapshot."""
+    async def get_items_in_stockpiles(self, guild_id: int) -> list[str]:
+        """Fetches unique item names that are currently present in at least one stockpile snapshot for a guild."""
         async with self.engine.connect() as conn:
-            stmt = select(SnapshotItem.item_name).distinct().order_by(SnapshotItem.item_name)
+            stmt = (
+                select(SnapshotItem.item_name)
+                .distinct()
+                .join(StockpileSnapshot, StockpileSnapshot.id == SnapshotItem.snapshot_id)
+                .where(StockpileSnapshot.guild_id == guild_id)
+                .order_by(SnapshotItem.item_name)
+            )
             result = await conn.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 

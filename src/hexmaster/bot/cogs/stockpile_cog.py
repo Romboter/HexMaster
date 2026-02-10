@@ -9,6 +9,7 @@ from discord.ext import commands
 from tabulate import tabulate
 
 from hexmaster.services.stockpile_service import StockpileService
+from hexmaster.services.ocr_service import OCRServiceError
 from hexmaster.db.repositories.settings_repository import SettingsRepository
 from hexmaster.utils.datetime_utils import get_age_str
 from hexmaster.utils.discord_utils import (
@@ -135,7 +136,15 @@ class StockpileCog(commands.Cog):
                 interaction, 
                 f"Imported {count} items for `{stockpile}` ({struct_type}) in `{town}`.\nSnapshot ID: `{snapshot_id}`"
             )
+        except OCRServiceError as e:
+            print(f"OCR Service Error: {e.message}\nDetails: {e.technical_details}")
+            await send_error(
+                interaction, 
+                f"**OCR Service Error**\n{e.message}\n\n*Transient errors are common during high load. Please try again in a few minutes.*",
+                title="OCR Failure"
+            )
         except Exception as e:
+            print(f"General Error during report: {str(e)}")
             await send_error(interaction, f"Error during upload: {str(e)}")
 
     @report.autocomplete("town")

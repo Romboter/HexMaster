@@ -44,7 +44,7 @@ class HexMasterBot(commands.Bot):
 
         if town_count == 0:
             print("🌱 Seeding database...")
-            data_dir = Path("data")
+            data_dir = Path("data/core")
             await seed_regions_from_csv(self.engine, data_dir / "Regions.csv")
             await seed_towns_from_csv(self.engine, data_dir / "Towns.csv")
             await seed_catalog_from_csv(self.engine, data_dir / "catalog.csv")

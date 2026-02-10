@@ -76,11 +76,11 @@ class SetupCog(commands.Cog):
                     for _, row in df.iterrows():
                         await self.repo.upsert_priority_item(
                             guild_id=guild_id,
-                            codename=row["codename"],
-                            name=row["name"],
-                            qty_per_crate=int(row["qty_per_crate"]),
-                            min_for_base_crates=int(row["min_for_base_crates"]) if pd.notna(row["min_for_base_crates"]) else None,
-                            priority=float(row["priority"])
+                            codename=row["CodeName"],
+                            name=row["Name"],
+                            qty_per_crate=int(row["Qty per Crate"]),
+                            min_for_base_crates=int(row["Min For Base (crates)"]) if pd.notna(row["Min For Base (crates)"]) else None,
+                            priority=float(row["Priority"])
                         )
                     await send_success(interaction, "Loaded standard logistics priorities from template.")
                 else:

@@ -59,6 +59,34 @@ async def sync_schema(conn: AsyncConnection) -> None:
         ("guild_configs", "ALTER TABLE guild_configs ALTER COLUMN guild_id TYPE BIGINT"),
         ("priority", "ALTER TABLE priority ALTER COLUMN guild_id TYPE BIGINT"),
         ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ALTER COLUMN guild_id TYPE BIGINT"),
+
+        # Fix Priority Table Primary Key (Composite PK: guild_id, codename)
+        ("priority", """
+            DO $$ 
+            DECLARE 
+                pk_name TEXT;
+            BEGIN 
+                -- 1. Ensure guild_id is NOT NULL (required for PK)
+                -- If there are nulls, assign a default of 0 (placeholder)
+                UPDATE priority SET guild_id = 0 WHERE guild_id IS NULL;
+                ALTER TABLE priority ALTER COLUMN guild_id SET NOT NULL;
+
+                -- 2. Find and drop the existing primary key constraint
+                SELECT conname INTO pk_name
+                FROM pg_constraint 
+                WHERE conrelid = 'priority'::regclass 
+                AND contype = 'p';
+
+                IF pk_name IS NOT NULL THEN
+                    EXECUTE 'ALTER TABLE priority DROP CONSTRAINT ' || pk_name;
+                END IF;
+
+                -- 3. Add the new composite primary key
+                ALTER TABLE priority ADD PRIMARY KEY (guild_id, codename);
+            EXCEPTION WHEN OTHERS THEN 
+                RAISE NOTICE 'Migration for priority PK already applied or failed: %', SQLERRM;
+            END $$;
+        """),
     ]
 
     for table, stmt in migrations:
