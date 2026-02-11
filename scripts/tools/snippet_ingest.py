@@ -1,4 +1,6 @@
-import os
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
@@ -81,7 +83,7 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
 
             if not code_name or not item_name:
                 continue  # skip malformed lines
-            
+
             # 2. Skip items not present in the master catalog
             if (code_name, item_name) not in valid_keys:
                 print(f"Warning: Skipping {item_name} ({code_name}) - not found in catalog_items.")

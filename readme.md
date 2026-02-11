@@ -1,5 +1,12 @@
 # HexMaster — Foxhole Logistics Discord Bot
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
 HexMaster is a powerful Discord bot designed for **Foxhole** logistics groups. It enables seamless stockpile management, cross-map item discovery, and intelligent supply chain comparison using OCR and real-time game data.
 
 The bot follows a **snapshot-based storage** model, preserving full historical data of every stockpile update without ever overwriting.
@@ -90,7 +97,7 @@ While the core logic is now stable, the following UI and feature enhancements ar
 
 - Docker & Docker Compose
 - Discord Bot Token
-- **Headless FIR Service**: A running instance of the [FIR (Headless Fork)](https://github.com/garykuepper/fir).
+- **Foxhole Stockpiles (FS)**: A running instance of [Foxhole Stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
 
 ### 2) Environment Setup
 
@@ -99,7 +106,7 @@ Create a `.env` file from `.env.example`:
 ```env
 DISCORD_TOKEN=your_token_here
 DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@postgres:5432/hexmaster
-OCR_URL=http://your_ocr_service_ip:5000
+OCR_URL=http://your_fs_service_ip:8000
 ```
 
 ### 3) Launch
@@ -178,7 +185,7 @@ python -m scripts.sync_regions
 
 HexMaster relies on several critical community-maintained tools and APIs:
 
-- **FIR (Foxhole Inventory Reporter)**: All OCR and screenshot-to-data logic is powered by the [Headless FIR Fork](https://github.com/garykuepper/fir) (originally by GICodeWarrior).
+- **Foxhole Stockpiles (FS)**: All OCR and screenshot-to-data logic is powered by [xurxogr/foxhole-stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
 - **Foxhole WarAPI**: Live town data, map status, and hex regions are provided by the official [WarAPI](https://github.com/clapfoot/warapi) maintained by Clapfoot/Siege Camp.
 - **Discord.py**: High-level Discord API wrapper.
 - **SQLAlchemy & asyncpg**: Database abstraction and performance.

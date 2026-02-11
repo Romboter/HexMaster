@@ -1,12 +1,17 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import io
 import json
-import pandas as pd
-import aiohttp
 from typing import Optional
+
+import aiohttp
+import pandas as pd
 
 
 class OCRServiceError(Exception):
     """Custom exception for OCR Service failures."""
+
     def __init__(self, status: int, message: str, technical_details: Optional[str] = None):
         super().__init__(message)
         self.status = status
@@ -29,9 +34,9 @@ class OCRService:
         url = f"{self.base_url}/process"
 
         data = aiohttp.FormData()
-        data.add_field('image', image_bytes, filename='screenshot.png', content_type='image/png')
-        data.add_field('town', town)
-        data.add_field('label', label)
+        data.add_field("image", image_bytes, filename="screenshot.png", content_type="image/png")
+        data.add_field("town", town)
+        data.add_field("label", label)
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, data=data) as resp:
@@ -45,14 +50,14 @@ class OCRService:
                 error_json = json.loads(raw_error)
                 msg = error_json.get("error", "Unknown OCR error")
                 details = error_json.get("stderr_tail") or error_json.get("details")
-                
+
                 if "headless_process failed" in msg:
                     msg = "OCR Service encountered a headless process crash. Transient failure likely."
-                
+
                 raise OCRServiceError(resp.status, msg, details)
             except json.JSONDecodeError:
                 raise OCRServiceError(resp.status, f"OCR Service returned an error: {raw_error[:200]}")
 
         # Assuming FIR returns a TSV or JSON that pandas can read
         content = await resp.text()
-        return pd.read_csv(io.StringIO(content), sep='\t')
+        return pd.read_csv(io.StringIO(content), sep="\t")

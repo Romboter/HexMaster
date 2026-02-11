@@ -1,5 +1,7 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
-import os
 from pathlib import Path
 
 import discord
@@ -7,16 +9,18 @@ from discord.ext import commands
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from hexmaster.config import Settings
-from hexmaster.logging import configure_logging
 from hexmaster.db.init import init_db
-from hexmaster.db.seed_reference import (
-    seed_towns_from_csv, seed_catalog_from_csv, seed_priority_from_csv, seed_regions_from_csv
-)
-
+from hexmaster.db.repositories.settings_repository import SettingsRepository
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
+from hexmaster.db.seed_reference import (
+    seed_catalog_from_csv,
+    seed_priority_from_csv,
+    seed_regions_from_csv,
+    seed_towns_from_csv,
+)
+from hexmaster.logging import configure_logging
 from hexmaster.services.ocr_service import OCRService
 from hexmaster.services.war_service import WarService
-from hexmaster.db.repositories.settings_repository import SettingsRepository
 
 
 class HexMasterBot(commands.Bot):
@@ -32,7 +36,8 @@ class HexMasterBot(commands.Bot):
         self.settings_repo = SettingsRepository(self.engine)
         self.ocr_service = OCRService(settings.ocr_url)
         self.war_service = WarService(settings.warapi_base_url)
-#
+
+    #
     async def setup_hook(self):
         # 1. Ensure DB schema is created (Replaces manual SQL files)
         await init_db(self.engine)
@@ -40,6 +45,7 @@ class HexMasterBot(commands.Bot):
         # 2. Seed database if empty
         async with self.engine.connect() as conn:
             from sqlalchemy import text
+
             town_count = await conn.scalar(text("SELECT COUNT(*) FROM towns"))
 
         if town_count == 0:
@@ -58,12 +64,12 @@ class HexMasterBot(commands.Bot):
         await self.load_extension("hexmaster.bot.cogs.priority_cog")
         await self.load_extension("hexmaster.bot.cogs.setup_cog")
 
-
         # 4. Syncing globally (Guild agnostic)
         await self.tree.sync()
         print("✅ Synced commands globally")
 
     async def on_ready(self):
+        assert self.user is not None
         print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 

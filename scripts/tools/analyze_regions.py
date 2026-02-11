@@ -1,7 +1,11 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
+import os
+import re
+
 import pandas as pd
 import requests
-import re
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,9 +14,11 @@ REGIONS_CSV = "data/core/Regions.csv"
 WARAPI_BASE_URL = os.getenv("WARAPI_BASE_URL", "https://war-service-live.foxholeservices.com/api")
 WARAPI_MAPS_URL = f"{WARAPI_BASE_URL}/worldconquest/maps"
 
+
 def clean_region_name(name):
     # Remove "hex" or " hex" suffix (case-insensitive)
     return re.sub(r"\s*hex$", "", str(name), flags=re.IGNORECASE).strip().lower()
+
 
 def main():
     print("Reading Regions.csv...")
@@ -23,13 +29,13 @@ def main():
         return
 
     print(f"Total rows in CSV: {len(df)}")
-    
+
     # Analyze names
-    df['cleaned_name'] = df['Region'].apply(clean_region_name)
-    
-    unique_original = df['Region'].unique()
-    unique_cleaned = df['cleaned_name'].unique()
-    
+    df["cleaned_name"] = df["Region"].apply(clean_region_name)
+
+    unique_original = df["Region"].unique()
+    unique_cleaned = df["cleaned_name"].unique()
+
     print(f"Unique cleaned names ({len(unique_cleaned)}):")
     print(sorted(list(unique_cleaned)))
 
@@ -47,21 +53,22 @@ def main():
             warapi_maps = sorted([m.lower() for m in response.json()])
             out.write(f"Total maps from WarAPI: {len(warapi_maps)}\n")
             out.write(f"WarAPI maps list: {warapi_maps}\n\n")
-            
+
             # Compare
             missing_in_warapi = sorted(list(set(unique_cleaned) - set(warapi_maps)))
             missing_in_csv = sorted(list(set(warapi_maps) - set(unique_cleaned)))
-            
+
             out.write(f"Cleaned names NOT in WarAPI ({len(missing_in_warapi)}):\n")
             out.write(f"{missing_in_warapi}\n\n")
-                
+
             out.write(f"WarAPI maps NOT in CSV ({len(missing_in_csv)}):\n")
             out.write(f"{missing_in_csv}\n")
-            
+
             print("Results saved to analyze_results.txt")
         except Exception as e:
             out.write(f"Error fetching from WarAPI: {e}\n")
             print(f"Error fetching from WarAPI: {e}")
+
 
 if __name__ == "__main__":
     main()

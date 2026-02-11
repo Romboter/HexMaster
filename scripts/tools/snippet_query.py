@@ -1,11 +1,15 @@
-import os
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
+
+import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
-import pandas as pd
 from tabulate import tabulate
 
 from hexmaster.config import Settings
+
 SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN = """
                                     WITH latest_per_key
                                              AS (SELECT DISTINCT ON (s.town, s.struct_type, s.stockpile_name) s.id,

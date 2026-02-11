@@ -1,7 +1,13 @@
-from sqlalchemy import select, insert, desc, text
-from sqlalchemy.ext.asyncio import AsyncEngine
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 from datetime import datetime, timezone
-from hexmaster.db.models import StockpileSnapshot, SnapshotItem, CatalogItem, Town, Priority, Region
+
+from sqlalchemy import desc, insert, select, text
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from hexmaster.db.models import CatalogItem, Priority, Region, SnapshotItem, StockpileSnapshot, Town
+
 
 # TODO: Add docstrings
 class StockpileRepository:
@@ -19,7 +25,9 @@ class StockpileRepository:
         """Helper to normalize town/stockpile names."""
         return name.strip().lower() if name else ""
 
-    def _latest_snapshots_subquery(self, guild_id: int, town: str = None, struct_type: str = None, stockpile: str = None):
+    def _latest_snapshots_subquery(
+        self, guild_id: int, town: str | None = None, struct_type: str | None = None, stockpile: str | None = None
+    ):
         """Helper to find the most recent snapshot IDs for unique (town, struct, stockpile) tuples."""
         subq = (
             select(StockpileSnapshot.id)
@@ -30,7 +38,7 @@ class StockpileRepository:
                 StockpileSnapshot.struct_type,
                 StockpileSnapshot.stockpile_name,
                 desc(StockpileSnapshot.captured_at),
-                desc(StockpileSnapshot.id)
+                desc(StockpileSnapshot.id),
             )
         )
         if town:
@@ -67,7 +75,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_stockpile_names_for_town(self, guild_id: int, town: str, struct_type: str = None) -> list[str]:
+    async def get_stockpile_names_for_town(self, guild_id: int, town: str, struct_type: str | None = None) -> list[str]:
         """Fetches unique stockpile names for a specific town and optional structure type."""
         async with self.engine.connect() as conn:
             stmt = (
@@ -78,7 +86,7 @@ class StockpileRepository:
             )
             if struct_type:
                 stmt = stmt.where(StockpileSnapshot.struct_type == struct_type.strip())
-            
+
             stmt = stmt.order_by(StockpileSnapshot.stockpile_name)
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
@@ -92,8 +100,8 @@ class StockpileRepository:
                 .join(StockpileSnapshot, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.guild_id == guild_id)
                 .where(
-                    (StockpileSnapshot.struct_type.ilike("%Storage Depot%")) |
-                    (StockpileSnapshot.struct_type.ilike("%Seaport%"))
+                    (StockpileSnapshot.struct_type.ilike("%Storage Depot%"))
+                    | (StockpileSnapshot.struct_type.ilike("%Seaport%"))
                 )
                 .order_by(Town.name)
             )
@@ -107,7 +115,15 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return {(row.codename, row.displayname) for row in result}
 
-    async def ingest_snapshot(self, guild_id: int, town: str, struct_type: str, stockpile_name: str, items_data: list[dict], war_number: int | None = None):
+    async def ingest_snapshot(
+        self,
+        guild_id: int,
+        town: str,
+        struct_type: str,
+        stockpile_name: str,
+        items_data: list[dict],
+        war_number: int | None = None,
+    ):
         """Creates a new snapshot and inserts its items in a single transaction."""
         async with self.engine.begin() as conn:
             # 1. Insert the snapshot header
@@ -116,14 +132,18 @@ class StockpileRepository:
             norm_struct = struct_type.strip()
             norm_stockpile = stockpile_name.strip()
 
-            stmt = insert(StockpileSnapshot).values(
-                guild_id=guild_id,
-                town=norm_town,
-                struct_type=norm_struct,
-                stockpile_name=norm_stockpile,
-                war_number=war_number,
-                captured_at=datetime.now(timezone.utc)
-            ).returning(StockpileSnapshot.id)
+            stmt = (
+                insert(StockpileSnapshot)
+                .values(
+                    guild_id=guild_id,
+                    town=norm_town,
+                    struct_type=norm_struct,
+                    stockpile_name=norm_stockpile,
+                    war_number=war_number,
+                    captured_at=datetime.now(timezone.utc),
+                )
+                .returning(StockpileSnapshot.id)
+            )
 
             res = await conn.execute(stmt)
             snapshot_id = res.scalar_one()
@@ -137,10 +157,14 @@ class StockpileRepository:
 
             return snapshot_id
 
-    async def get_latest_inventory(self, guild_id: int, town: str, struct_type: str = None, stockpile: str = None):
+    async def get_latest_inventory(
+        self, guild_id: int, town: str, struct_type: str | None = None, stockpile: str | None = None
+    ):
         """Fetches the latest item counts for a specific town and guild."""
         async with self.engine.connect() as conn:
-            subq = self._latest_snapshots_subquery(guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile)
+            subq = self._latest_snapshots_subquery(
+                guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile
+            )
 
             # Join with SnapshotItem and Town to get actual inventory with pretty names
             stmt = (
@@ -155,7 +179,7 @@ class StockpileRepository:
                     StockpileSnapshot.war_number,
                     CatalogItem.quantitypercrate.label("catalog_qpc"),
                     Town.name.label("pretty_town"),
-                    StockpileSnapshot.captured_at
+                    StockpileSnapshot.captured_at,
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
@@ -174,13 +198,17 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [dict(row) for row in result.mappings().all()]
 
-    async def get_latest_snapshot_for_town_filtered(self, guild_id: int, town: str, struct_type: str = None, stockpile: str = None):
+    async def get_latest_snapshot_for_town_filtered(
+        self, guild_id: int, town: str, struct_type: str | None = None, stockpile: str | None = None
+    ):
         """Fetches the latest snapshot and its items for a specific town and guild with optional filters."""
         async with self.engine.connect() as conn:
             norm_town = self._normalize_name(town)
             # Find the latest snapshot IDs for each unique (struct, stockpile) in this town/guild
-            subq = self._latest_snapshots_subquery(guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile)
-            
+            subq = self._latest_snapshots_subquery(
+                guild_id=guild_id, town=town, struct_type=struct_type, stockpile=stockpile
+            )
+
             # Fetch all items from these latest snapshots
             stmt_items = (
                 select(
@@ -188,22 +216,22 @@ class StockpileRepository:
                     SnapshotItem.item_name,
                     SnapshotItem.total,
                     SnapshotItem.per_crate,
-                    CatalogItem.quantitypercrate.label("catalog_qpc")
+                    CatalogItem.quantitypercrate.label("catalog_qpc"),
                 )
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
                 .where(SnapshotItem.snapshot_id.in_(subq))
             )
             items_res = await conn.execute(stmt_items)
             items = items_res.mappings().all()
-            
+
             # Return any snapshot header as a reference, with pretty town name
             latest_snap_stmt = (
                 select(
-                    StockpileSnapshot.struct_type, 
-                    StockpileSnapshot.stockpile_name, 
+                    StockpileSnapshot.struct_type,
+                    StockpileSnapshot.stockpile_name,
                     StockpileSnapshot.war_number,
                     Town.name.label("pretty_town"),
-                    StockpileSnapshot.captured_at
+                    StockpileSnapshot.captured_at,
                 )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.town == norm_town)
@@ -213,18 +241,15 @@ class StockpileRepository:
                 latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.struct_type == struct_type.strip())
             if stockpile:
                 latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.stockpile_name == stockpile.strip())
-            
+
             latest_snap_stmt = latest_snap_stmt.order_by(desc(StockpileSnapshot.captured_at)).limit(1)
-            
+
             snap_res = await conn.execute(latest_snap_stmt)
             snapshot = snap_res.mappings().first()
 
             return snapshot, items
 
-    async def get_latest_snapshot_for_town(self, town: str):
-        """Deprecated: Use get_latest_snapshot_for_town_filtered instead. 
-        Fetches the latest snapshot and its items for a specific town across ALL stockpiles."""
-        return await self.get_latest_snapshot_for_town_filtered(town)
+
 
     async def search_item_across_stockpiles(self, guild_id: int, item_name: str):
         """Finds all latest instances of an item across all towns for a guild."""
@@ -245,7 +270,7 @@ class StockpileRepository:
                     Town.y,
                     Region.q,
                     Region.r,
-                    StockpileSnapshot.captured_at
+                    StockpileSnapshot.captured_at,
                 )
                 .join(SnapshotItem, SnapshotItem.snapshot_id == StockpileSnapshot.id)
                 # Join towns to get the pretty name and x, y
@@ -272,7 +297,7 @@ class StockpileRepository:
                     StockpileSnapshot.struct_type,
                     StockpileSnapshot.stockpile_name,
                     StockpileSnapshot.captured_at,
-                    StockpileSnapshot.war_number
+                    StockpileSnapshot.war_number,
                 )
                 .join(Town, text("LOWER(towns.name) = stockpile_snapshots.town"))
                 .where(StockpileSnapshot.guild_id == guild_id)
@@ -286,6 +311,7 @@ class StockpileRepository:
         """Fetches coordinates and region offsets for a specific town (case-insensitive)."""
         async with self.engine.connect() as conn:
             from sqlalchemy import func
+
             stmt = (
                 select(Town.name, Town.x, Town.y, Region.q, Region.r)
                 .join(Region, Region.id == Town.region_id)
@@ -316,17 +342,26 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all() if row[0]]
 
-    async def upsert_priority_item(self, guild_id: int, codename: str, name: str, qty_per_crate: int, min_for_base_crates: int | None, priority: float):
+    async def upsert_priority_item(
+        self,
+        guild_id: int,
+        codename: str,
+        name: str,
+        qty_per_crate: int,
+        min_for_base_crates: int | None,
+        priority: float,
+    ):
         """Adds or updates an item in the priority list for a specific guild."""
         async with self.engine.begin() as conn:
             from sqlalchemy.dialects.postgresql import insert
+
             stmt = insert(Priority).values(
                 guild_id=guild_id,
                 codename=codename,
                 name=name,
                 qty_per_crate=qty_per_crate,
                 min_for_base_crates=min_for_base_crates,
-                priority=priority
+                priority=priority,
             )
             stmt = stmt.on_conflict_do_update(
                 index_elements=[Priority.guild_id, Priority.codename],
@@ -334,8 +369,8 @@ class StockpileRepository:
                     "name": name,
                     "qty_per_crate": qty_per_crate,
                     "min_for_base_crates": min_for_base_crates,
-                    "priority": priority
-                }
+                    "priority": priority,
+                },
             )
             await conn.execute(stmt)
 
@@ -343,6 +378,7 @@ class StockpileRepository:
         """Removes an item from the priority list for a specific guild."""
         async with self.engine.begin() as conn:
             from sqlalchemy import delete
+
             stmt = delete(Priority).where(Priority.guild_id == guild_id).where(Priority.codename == codename)
             await conn.execute(stmt)
 
@@ -350,6 +386,7 @@ class StockpileRepository:
         """Clears all items from the priority list for a specific guild."""
         async with self.engine.begin() as conn:
             from sqlalchemy import delete
+
             stmt = delete(Priority).where(Priority.guild_id == guild_id)
             await conn.execute(stmt)
 
@@ -359,4 +396,3 @@ class StockpileRepository:
             stmt = select(CatalogItem).where(CatalogItem.displayname == displayname)
             res = await conn.execute(stmt)
             return res.mappings().first()
-

@@ -1,17 +1,22 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
-import aiohttp
 from datetime import datetime, timedelta
 from typing import List, Optional
+
+import aiohttp
 
 
 class WarService:
     """
     Service for interacting with the Foxhole WarAPI across multiple shards.
     """
+
     SHARD_URLS = {
         "Alpha": "https://war-service-live.foxholeservices.com/api",
         "Bravo": "https://war-service-live-2.foxholeservices.com/api",
-        "Charlie": "https://war-service-live-3.foxholeservices.com/api"
+        "Charlie": "https://war-service-live-3.foxholeservices.com/api",
     }
 
     def __init__(self, default_base_url: str):
@@ -35,7 +40,7 @@ class WarService:
                 if resp.status != 200:
                     error_text = await resp.text()
                     raise RuntimeError(f"WarAPI {shard_name or ''} returned status {resp.status}: {error_text}")
-                return await resp.json()
+                return List[str](await resp.json())
 
     async def get_war_status(self, shard_name: str | None = None) -> dict:
         """Fetches the current war status from the specified shard."""
@@ -45,7 +50,7 @@ class WarService:
                 if resp.status != 200:
                     error_text = await resp.text()
                     raise RuntimeError(f"WarAPI {shard_name or ''} returned status {resp.status}: {error_text}")
-                return await resp.json()
+                return dict(await resp.json())
 
     async def get_current_war_number(self, shard_name: str | None = "Alpha") -> Optional[int]:
         """Fetches the current war number for a shard, using cache if available."""
@@ -53,7 +58,7 @@ class WarService:
             now = datetime.now()
             shard_key = shard_name or "Alpha"
             cache = self._shard_caches.get(shard_key)
-            
+
             if cache and cache.get("last_fetch"):
                 if now - cache["last_fetch"] < self._cache_duration:
                     return cache.get("warNumber")
@@ -61,10 +66,7 @@ class WarService:
             try:
                 data = await self.get_war_status(shard_key)
                 war_number = data.get("warNumber")
-                self._shard_caches[shard_key] = {
-                    "warNumber": war_number,
-                    "last_fetch": now
-                }
+                self._shard_caches[shard_key] = {"warNumber": war_number, "last_fetch": now}
                 return war_number
             except Exception as e:
                 print(f"Error fetching war info for {shard_key}: {e}")

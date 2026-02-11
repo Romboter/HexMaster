@@ -1,6 +1,11 @@
-from sqlalchemy import select, insert, update
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from hexmaster.db.models import GuildConfig
+
 
 class SettingsRepository:
     def __init__(self, engine: AsyncEngine):
@@ -29,10 +34,6 @@ class SettingsRepository:
                         config.shard = shard
                     # SQLAlchemy marks it as dirty automatically
                 else:
-                    new_config = GuildConfig(
-                        guild_id=guild_id,
-                        faction=faction,
-                        shard=shard
-                    )
+                    new_config = GuildConfig(guild_id=guild_id, faction=faction, shard=shard)
                     session.add(new_config)
             await session.commit()

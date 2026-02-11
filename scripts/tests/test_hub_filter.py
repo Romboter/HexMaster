@@ -1,7 +1,13 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
+
 from sqlalchemy.ext.asyncio import create_async_engine
+
 from hexmaster.config import Settings
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
+
 
 async def test_hub_filter():
     settings = Settings.load()
@@ -18,6 +24,7 @@ async def test_hub_filter():
         print(f"Town: {town}, Structure: {snap['struct_type']}")
 
     await engine.dispose()
+
 
 if __name__ == "__main__":
     asyncio.run(test_hub_filter())

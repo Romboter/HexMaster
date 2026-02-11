@@ -1,8 +1,13 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
 import os
+
+from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
-from dotenv import load_dotenv
+
 
 async def check_schema():
     load_dotenv()
@@ -13,11 +18,14 @@ async def check_schema():
 
     engine = create_async_engine(db_url)
     async with engine.connect() as conn:
-        result = await conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'regions'"))
+        result = await conn.execute(
+            text("SELECT column_name FROM information_schema.columns WHERE table_name = 'regions'")
+        )
         columns = [row[0] for row in result]
         print(f"Columns in 'regions' table: {columns}")
-        
+
     await engine.dispose()
+
 
 if __name__ == "__main__":
     asyncio.run(check_schema())
