@@ -91,7 +91,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_towns_with_hub_snapshots(self, guild_id: int) -> list[str]:
+    async def get_towns_with_hub_snapshots(self, guild_id: int, war_number: int | None = None) -> list[str]:
         """Fetches pretty town names that have at least one Seaport or Storage Depot snapshot for a guild."""
         async with self.engine.connect() as conn:
             stmt = (
@@ -103,8 +103,11 @@ class StockpileRepository:
                     (StockpileSnapshot.struct_type.ilike("%Storage Depot%"))
                     | (StockpileSnapshot.struct_type.ilike("%Seaport%"))
                 )
-                .order_by(Town.name)
             )
+            if war_number:
+                stmt = stmt.where(StockpileSnapshot.war_number == war_number)
+
+            stmt = stmt.order_by(Town.name)
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
@@ -216,6 +219,7 @@ class StockpileRepository:
                     SnapshotItem.item_name,
                     SnapshotItem.total,
                     SnapshotItem.per_crate,
+                    SnapshotItem.is_crated,
                     CatalogItem.quantitypercrate.label("catalog_qpc"),
                 )
                 .join(CatalogItem, CatalogItem.codename == SnapshotItem.code_name)
