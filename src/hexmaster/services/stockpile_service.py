@@ -99,10 +99,11 @@ class StockpileService:
         if not recv_snap:
             raise ValueError(f"No snapshots found for receiving town `{receiving}`.")
 
-        # Process inventories into total quantities by code_name
-        ship_total_map: dict[str, int] = {}
+        # Process inventories into total quantities by (code_name, is_crated)
+        ship_total_map: dict[tuple[str, bool], int] = {}
         for item in ship_items:
-            ship_total_map[item["code_name"]] = ship_total_map.get(item["code_name"], 0) + item["total"]
+            key = (item["code_name"], item["is_crated"])
+            ship_total_map[key] = ship_total_map.get(key, 0) + item["total"]
 
         recv_total_map: dict[str, int] = {}
         for item in recv_items:
@@ -139,26 +140,76 @@ class StockpileService:
             lacking_crates = target_min_crates - held_crates
 
             if lacking_crates > 0:
-                avail_crates = ship_total_map.get(codename, 0) / qty_per_crate
-                comparison_data.append({"Item": p["name"], "Avail": avail_crates, "Need": lacking_crates})
+                # For priority items, we usually just want to know if we can fill the need.
+                # However, we still need to respect the display rules.
+                # Since priority items are usually requested in crates, we look for crates first.
+                
+                # Check for crates
+                avail_crates_crated = ship_total_map.get((codename, True), 0) / qty_per_crate
+                if avail_crates_crated > 0:
+                     comparison_data.append({
+                        "Item": p["name"], 
+                        "Avail": avail_crates_crated, 
+                        "Need": lacking_crates,
+                        "is_crated": True
+                    })
+                
+                # Check for loose items if destination is a HUB
+                if is_recv_hub:
+                    avail_crates_loose = ship_total_map.get((codename, False), 0) / qty_per_crate
+                    if avail_crates_loose > 0:
+                        comparison_data.append({
+                            "Item": p["name"],
+                            "Avail": avail_crates_loose,
+                            "Need": lacking_crates,  # Same need, just different source form
+                            "is_crated": False
+                        })
+                
+                # If neither found but needed, show 0 avail (defaulting to crate view for priority)
+                if avail_crates_crated == 0 and (not is_recv_hub or (is_recv_hub and avail_crates_loose == 0)):
+                     comparison_data.append({
+                        "Item": p["name"], 
+                        "Avail": 0, 
+                        "Need": lacking_crates,
+                        "is_crated": True
+                    })
+
 
         # Process Non-Priority Items
-        item_details_map = {i["code_name"]: i for i in ship_items + recv_items}
-        all_inventory_codenames = set(recv_total_map.keys()) | set(ship_total_map.keys())
-        non_priority_codenames = all_inventory_codenames - handled_codenames
-
-        codename_to_name = {i["code_name"]: i["item_name"] for i in ship_items + recv_items}
+        # Gather all code names present in shipping
+        ship_codenames = {k[0] for k in ship_total_map.keys()}
+        non_priority_codenames = ship_codenames - handled_codenames
+        
+        item_details_map = {i["code_name"]: i for i in ship_items}
+        codename_to_name = {i["code_name"]: i["item_name"] for i in ship_items}
 
         for codename in sorted(non_priority_codenames, key=lambda c: codename_to_name.get(c, c)):
-            ship_total = ship_total_map.get(codename, 0)
             item_ref = item_details_map.get(codename)
-            qty_crates = self.get_qty_crates(
-                ship_total,
-                item_ref.get("catalog_qpc") if item_ref else None,
-                item_ref.get("per_crate") if item_ref else None,
-            )
+            qpc = item_ref.get("catalog_qpc") if item_ref else None
+            per_crate = item_ref.get("per_crate") if item_ref else None
+            
+            # Check Crated
+            ship_total_crated = ship_total_map.get((codename, True), 0)
+            if ship_total_crated > 0:
+                qty_crates = self.get_qty_crates(ship_total_crated, qpc, per_crate)
+                comparison_data.append({
+                    "Item": codename_to_name.get(codename, codename), 
+                    "Avail": qty_crates, 
+                    "Need": 0,
+                    "is_crated": True
+                })
 
-            comparison_data.append({"Item": codename_to_name.get(codename, codename), "Avail": qty_crates, "Need": 0})
+            # Check Loose - ONLY if destination is a HUB
+            if is_recv_hub:
+                ship_total_loose = ship_total_map.get((codename, False), 0)
+                if ship_total_loose > 0:
+                    qty_crates = self.get_qty_crates(ship_total_loose, qpc, per_crate)
+                    comparison_data.append({
+                        "Item": codename_to_name.get(codename, codename), 
+                        "Avail": qty_crates, 
+                        "Need": 0,
+                        "is_crated": False
+                    })
 
         return {
             "comparison_data": comparison_data,

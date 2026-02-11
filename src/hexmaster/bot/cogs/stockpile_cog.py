@@ -218,7 +218,19 @@ class StockpileCog(commands.Cog):
                     status = "🟢"
 
             need_val = max(0, min_val - qty_crates) if p_data else 0
-            crated_tag = "(Cr)" if r["is_crated"] else "(itm)"
+            # Determine tags based on location type
+            # Hubs: Crates = No Tag, Loose = (itm)
+            # Bases: All = No Tag
+            hubs = ["Storage Depot", "Seaport"]
+            is_hub = any(h in rows[0]["struct_type"] for h in hubs)
+            
+            crated_tag = ""
+            if is_hub:
+                if not r["is_crated"]:
+                    crated_tag = " (itm)"
+            else:
+                # Base/other: No tags for anything, everything assumed loose/available
+                pass
 
             # Truncate item name to 20 chars
             base_name = r["item_name"] or "Unknown"
@@ -227,7 +239,7 @@ class StockpileCog(commands.Cog):
 
             table_rows.append(
                 [
-                    f"{base_name} {crated_tag}",
+                    f"{base_name}{crated_tag}",
                     f"{round(qty_crates, 1):g}",
                     f"{round(need_val, 1):g}" if need_val > 0 else "-",
                     status,
@@ -349,8 +361,17 @@ class StockpileCog(commands.Cog):
                 item_name = d["Item"] or "Unknown"
                 if len(item_name) > 20:
                     item_name = item_name[:20].strip() + "..."
+                
+                # Tag logic for Requisition
+                # If is_crated is True, no tag.
+                # If is_crated is False, add (itm) tag.
+                # Note: The service layer already filters strictly for Base destinations, 
+                # so we can just trust the is_crated flag here.
+                tag = ""
+                if not d.get("is_crated", True):
+                     tag = " (itm)"
 
-                table_rows.append([item_name, f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
+                table_rows.append([f"{item_name}{tag}", f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
 
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else ship_town.title()
@@ -386,7 +407,12 @@ class StockpileCog(commands.Cog):
         guild_id = interaction.guild_id
         if not guild_id:
             return []
-        return await self._get_cached_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots, guild_id)
+        
+        shard = await self._get_shard(guild_id)
+        war_number = await self.war_service.get_current_war_number(shard) if self.war_service else None
+        
+        # Pass war_number to ensure we only see hubs for the current war
+        return await self._get_cached_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots, guild_id, war_number)
 
     @requisition.autocomplete("ship_struct")
     async def requisition_ship_struct_autocomplete(
