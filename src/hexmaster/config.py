@@ -1,10 +1,12 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 # src/hexmaster/config.py
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
-
 
 from dotenv import load_dotenv
 
@@ -36,7 +38,7 @@ class Settings:
                 ("DATABASE_URL", database_url),
                 ("DISCORD_TOKEN", discord_token),
                 ("OCR_URL", ocr_url),
-                ("WARAPI_BASE_URL", warapi_base_url)
+                ("WARAPI_BASE_URL", warapi_base_url),
             )
             if not value
         ]
@@ -58,9 +60,11 @@ class Settings:
                 'WARAPI_BASE_URL="https://war-service-live.foxholeservices.com/api"\n'
             )
 
+        assert database_url is not None
+        assert discord_token is not None
+        assert ocr_url is not None
+        assert warapi_base_url is not None
+
         return Settings(
-            database_url=database_url,
-            discord_token=discord_token,
-            ocr_url=ocr_url,
-            warapi_base_url=warapi_base_url
+            database_url=database_url, discord_token=discord_token, ocr_url=ocr_url, warapi_base_url=warapi_base_url
         )

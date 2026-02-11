@@ -1,15 +1,19 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
-import os
+
 from hexmaster.config import Settings
 from hexmaster.services.war_service import WarService
+
 
 async def test_war_service():
     print("Loading settings...")
     settings = Settings.load()
     print(f"Using WarAPI Base URL: {settings.warapi_base_url}")
-    
+
     service = WarService(settings.warapi_base_url)
-    
+
     print("\n1. Testing get_maps()...")
     try:
         maps = await service.get_maps()
@@ -24,6 +28,7 @@ async def test_war_service():
         print(f"✅ Success! War Number: {war.get('warNumber')}")
     except Exception as e:
         print(f"❌ Failed get_war_status(): {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(test_war_service())

@@ -1,9 +1,11 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
+import io
 import os
 
-import requests
 import pandas as pd
-import io
-
+import requests
 from tabulate import tabulate
 
 
@@ -11,16 +13,10 @@ def get_stockpile_df_from_server(server_ip, image_path, label, stockpile="Public
     url = f"http://{server_ip}:5000/process"
 
     # Payload for form data
-    data = {
-        "label": label,
-        "stockpile": stockpile,
-        "version": version
-    }
+    data = {"label": label, "stockpile": stockpile, "version": version}
 
     # Attach the physical file
-    files = {
-        'image': open(image_path, 'rb')
-    }
+    files = {"image": open(image_path, "rb")}
 
     print(f"Uploading {image_path} to {server_ip}...")
     try:
@@ -28,7 +24,7 @@ def get_stockpile_df_from_server(server_ip, image_path, label, stockpile="Public
         response.raise_for_status()
 
         # Convert the received TSV bytes directly into a DataFrame
-        df = pd.read_csv(io.StringIO(response.text), sep='\t')
+        df = pd.read_csv(io.StringIO(response.text), sep="\t")
         print(f"Successfully received data: {len(df)} rows.")
         return df
 
@@ -56,6 +52,6 @@ if __name__ == "__main__":
     if os.path.exists(image_path):
         df = get_stockpile_df_from_server(SERVER_IP, image_path, town)
         if df is not None:
-            print(tabulate(df.head(), headers='keys', tablefmt='psql'))
+            print(tabulate(df.head(), headers="keys", tablefmt="psql"))
     else:
         print(f"Error: File not found at {image_path}")

@@ -1,10 +1,15 @@
-import pandas as pd
-import aiohttp
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 from typing import Optional
+
+import aiohttp
+import pandas as pd
 
 
 class OCRServiceError(Exception):
     """Custom exception for OCR Service failures."""
+
     def __init__(self, status: int, message: str, technical_details: Optional[str] = None):
         super().__init__(message)
         self.status = status

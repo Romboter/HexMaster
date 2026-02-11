@@ -1,10 +1,13 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import json
 from pathlib import Path
 
 import pandas as pd
 
-
 CATALOG_PATH = Path("../data/catalog.json")
+
 
 def normalize_faction(value) -> str:
     if isinstance(value, str):
@@ -13,6 +16,7 @@ def normalize_faction(value) -> str:
         if "Wardens" in value:
             return "Wardens"
     return "Both"
+
 
 def load_catalog(path: Path) -> list[dict]:
     with path.open("r", encoding="utf-8") as f:
@@ -76,8 +80,8 @@ def main() -> None:
     print(df.head())
     print(f"\nLoaded {len(df)} unique catalog items.")
     input_csv = "data/core/catalog.csv"
-    output_json = "data/core/catalog.json"
     df.to_csv(input_csv)
+
 
 if __name__ == "__main__":
     main()

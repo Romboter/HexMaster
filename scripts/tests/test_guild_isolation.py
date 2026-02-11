@@ -1,19 +1,25 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
 import os
+
 from sqlalchemy.ext.asyncio import create_async_engine
-from hexmaster.db.repositories.stockpile_repository import StockpileRepository
-from hexmaster.db.repositories.settings_repository import SettingsRepository
+
 from hexmaster.db.models import Base
+from hexmaster.db.repositories.settings_repository import SettingsRepository
+from hexmaster.db.repositories.stockpile_repository import StockpileRepository
+
 
 async def test_isolation():
     # Use in-memory SQLite for verification
     db_url = "sqlite+aiosqlite:///"
     engine = create_async_engine(db_url)
-    
+
     # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     repo = StockpileRepository(engine)
     settings_repo = SettingsRepository(engine)
 
@@ -23,7 +29,7 @@ async def test_isolation():
     print("--- Testing Guild Isolation (SQLite) ---")
 
     # 1. Test Guild Config Isolation
-    print(f"Setting Alpha shard for Guild A and Bravo for Guild B...")
+    print("Setting Alpha shard for Guild A and Bravo for Guild B...")
     await settings_repo.upsert_config(guild_a, faction="Colonial", shard="Alpha")
     await settings_repo.upsert_config(guild_b, faction="Warden", shard="Bravo")
 
@@ -38,7 +44,7 @@ async def test_isolation():
     # 2. Test Priority Isolation
     print("Adding priority item to Guild A...")
     await repo.upsert_priority_item(guild_a, "soldier_supplies", "Soldier Supplies", 10, 100, 1.0)
-    
+
     priorities_a = await repo.get_priority_list(guild_a)
     priorities_b = await repo.get_priority_list(guild_b)
 
@@ -50,9 +56,11 @@ async def test_isolation():
     print("Ingesting snapshot for Guild A...")
     items = [{"code_name": "soldier_supplies", "item_name": "Soldier Supplies", "quantity": 500}]
     # We need a town record for the join in get_latest_inventory
-    from hexmaster.db.models import Town, Region
+    from hexmaster.db.models import Region, Town
+
     async with engine.begin() as conn:
         from sqlalchemy import insert
+
         await conn.execute(insert(Region).values(id=1, name="The Fingers"))
         await conn.execute(insert(Town).values(name="The Fingers", region_id=1, x=0, y=0))
 
@@ -60,11 +68,13 @@ async def test_isolation():
 
     # Verify directly via select to avoid DISTINCT ON issues in SQLite
     async with engine.connect() as conn:
-        from hexmaster.db.models import StockpileSnapshot
         from sqlalchemy import select
+
+        from hexmaster.db.models import StockpileSnapshot
+
         res_a = await conn.execute(select(StockpileSnapshot).where(StockpileSnapshot.guild_id == guild_a))
         res_b = await conn.execute(select(StockpileSnapshot).where(StockpileSnapshot.guild_id == guild_b))
-        
+
         snaps_a = res_a.all()
         snaps_b = res_b.all()
 
@@ -76,6 +86,7 @@ async def test_isolation():
     if os.path.exists("test_isolation.db"):
         os.remove("test_isolation.db")
     print("--- Isolation Test Passed ---")
+
 
 if __name__ == "__main__":
     asyncio.run(test_isolation())

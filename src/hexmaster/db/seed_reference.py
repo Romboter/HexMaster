@@ -1,16 +1,20 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import csv
 import re
-import pandas as pd
 from pathlib import Path
-from sqlalchemy import select, func
+
+import pandas as pd
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
-from hexmaster.db.models import Town, CatalogItem, Priority, Region
+
+from hexmaster.db.models import CatalogItem, Priority, Region, Town
 
 # Manual overrides for regions that have different names in WarAPI vs In-Game
-NAME_OVERRIDES = {
-    "mooringcounty": "themoors"
-}
+NAME_OVERRIDES = {"mooringcounty": "themoors"}
+
 
 def clean_region_name(name: str) -> str:
     """Removes 'hex' suffix and applies manual overrides."""
@@ -37,10 +41,12 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
             name = row["Town"].strip()
             region_raw = row["Region"].strip()
             region_clean = clean_region_name(region_raw)
-            
+
             region_id = region_map.get(region_clean)
             if region_id is None:
-                print(f"⚠️ Warning: Region '{region_clean}' (from '{region_raw}') not found in DB. Skipping town '{name}'.")
+                print(
+                    f"⚠️ Warning: Region '{region_clean}' (from '{region_raw}') not found in DB. Skipping town '{name}'."
+                )
                 continue
 
             towns_dict[name] = {
@@ -48,7 +54,7 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
                 "region_id": region_id,
                 "x": float(row["x"]) if row.get("x") else 0.0,
                 "y": float(row["y"]) if row.get("y") else 0.0,
-                "marker_type": row.get("MarkerType", "Unknown").strip()
+                "marker_type": row.get("MarkerType", "Unknown").strip(),
             }
 
         towns_data = list(towns_dict.values())
@@ -59,7 +65,7 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
     async with engine.begin() as conn:
         # Check if towns already exist to avoid wasted resources
         count = await conn.scalar(select(func.count()).select_from(Town))
-        if count > 0:
+        if count is not None and count > 0:
             print(f"✅ Towns table already populated ({count} entries). Skipping seeding.")
             return
 
@@ -67,7 +73,7 @@ async def seed_towns_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
         stmt = insert(Town).values(towns_data)
         stmt = stmt.on_conflict_do_nothing(index_elements=[Town.name])
         await conn.execute(stmt)
-        
+
         print(f"✅ Town reference seeded ({len(towns_data)} entries).")
 
 
@@ -89,12 +95,14 @@ async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
             except (ValueError, TypeError):
                 qty_val = None
 
-        catalog_data.append({
-            "codename": str(row["CodeName"]).strip(),
-            "displayname": str(row["DisplayName"]).strip(),
-            "factionvariant": str(row.get("FactionVariant", "Both")).strip(),
-            "quantitypercrate": qty_val
-        })
+        catalog_data.append(
+            {
+                "codename": str(row["CodeName"]).strip(),
+                "displayname": str(row["DisplayName"]).strip(),
+                "factionvariant": str(row.get("FactionVariant", "Both")).strip(),
+                "quantitypercrate": qty_val,
+            }
+        )
 
     # 2. Deduplicate by (codename, displayname)
     clean_data = {(item["codename"], item["displayname"]): item for item in catalog_data}
@@ -105,7 +113,7 @@ async def seed_catalog_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
     async with engine.begin() as conn:
         count = await conn.scalar(select(func.count()).select_from(CatalogItem))
-        if count > 0:
+        if count is not None and count > 0:
             print(f"✅ Catalog table already populated ({count} entries). skipping seeding.")
             return
 
@@ -136,7 +144,7 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
             "name": str(row["Name"]).strip(),
             "qty_per_crate": int(row["Qty per Crate"]),
             "min_for_base_crates": min_crates,
-            "priority": float(row["Priority"])
+            "priority": float(row["Priority"]),
         }
 
     priority_data = list(priority_map.values())
@@ -145,7 +153,7 @@ async def seed_priority_from_csv(engine: AsyncEngine, csv_path: Path) -> None:
 
     async with engine.begin() as conn:
         count = await conn.scalar(select(func.count()).select_from(Priority))
-        if count > 0:
+        if count is not None and count > 0:
             print(f"✅ Priority table already populated ({count} entries). skipping seeding.")
             return
 
@@ -167,13 +175,8 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path, force: bool
         # Map raw r from CSV to both 'r' and 'raw_r' to be safe and match DB observations
         q_val = float(row["raw q"]) if not pd.isna(row.get("raw q")) else 0.0
         r_val = float(row["raw r"]) if not pd.isna(row.get("raw r")) else 0.0
-        
-        regions_map[name] = {
-            "name": name,
-            "q": q_val,
-            "raw_r": r_val,
-            "r": r_val
-        }
+
+        regions_map[name] = {"name": name, "q": q_val, "raw_r": r_val, "r": r_val}
 
     regions_data = list(regions_map.values())
     if not regions_data:
@@ -181,7 +184,7 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path, force: bool
 
     async with engine.begin() as conn:
         count = await conn.scalar(select(func.count()).select_from(Region))
-        if count > 0 and not force:
+        if count is not None and count > 0 and not force:
             print(f"✅ Regions table already populated ({count} entries). skipping seeding.")
             return
 
@@ -195,13 +198,13 @@ async def seed_regions_from_csv(engine: AsyncEngine, csv_path: Path, force: bool
                     "q": stmt.excluded.q,
                     "r": stmt.excluded.r,
                     "raw_r": stmt.excluded.raw_r,
-                }
+                },
             )
         else:
             stmt = stmt.on_conflict_do_nothing(index_elements=[Region.name])
-            
+
         await conn.execute(stmt)
-        
+
         if force:
             print(f"✅ Region reference updated/synced ({len(regions_data)} entries).")
         else:

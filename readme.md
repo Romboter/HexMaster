@@ -1,5 +1,12 @@
 # HexMaster — Foxhole Logistics Discord Bot
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
 HexMaster is a powerful Discord bot designed for **Foxhole** logistics groups. It enables seamless stockpile management, cross-map item discovery, and intelligent supply chain comparison using OCR and real-time game data.
 
 The bot follows a **snapshot-based storage** model, preserving full historical data of every stockpile update without ever overwriting.
@@ -90,27 +97,42 @@ While the core logic is now stable, the following UI and feature enhancements ar
 
 - Docker & Docker Compose
 - Discord Bot Token
-- **Headless FIR Service**: A running instance of the [FIR (Headless Fork)](https://github.com/garykuepper/fir).
+- **Foxhole Stockpiles (FS)**: A running instance of [Foxhole Stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
 
-### 2) Environment Setup
+### Installation (Docker)
 
-Create a `.env` file from `.env.example`:
+You can run the bot using the pre-built Docker image from the GitHub Container Registry.
 
-```env
-DISCORD_TOKEN=your_token_here
-DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@postgres:5432/hexmaster
-OCR_URL=http://your_ocr_service_ip:5000
-```
+1.  **Clone the repository** (to get the `docker-compose.yml`):
 
-### 3) Launch
+    ```bash
+    git clone https://github.com/garykuepper/HexMaster.git
+    cd HexMaster
+    ```
 
-Start the bot and database:
+2.  **Configure environment**:
+    Copy `.env.example` to `.env` and fill in your `DISCORD_TOKEN`.
 
-```bash
-docker compose up --build -d
-```
+    ```bash
+    cp .env.example .env
+    nano .env
+    ```
 
-### 4) Deployment Reference
+3.  **Run the bot**:
+    ```bash
+    docker-compose up -d
+    ```
+    This will pull the latest image from `ghcr.io/garykuepper/hexmaster:main` and start the bot and database.
+
+### Local Development / Building from Source
+
+If you want to build the image locally instead of pulling it:
+
+1. Uncomment `build: .` in `docker-compose.yml`.
+2. Comment out `image: ghcr.io/garykuepper/hexmaster:main`.
+3. Run `docker-compose up -d --build`.
+
+### Deployment Reference
 
 For transparency, here is the `docker-compose.yml` used to orchestrate the containers:
 
@@ -120,21 +142,22 @@ services:
     image: postgres:16
     container_name: hexmaster_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hexmaster
+      POSTGRES_USER: hexmaster
+      POSTGRES_PASSWORD: hexmaster
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U hexmaster"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   hexmaster_bot:
-    build: .
+    image: ghcr.io/garykuepper/hexmaster:main
+    # build: .
     container_name: hexmaster_bot
     restart: always
     depends_on:
@@ -143,8 +166,10 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - OCR_URL=${OCR_URL}
+      - DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@127.0.0.1:5432/hexmaster
+      - OCR_URL=http://localhost:8000
+      - WARAPI_BASE_URL=https://war-service-live.foxholeservices.com/api
+      - DISCORD_GUILD_ID=175795857138909185
     volumes:
       - shared_data:/app/shared
     network_mode: host
@@ -178,7 +203,7 @@ python -m scripts.sync_regions
 
 HexMaster relies on several critical community-maintained tools and APIs:
 
-- **FIR (Foxhole Inventory Reporter)**: All OCR and screenshot-to-data logic is powered by the [Headless FIR Fork](https://github.com/garykuepper/fir) (originally by GICodeWarrior).
+- **Foxhole Stockpiles (FS)**: All OCR and screenshot-to-data logic is powered by [xurxogr/foxhole-stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
 - **Foxhole WarAPI**: Live town data, map status, and hex regions are provided by the official [WarAPI](https://github.com/clapfoot/warapi) maintained by Clapfoot/Siege Camp.
 - **Discord.py**: High-level Discord API wrapper.
 - **SQLAlchemy & asyncpg**: Database abstraction and performance.

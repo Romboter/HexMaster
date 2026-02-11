@@ -1,24 +1,32 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
+
 from sqlalchemy.ext.asyncio import create_async_engine
+
 from hexmaster.config import Settings
 from hexmaster.db.repositories.stockpile_repository import StockpileRepository
+
 
 async def test_inventory_query():
     settings = Settings.load()
     engine = create_async_engine(settings.database_url)
     repo = StockpileRepository(engine)
-    
+
     town = "Kingstone"
     print(f"--- Testing get_latest_inventory for {town} ---")
     rows = await repo.get_latest_inventory(town)
-    
+
     print(f"Found {len(rows)} rows.")
     if rows:
         print(f"First 5 rows: {rows[:5]}")
     else:
         # Check if subquery returns anything
-        from sqlalchemy import select, desc
+        from sqlalchemy import desc, select
+
         from hexmaster.db.models import StockpileSnapshot
+
         async with engine.connect() as conn:
             subq = (
                 select(StockpileSnapshot.id)
@@ -29,7 +37,7 @@ async def test_inventory_query():
                     StockpileSnapshot.struct_type,
                     StockpileSnapshot.stockpile_name,
                     desc(StockpileSnapshot.captured_at),
-                    desc(StockpileSnapshot.id)
+                    desc(StockpileSnapshot.id),
                 )
             )
             res = await conn.execute(subq)
@@ -37,6 +45,7 @@ async def test_inventory_query():
             print(f"Subquery IDs: {ids}")
 
     await engine.dispose()
+
 
 if __name__ == "__main__":
     asyncio.run(test_inventory_query())

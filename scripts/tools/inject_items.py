@@ -1,7 +1,11 @@
+# Copyright (c) 2024-2025 Gary Kuepper
+# Licensed under the MIT License.
+
 import asyncio
+
 import pandas as pd
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import insert
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from hexmaster.config import Settings
 from hexmaster.db.models import CatalogItem
