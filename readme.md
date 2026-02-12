@@ -6,11 +6,6 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
-[![GitHub Stars](https://img.shields.io/github/stars/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/pulls)
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/commits/main)
 
 </div>
 
