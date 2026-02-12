@@ -253,8 +253,6 @@ class StockpileRepository:
 
             return snapshot, items
 
-
-
     async def search_item_across_stockpiles(self, guild_id: int, item_name: str):
         """Finds all latest instances of an item across all towns for a guild."""
         async with self.engine.connect() as conn:

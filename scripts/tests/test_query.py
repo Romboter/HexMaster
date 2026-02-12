@@ -15,8 +15,9 @@ async def test_inventory_query():
     repo = StockpileRepository(engine)
 
     town = "Kingstone"
+    guild_id = 555
     print(f"--- Testing get_latest_inventory for {town} ---")
-    rows = await repo.get_latest_inventory(town)
+    rows = await repo.get_latest_inventory(guild_id, town)
 
     print(f"Found {len(rows)} rows.")
     if rows:

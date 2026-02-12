@@ -21,14 +21,15 @@ async def test_war_ingestion():
 
     # Needs some real item codenames from catalog
     # I'll just use what's likely there or skip item insertion if I can
-    items = []
+    items: list[dict] = []
+    guild_id = 12345
 
     print(f"Ingesting snapshot for {town} with War {war_number}...")
-    snapshot_id = await repo.ingest_snapshot(town, struct, stockpile, items, war_number)
+    snapshot_id = await repo.ingest_snapshot(guild_id, town, struct, stockpile, items, war_number)
     print(f"Inserted snapshot_id: {snapshot_id}")
 
     print(f"Fetching latest inventory for {town}...")
-    await repo.get_latest_inventory(town)
+    await repo.get_latest_inventory(guild_id, town)
 
     # Since we inserted 0 items, get_latest_inventory might return nothing if it joins with items
     # Let's check the snapshot header directly instead using a new repo method or simple query

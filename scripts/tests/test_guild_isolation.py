@@ -37,6 +37,8 @@ async def test_isolation():
     print(f"Config A type: {type(config_a)}, value: {config_a}")
     config_b = await settings_repo.get_config(guild_b)
 
+    assert config_a is not None
+    assert config_b is not None
     assert config_a.shard == "Alpha"
     assert config_b.shard == "Bravo"
     print("✅ Guild configs isolated.")

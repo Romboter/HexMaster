@@ -148,7 +148,10 @@ class StockpileCog(commands.Cog):
                 guild_id, image_bytes, town, stockpile, war_number
             )
             # Show the inventory table immediately for feedback
-            await self._send_inventory_results(interaction, guild_id, town, struct_type, stockpile, success_msg=f"Imported {count} items. Snapshot ID: `{snapshot_id}`")
+            success_msg = f"Imported {count} items. Snapshot ID: `{snapshot_id}`"
+            await self._send_inventory_results(
+                interaction, guild_id, town, struct_type, stockpile, success_msg=success_msg
+            )
         except OCRServiceError as e:
             print(f"OCR Service Error: {e.message}\nDetails: {e.technical_details}")
             await send_error(
@@ -184,7 +187,15 @@ class StockpileCog(commands.Cog):
 
         await self._send_inventory_results(interaction, guild_id, town_input, structure, stockpile)
 
-    async def _send_inventory_results(self, interaction: discord.Interaction, guild_id: int, town_name: str, structure: str = None, stockpile: str = None, success_msg: str = None) -> None:
+    async def _send_inventory_results(
+        self,
+        interaction: discord.Interaction,
+        guild_id: int,
+        town_name: str,
+        structure: str | None = None,
+        stockpile: str | None = None,
+        success_msg: str | None = None,
+    ) -> None:
         """Reusable helper to fetch inventory and render table."""
         rows = await self.repo.get_latest_inventory(guild_id, town_name, structure, stockpile)
         if not rows:
@@ -223,7 +234,7 @@ class StockpileCog(commands.Cog):
             # Bases: All = No Tag
             hubs = ["Storage Depot", "Seaport"]
             is_hub = any(h in rows[0]["struct_type"] for h in hubs)
-            
+
             crated_tag = ""
             if is_hub:
                 if not r["is_crated"]:
@@ -261,9 +272,12 @@ class StockpileCog(commands.Cog):
         title = f"{pretty_name} [{age_str}]"
         if success_msg:
             title = f"{success_msg}\n{title}"
-        if war_num and not past_war_warning: title += f" War {war_num}"
-        if stockpile: title += f" (Filter: {stockpile})"
-        if past_war_warning: title += past_war_warning
+        if war_num and not past_war_warning:
+            title += f" War {war_num}"
+        if stockpile:
+            title += f" (Filter: {stockpile})"
+        if past_war_warning:
+            title += past_war_warning
 
         title = f"{pretty_name} ({age_str})"
         if war_num and not past_war_warning:
@@ -361,17 +375,19 @@ class StockpileCog(commands.Cog):
                 item_name = d["Item"] or "Unknown"
                 if len(item_name) > 20:
                     item_name = item_name[:20].strip() + "..."
-                
+
                 # Tag logic for Requisition
                 # If is_crated is True, no tag.
                 # If is_crated is False, add (itm) tag.
-                # Note: The service layer already filters strictly for Base destinations, 
+                # Note: The service layer already filters strictly for Base destinations,
                 # so we can just trust the is_crated flag here.
                 tag = ""
                 if not d.get("is_crated", True):
-                     tag = " (itm)"
+                    tag = " (itm)"
 
-                table_rows.append([f"{item_name}{tag}", f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status])
+                table_rows.append(
+                    [f"{item_name}{tag}", f"{round(d['Avail'], 1):g}", f"{round(d['Need'], 1):g}", status]
+                )
 
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
             ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else ship_town.title()
@@ -407,12 +423,14 @@ class StockpileCog(commands.Cog):
         guild_id = interaction.guild_id
         if not guild_id:
             return []
-        
+
         shard = await self._get_shard(guild_id)
         war_number = await self.war_service.get_current_war_number(shard) if self.war_service else None
-        
+
         # Pass war_number to ensure we only see hubs for the current war
-        return await self._get_cached_choices(current, "hub_towns", self.repo.get_towns_with_hub_snapshots, guild_id, war_number)
+        return await self._get_cached_choices(
+            current, "hub_towns", self.repo.get_towns_with_hub_snapshots, guild_id, war_number
+        )
 
     @requisition.autocomplete("ship_struct")
     async def requisition_ship_struct_autocomplete(

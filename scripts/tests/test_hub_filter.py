@@ -15,12 +15,13 @@ async def test_hub_filter():
     repo = StockpileRepository(engine)
 
     print("Fetching towns with hub snapshots...")
-    hub_towns = await repo.get_towns_with_hub_snapshots()
+    guild_id = 777
+    hub_towns = await repo.get_towns_with_hub_snapshots(guild_id)
     print(f"Hub Towns: {hub_towns}")
 
     if hub_towns:
         town = hub_towns[0]
-        snap, _ = await repo.get_latest_snapshot_for_town(town)
+        snap, _ = await repo.get_latest_snapshot_for_town_filtered(guild_id, town)
         print(f"Town: {town}, Structure: {snap['struct_type']}")
 
     await engine.dispose()

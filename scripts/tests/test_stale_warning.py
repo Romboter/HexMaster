@@ -14,25 +14,27 @@ async def test_stale_warning():
     settings = Settings.load()
     engine = create_async_engine(settings.database_url)
     repo = StockpileRepository(engine)
-    war_service = WarService()
+    war_service = WarService(default_base_url="https://war-service-live.foxholeservices.com/api")
 
     town = "Tine"
+    guild_id = 999
     current_war = await war_service.get_current_war_number()
-    past_war = current_war - 1
+    past_war = (current_war - 1) if current_war else 100
 
     print(f"Current War: {current_war}")
     print(f"Mocking a snapshot for {town} from War {past_war}...")
 
     # Ingest a snapshot with a past war number
-    await repo.ingest_snapshot(town, "Seaport", "StaleStockpile", [], past_war)
+    await repo.ingest_snapshot(guild_id, town, "Seaport", "StaleStockpile", [], past_war)
 
     # Fetch inventory
-    rows = await repo.get_latest_inventory(town)
+    _ = await repo.get_latest_inventory(guild_id, town)
 
-    if rows:
-        # Note: inventory join currently requires items to be in the snapshot to show up in get_latest_inventory
-        # So I should probably check get_latest_snapshot_for_town instead
-        snapshot, items = await repo.get_latest_snapshot_for_town(town)
+    # Note: inventory join currently requires items to be in the snapshot to show up in get_latest_inventory
+    # So I should probably check get_latest_snapshot_for_town_filtered instead
+    snapshot, items = await repo.get_latest_snapshot_for_town_filtered(guild_id, town)
+
+    if snapshot:
         war_num = snapshot.get("war_number")
         print(f"Retrieved Snapshot War Number: {war_num}")
 

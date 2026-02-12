@@ -116,7 +116,7 @@ async def ingest_tsv(tsv_path: str, town: str, struct_type: str, stockpile_name:
             )
 
     await engine.dispose()
-    return snapshot_id
+    return int(snapshot_id)
 
 
 SQL_LATEST_ITEMS_PER_KEY_FOR_TOWN = """

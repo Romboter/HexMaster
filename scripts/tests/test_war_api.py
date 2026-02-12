@@ -7,7 +7,7 @@ from hexmaster.services.war_service import WarService
 
 
 async def test_war_service():
-    service = WarService()
+    service = WarService(default_base_url="https://war-service-live.foxholeservices.com/api")
     print("Fetching current war number...")
     war_number = await service.get_current_war_number()
     print(f"Current War Number: {war_number}")

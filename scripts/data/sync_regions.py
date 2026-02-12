@@ -46,7 +46,7 @@ def main():
         return
 
     # 1. Build a map of existing coordinates from Regions.csv
-    coords_map = {}
+    coords_map: dict[str, tuple[float, float]] = {}
     if REGIONS_CSV_PATH.exists():
         print(f"Reading existing coordinates from {REGIONS_CSV_PATH}...")
         df_old = pd.read_csv(REGIONS_CSV_PATH)

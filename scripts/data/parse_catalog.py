@@ -3,6 +3,7 @@
 
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 
@@ -18,9 +19,9 @@ def normalize_faction(value) -> str:
     return "Both"
 
 
-def load_catalog(path: Path) -> list[dict]:
+def load_catalog(path: Path) -> list[dict[str, Any]]:
     with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        return cast(list[dict[str, Any]], json.load(f))
 
 
 def extract_items(raw_items: list[dict]) -> pd.DataFrame:

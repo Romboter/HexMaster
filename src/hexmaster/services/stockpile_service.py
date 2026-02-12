@@ -34,11 +34,11 @@ class StockpileService:
         # Extract metadata from the first row (populated by OCRService)
         first_row = df.iloc[0]
         struct_type = str(first_row.get("Structure Type", "Unknown")).strip()
-        
+
         # Priority: OCR Detected Name > User Fallback (if default set to "Public")
         detected_stockpile = str(first_row.get("Stockpile Name", "")).strip()
         if detected_stockpile:
-             stockpile_name = detected_stockpile
+            stockpile_name = detected_stockpile
 
         # --- UPDATED LOOKUP LOGIC ---
         valid_pairs = await self.repo.get_catalog_items()
@@ -48,28 +48,30 @@ class StockpileService:
         items = []
         for _, r in df.iterrows():
             cname = str(r.get("CodeName", "")).strip()
-            
-            # If valid code, use the DB's pretty name. 
+
+            # If valid code, use the DB's pretty name.
             # If invalid code, skip it (it might be a modded item or OCR error)
             if cname in code_to_name:
                 real_name = code_to_name[cname]
-                
+
                 qty = int(r["Quantity"]) if pd.notna(r.get("Quantity")) else 0
                 is_crated = str(r.get("Crated?", "")).upper() in ("TRUE", "YES", "T", "Y")
-                
+
                 # Calculate totals if not provided by OCR
                 # (FS usually provides raw quantity and crated status, not total items)
                 # We let the repo/view logic handle the crates-to-items math based on the catalog definition
-                
-                items.append({
-                    "code_name": cname,
-                    "item_name": real_name, # Use the clean name from DB
-                    "quantity": qty,
-                    "is_crated": is_crated,
-                    "per_crate": 0, # Will be filled by DB default on read if 0
-                    "total": qty,   # Temporarily store raw qty; detailed math happens on read
-                    "description": ""
-                })
+
+                items.append(
+                    {
+                        "code_name": cname,
+                        "item_name": real_name,  # Use the clean name from DB
+                        "quantity": qty,
+                        "is_crated": is_crated,
+                        "per_crate": 0,  # Will be filled by DB default on read if 0
+                        "total": qty,  # Temporarily store raw qty; detailed math happens on read
+                        "description": "",
+                    }
+                )
         snapshot_id = await self.repo.ingest_snapshot(guild_id, town, struct_type, stockpile_name, items, war_number)
         return snapshot_id, len(items), struct_type
 
@@ -143,43 +145,36 @@ class StockpileService:
                 # For priority items, we usually just want to know if we can fill the need.
                 # However, we still need to respect the display rules.
                 # Since priority items are usually requested in crates, we look for crates first.
-                
+
                 # Check for crates
                 avail_crates_crated = ship_total_map.get((codename, True), 0) / qty_per_crate
                 if avail_crates_crated > 0:
-                     comparison_data.append({
-                        "Item": p["name"], 
-                        "Avail": avail_crates_crated, 
-                        "Need": lacking_crates,
-                        "is_crated": True
-                    })
-                
+                    comparison_data.append(
+                        {"Item": p["name"], "Avail": avail_crates_crated, "Need": lacking_crates, "is_crated": True}
+                    )
+
                 # Check for loose items if destination is a HUB
                 if is_recv_hub:
                     avail_crates_loose = ship_total_map.get((codename, False), 0) / qty_per_crate
                     if avail_crates_loose > 0:
-                        comparison_data.append({
-                            "Item": p["name"],
-                            "Avail": avail_crates_loose,
-                            "Need": lacking_crates,  # Same need, just different source form
-                            "is_crated": False
-                        })
-                
+                        comparison_data.append(
+                            {
+                                "Item": p["name"],
+                                "Avail": avail_crates_loose,
+                                "Need": lacking_crates,  # Same need, just different source form
+                                "is_crated": False,
+                            }
+                        )
+
                 # If neither found but needed, show 0 avail (defaulting to crate view for priority)
                 if avail_crates_crated == 0 and (not is_recv_hub or (is_recv_hub and avail_crates_loose == 0)):
-                     comparison_data.append({
-                        "Item": p["name"], 
-                        "Avail": 0, 
-                        "Need": lacking_crates,
-                        "is_crated": True
-                    })
-
+                    comparison_data.append({"Item": p["name"], "Avail": 0, "Need": lacking_crates, "is_crated": True})
 
         # Process Non-Priority Items
         # Gather all code names present in shipping
         ship_codenames = {k[0] for k in ship_total_map.keys()}
         non_priority_codenames = ship_codenames - handled_codenames
-        
+
         item_details_map = {i["code_name"]: i for i in ship_items}
         codename_to_name = {i["code_name"]: i["item_name"] for i in ship_items}
 
@@ -187,29 +182,33 @@ class StockpileService:
             item_ref = item_details_map.get(codename)
             qpc = item_ref.get("catalog_qpc") if item_ref else None
             per_crate = item_ref.get("per_crate") if item_ref else None
-            
+
             # Check Crated
             ship_total_crated = ship_total_map.get((codename, True), 0)
             if ship_total_crated > 0:
                 qty_crates = self.get_qty_crates(ship_total_crated, qpc, per_crate)
-                comparison_data.append({
-                    "Item": codename_to_name.get(codename, codename), 
-                    "Avail": qty_crates, 
-                    "Need": 0,
-                    "is_crated": True
-                })
+                comparison_data.append(
+                    {
+                        "Item": codename_to_name.get(codename, codename),
+                        "Avail": qty_crates,
+                        "Need": 0,
+                        "is_crated": True,
+                    }
+                )
 
             # Check Loose - ONLY if destination is a HUB
             if is_recv_hub:
                 ship_total_loose = ship_total_map.get((codename, False), 0)
                 if ship_total_loose > 0:
                     qty_crates = self.get_qty_crates(ship_total_loose, qpc, per_crate)
-                    comparison_data.append({
-                        "Item": codename_to_name.get(codename, codename), 
-                        "Avail": qty_crates, 
-                        "Need": 0,
-                        "is_crated": False
-                    })
+                    comparison_data.append(
+                        {
+                            "Item": codename_to_name.get(codename, codename),
+                            "Avail": qty_crates,
+                            "Need": 0,
+                            "is_crated": False,
+                        }
+                    )
 
         return {
             "comparison_data": comparison_data,
