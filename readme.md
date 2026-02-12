@@ -1,11 +1,18 @@
+<div align="center">
+  <img src="data/core/HexMaster-cropped.png" alt="HexMaster Logo" width="200">
+
 # HexMaster — Foxhole Logistics Discord Bot
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/pulls)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/garykuepper/HexMaster?style=flat&logo=github)](https://github.com/garykuepper/HexMaster/commits/main)
+
+</div>
 
 HexMaster is a powerful Discord bot designed for **Foxhole** logistics groups. It enables seamless stockpile management, cross-map item discovery, and intelligent supply chain comparison using OCR and real-time game data.
 
@@ -13,200 +20,60 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ---
 
-## What HexMaster Does (MVP)
+## Documentation Links 📚
 
-### 1. Intelligence Reporting
+- **[Installation & Deployment](docs/installation.md)**: Setup guides for Docker and local development.
+- **[User Guide (Commands)](docs/commands.md)**: Detailed info on `/report`, `/locate`, `/inventory`, and more.
+- **[Admin Guide (Tools)](docs/admin.md)**: How to configure the bot, shards, and priority lists.
+- **[Technical Reference](docs/tech_reference.md)**: Architecture, project structure, and technical details.
 
-- **Filing Reports**: Users file intelligence reports by uploading screenshots of stockpiles via the `/report` slash command.
-- **Deep Processing**: The bot uses an OCR service to transcribe item codes, names, total quantities, and crate statuses.
-- **Historical snapshots**: Every import creates a new time-stamped record for trend analysis.
+---
 
-### 2. Requisition Orders
+## What HexMaster Does
 
-- **Supply Chain Decisioning**: Compare a "Shipping Hub" (e.g., Seaport/Warehouse) against a "Receiving Town/Base".
-- **Hub Detection**: Automatically detects Seaports and Storage Warehouses to apply a **4x requirement multiplier**.
-- **Crate-First Units**: All quantities are standardized to "Crates" for easy logistics math.
-- **Priority Logic**: Sorts items by mission-critical importance and highlights shortages.
-
-### 3. Strategic Reconnaissance
-
-- **Global Search**: Find which stockpiles currently hold a specific item across the entire World Conquest map.
-- **Accurate Hex Math**: Uses a custom **Cartesian-Staggered** coordinate system to calculate distances in physical hex units.
-- **Proximity Sorting**: Results are sorted by distance from your reference town.
-- **Sync with WarAPI**: Automatically fetches 918+ town locations and marker types (Major/Minor) from the official Foxhole servers.
+1.  **Intelligence Reporting**: File reports by uploading screenshots of stockpiles.
+2.  **Requisition Orders**: Compare "Shipping Hubs" against "Receiving Bases" to identify supply gaps.
+3.  **Strategic Reconnaissance**: Find specific items across the entire World Conquest map with proximity sorting.
+4.  **Priority Management**: Track mission-critical items through customizable priority lists.
 
 ---
 
 ## Quick Reference 🚀
 
-### User Commands
+### For Players
 
-| Command          | Description                                                           |
-| ---------------- | --------------------------------------------------------------------- |
-| `/report`        | **File an Intelligence Report** by uploading a stockpile screenshot.  |
-| `/inventory`     | **View the Inventory** for a specific town or base.                   |
-| `/locate`        | **Perform Reconnaissance** to find an item's location across the map. |
-| `/requisition`   | **Calculate a Requisition Order** to identify supply gaps.            |
-| `/priority list` | **View the Priority List** for your current server.                   |
-| `/help`          | Display the command list and lore.                                    |
+- `/report`: Upload a screenshot to update stockpile data.
+- `/locate`: Find the nearest source of a specific item.
+- `/inventory`: View items currently held in a town or base.
+- `/requisition`: Calculate what supplies are missing from a destination.
 
-### Admin Commands (Administrator Permission Required)
+### For Admins
 
-| Command             | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| `/setup config`     | **Configure Server** settings (Faction, Shard).     |
-| `/setup priorities` | **Load Priority Templates** or clear existing ones. |
-| `/priority add`     | **Add/Update Item** in the priority list.           |
-| `/priority remove`  | **Remove Item** from the priority list.             |
+- `/setup config`: Set your server's faction and shard.
+- `/setup priorities`: Load standard priority templates.
 
 ---
 
-## Server Setup (Admins Only)
+## Future Roadmap
 
-Once the bot is invited to your server, you **must** configure it before it can fetch accurate game data or track stockpiles:
-
-1. **Configure Faction & Shard**: Run `/setup config faction:[Colonial/Warden] shard:[Alpha/Bravo/Charlie]`. This tells the bot which WarAPI endpoint to use and which faction items to prioritize.
-2. **Initialize Priorities**: Run `/setup priorities template:standard` to load a default list of 60+ critical logistics items. You can further customize these with `/priority add` and `/priority remove`.
-
----
-
-## Architecture
-
-- **Discord Bot**: Built with `discord.py` and `SQLAlchemy`.
-- **Database**: PostgreSQL with `asyncpg` for high-performance async queries.
-- **Sync Logic**: Standalone Python scripts for seeding regions and syncing with WarAPI.
-- **Dockerized**: Fully containerized for easy deployment on Linux/Windows.
+- **Dynamic Inventory Cleanup**: Automatically handle destroyed/captured towns via WarAPI.
+- **Faction Tracking**: Filter inventories based on real-time faction ownership.
+- **Logistics Threat Mapping**: Warn drivers if routes pass through contested territory.
+- **Supply Drop Alerts**: Automated pings for low-supply frontline bases.
+- **Trend Charts**: Visual graphs of stockpile changes over time.
 
 ---
 
-## Future Roadmap & UI Updates
+## Acknowledgements & Credits
 
-While the core logic is now stable, the following UI and feature enhancements are planned:
+HexMaster relies on several critical community-maintained tools:
 
-- **Dynamic Inventory Cleanup**: Automatically remove or "grey out" inventories for Seaports or Storage Warehouses that the WarAPI reports as **Destroyed** or **Captured** by the enemy.
-- **Faction Tracking**: Only show inventories that belong to the bot-owner's faction (Colonials/Wardens) in real-time.
-- **Logistics Threat Mapping**: Overlay current "Front Line" map data to warn logistics drivers if a `/locate` result requires driving through contested or enemy-held territory.
-- **Supply Drop Alerts**: Automated pings when a critical frontline base (based on WarAPI status) is low on Soldier Supplies or AT weapons.
-- **Trend Charts**: Visual graphs of stockpile changes over the last 24-48 hours.
-
----
-
-## Getting Started
-
-### 1) Prerequisites
-
-- Docker & Docker Compose
-- Discord Bot Token
-- **Foxhole Stockpiles (FS)**: A running instance of [Foxhole Stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
-
-### Installation (Docker)
-
-You can run the bot using the pre-built Docker image from the GitHub Container Registry.
-
-1.  **Clone the repository** (to get the `docker-compose.yml`):
-
-    ```bash
-    git clone https://github.com/garykuepper/HexMaster.git
-    cd HexMaster
-    ```
-
-2.  **Configure environment**:
-    Copy `.env.example` to `.env` and fill in your `DISCORD_TOKEN`.
-
-    ```bash
-    cp .env.example .env
-    nano .env
-    ```
-
-3.  **Run the bot**:
-    ```bash
-    docker-compose up -d
-    ```
-    This will pull the latest image from `ghcr.io/garykuepper/hexmaster:main` and start the bot and database.
-
-### Local Development / Building from Source
-
-If you want to build the image locally instead of pulling it:
-
-1. Uncomment `build: .` in `docker-compose.yml`.
-2. Comment out `image: ghcr.io/garykuepper/hexmaster:main`.
-3. Run `docker-compose up -d --build`.
-
-### Deployment Reference
-
-For transparency, here is the `docker-compose.yml` used to orchestrate the containers:
-
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    container_name: hexmaster_db
-    environment:
-      POSTGRES_DB: hexmaster
-      POSTGRES_USER: hexmaster
-      POSTGRES_PASSWORD: hexmaster
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hexmaster"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  hexmaster_bot:
-    image: ghcr.io/garykuepper/hexmaster:main
-    # build: .
-    container_name: hexmaster_bot
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@127.0.0.1:5432/hexmaster
-      - OCR_URL=http://localhost:8000
-      - WARAPI_BASE_URL=https://war-service-live.foxholeservices.com/api
-      - DISCORD_GUILD_ID=175795857138909185
-    volumes:
-      - shared_data:/app/shared
-    network_mode: host
-
-volumes:
-  pgdata:
-  shared_data:
-```
+- **[Foxhole Stockpiles (FS)](https://github.com/xurxogr/foxhole-stockpiles)**: OCR and screenshot-to-data logic.
+- **[WarAPI](https://github.com/clapfoot/warapi)**: Official Foxhole API for town data and map status.
+- **[Discord.py](https://discordpy.readthedocs.io/)**: Discord API wrapper.
+- **[SQLAlchemy](https://www.sqlalchemy.org/)**: Database abstraction.
 
 ---
-
-## Development & Seeding
-
-To update town data or region offsets manually:
-
-```bash
-python -m scripts.sync_regions
-```
-
----
-
-## Technical Reference
-
-- **Bot Implementation**: `src/hexmaster/bot/main.py`
-- **Database Schema**: `src/hexmaster/db/schema.sql` (managed automatically via `init_db`)
-- **Reference Data**: Located in `data/` (Towns, Regions, Catalog)
-
----
-
-## Credits & Attribution
-
-HexMaster relies on several critical community-maintained tools and APIs:
-
-- **Foxhole Stockpiles (FS)**: All OCR and screenshot-to-data logic is powered by [xurxogr/foxhole-stockpiles](https://github.com/xurxogr/foxhole-stockpiles).
-- **Foxhole WarAPI**: Live town data, map status, and hex regions are provided by the official [WarAPI](https://github.com/clapfoot/warapi) maintained by Clapfoot/Siege Camp.
-- **Discord.py**: High-level Discord API wrapper.
-- **SQLAlchemy & asyncpg**: Database abstraction and performance.
 
 ## License
 
