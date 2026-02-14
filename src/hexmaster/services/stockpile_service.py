@@ -49,32 +49,41 @@ class StockpileService:
             stockpile_name = detected_stockpile
 
         # --- UPDATED LOOKUP LOGIC ---
-        valid_pairs = await self.repo.get_catalog_items()
-        # Create a map of CodeName -> DisplayName
-        code_to_name = {c: n for c, n in valid_pairs}
+        code_to_details = await self.repo.get_catalog_items()
 
         items = []
         for _, r in df.iterrows():
             cname = str(r.get("CodeName", "")).strip()
 
-            # If valid code, use the DB's pretty name.
-            # If invalid code, skip it (it might be a modded item or OCR error)
-            if cname in code_to_name:
-                real_name = code_to_name[cname]
+            if cname in code_to_details:
+                details = code_to_details[cname]
+                real_name = details["displayname"]
+                qpc = details["qty_per_crate"]
+
+                quantity = int(r["Quantity"]) if pd.notna(r.get("Quantity")) else 0
+                is_crated = str(r.get("Crated?", "")).upper() in (
+                    "TRUE",
+                    "YES",
+                    "T",
+                    "Y",
+                )
+
+                # Calculate total and per_crate based on is_crated flag
+                if is_crated:
+                    per_crate = qpc
+                    total_qty = quantity * qpc
+                else:
+                    per_crate = qpc  # Still store the expected crate size
+                    total_qty = quantity
 
                 items.append(
                     {
                         "code_name": cname,
                         "item_name": real_name,
-                        "quantity": (
-                            int(r["Quantity"]) if pd.notna(r.get("Quantity")) else 0
-                        ),
-                        "is_crated": str(r.get("Crated?", "")).upper()
-                        in ("TRUE", "YES", "T", "Y"),
-                        "per_crate": (
-                            int(r["Per Crate"]) if pd.notna(r.get("Per Crate")) else 0
-                        ),
-                        "total": int(r["Total"]) if pd.notna(r.get("Total")) else 0,
+                        "quantity": quantity,
+                        "is_crated": is_crated,
+                        "per_crate": per_crate,
+                        "total": total_qty,
                         "description": str(r.get("Description", "")).strip(),
                     }
                 )

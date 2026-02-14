@@ -10,7 +10,9 @@ import pandas as pd
 class OCRServiceError(Exception):
     """Custom exception for OCR Service failures."""
 
-    def __init__(self, status: int, message: str, technical_details: Optional[str] = None):
+    def __init__(
+        self, status: int, message: str, technical_details: Optional[str] = None
+    ):
         super().__init__(message)
         self.status = status
         self.message = message
@@ -35,7 +37,9 @@ class OCRService:
 
         data = aiohttp.FormData()
         # FS expects the file field to be named 'image'
-        data.add_field("image", image_bytes, filename="screenshot.png", content_type="image/png")
+        data.add_field(
+            "image", image_bytes, filename="screenshot.png", content_type="image/png"
+        )
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -45,17 +49,24 @@ class OCRService:
                 raise OCRServiceError(500, f"Connection to FS Service failed: {str(e)}")
 
     async def _handle_response(
-        self, resp: aiohttp.ClientResponse, fallback_town: str | None, fallback_label: str | None
+        self,
+        resp: aiohttp.ClientResponse,
+        fallback_town: str | None,
+        fallback_label: str | None,
     ) -> pd.DataFrame:
         """Internal helper to handle the FS JSON response."""
         if resp.status != 200:
             raw_text = await resp.text()
-            raise OCRServiceError(resp.status, f"FS Service returned error: {raw_text[:200]}")
+            raise OCRServiceError(
+                resp.status, f"FS Service returned error: {raw_text[:200]}"
+            )
 
         try:
             data = await resp.json()
         except Exception:
-            raise OCRServiceError(resp.status, "Failed to decode JSON response from FS.")
+            raise OCRServiceError(
+                resp.status, "Failed to decode JSON response from FS."
+            )
 
         if not isinstance(data, dict):
             return pd.DataFrame()
@@ -98,8 +109,8 @@ class OCRService:
                     "Name": code,
                     "Quantity": item.get("quantity", 0),
                     "Crated?": "YES" if item.get("crated") else "NO",
-                    "Per Crate": 0,
-                    "Total": 0,
+                    "Per Crate": 0,  # Placeholder, calculated by StockpileService
+                    "Total": 0,  # Placeholder, calculated by StockpileService
                     "Description": "",
                 }
             )

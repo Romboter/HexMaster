@@ -157,12 +157,22 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_catalog_items(self) -> set[tuple[str, str]]:
-        """Fetches codename/displayname pairs for validation."""
+    async def get_catalog_items(self) -> dict[str, dict]:
+        """Fetches catalog item details (displayname, qty_per_crate) for validation."""
         async with self.engine.connect() as conn:
-            stmt = select(CatalogItem.codename, CatalogItem.displayname)
+            stmt = select(
+                CatalogItem.codename,
+                CatalogItem.displayname,
+                CatalogItem.quantitypercrate,
+            )
             result = await conn.execute(stmt)
-            return {(row.codename, row.displayname) for row in result}
+            return {
+                row.codename: {
+                    "displayname": row.displayname,
+                    "qty_per_crate": row.quantitypercrate or 1,
+                }
+                for row in result
+            }
 
     async def ingest_snapshot(
         self,
