@@ -20,8 +20,14 @@ async def sync_schema(conn: AsyncConnection) -> None:
         ("regions", "ALTER TABLE regions ADD COLUMN IF NOT EXISTS q FLOAT"),
         ("regions", "ALTER TABLE regions ADD COLUMN IF NOT EXISTS raw_r FLOAT"),
         ("regions", "ALTER TABLE regions ADD COLUMN IF NOT EXISTS r FLOAT"),
-        ("regions", "ALTER TABLE regions ADD COLUMN IF NOT EXISTS distance_to_origin FLOAT"),
-        ("regions", "ALTER TABLE regions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+        (
+            "regions",
+            "ALTER TABLE regions ADD COLUMN IF NOT EXISTS distance_to_origin FLOAT",
+        ),
+        (
+            "regions",
+            "ALTER TABLE regions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
+        ),
         # Towns Table
         (
             "towns",
@@ -33,10 +39,23 @@ async def sync_schema(conn: AsyncConnection) -> None:
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS global_q FLOAT"),
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS global_r FLOAT"),
         ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS town_type VARCHAR"),
-        ("towns", "ALTER TABLE towns ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+        (
+            "towns",
+            "ALTER TABLE towns ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
+        ),
         # Stockpile Snapshots Table
-        ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS guild_id BIGINT"),
-        ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS war_number INTEGER"),
+        (
+            "stockpile_snapshots",
+            "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS guild_id BIGINT",
+        ),
+        (
+            "stockpile_snapshots",
+            "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS war_number INTEGER",
+        ),
+        (
+            "stockpile_snapshots",
+            "ALTER TABLE stockpile_snapshots ADD COLUMN IF NOT EXISTS shard VARCHAR(20)",
+        ),
         # Guild Configs Table
         (
             "guild_configs",
@@ -52,17 +71,44 @@ async def sync_schema(conn: AsyncConnection) -> None:
         # Priority Table
         ("priority", "ALTER TABLE priority ADD COLUMN IF NOT EXISTS guild_id BIGINT"),
         # Snapshot Items Table (Ensuring primary key is correct is harder, but we can ensure columns)
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS code_name VARCHAR"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS item_name VARCHAR"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 0"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS is_crated BOOLEAN DEFAULT FALSE"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS per_crate INTEGER DEFAULT 0"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS total INTEGER DEFAULT 0"),
-        ("snapshot_items", "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS description TEXT"),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS code_name VARCHAR",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS item_name VARCHAR",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 0",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS is_crated BOOLEAN DEFAULT FALSE",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS per_crate INTEGER DEFAULT 0",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS total INTEGER DEFAULT 0",
+        ),
+        (
+            "snapshot_items",
+            "ALTER TABLE snapshot_items ADD COLUMN IF NOT EXISTS description TEXT",
+        ),
         # BigInt Fixes for guild_id
-        ("guild_configs", "ALTER TABLE guild_configs ALTER COLUMN guild_id TYPE BIGINT"),
+        (
+            "guild_configs",
+            "ALTER TABLE guild_configs ALTER COLUMN guild_id TYPE BIGINT",
+        ),
         ("priority", "ALTER TABLE priority ALTER COLUMN guild_id TYPE BIGINT"),
-        ("stockpile_snapshots", "ALTER TABLE stockpile_snapshots ALTER COLUMN guild_id TYPE BIGINT"),
+        (
+            "stockpile_snapshots",
+            "ALTER TABLE stockpile_snapshots ALTER COLUMN guild_id TYPE BIGINT",
+        ),
         # Fix Priority Table Primary Key (Composite PK: guild_id, codename)
         (
             "priority",

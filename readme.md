@@ -26,10 +26,10 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ## What HexMaster Does
 
-1.  **Intelligence Reporting**: File reports by uploading screenshots of stockpiles.
-2.  **Requisition Orders**: Compare "Shipping Hubs" against "Receiving Bases" to identify supply gaps.
-3.  **Strategic Reconnaissance**: Find specific items across the entire World Conquest map with proximity sorting.
-4.  **Priority Management**: Track mission-critical items through customizable priority lists.
+1. **Intelligence Reporting**: File reports by uploading screenshots of stockpiles.
+2. **Requisition Orders**: Compare "Shipping Hubs" against "Receiving Bases" to identify supply gaps.
+3. **Strategic Reconnaissance**: Find specific items across the entire World Conquest map with proximity sorting.
+4. **Priority Management**: Track mission-critical items through customizable priority lists.
 
 ---
 
@@ -49,13 +49,28 @@ The bot follows a **snapshot-based storage** model, preserving full historical d
 
 ---
 
+---
+
+## Acknowledgements & Credits
+
+HexMaster relies on several critical community-maintained tools:
+
+- **[Foxhole Stockpiles (FS)](https://github.com/xurxogr/foxhole-stockpiles)**: OCR and screenshot-to-data logic.
+- **[WarAPI](https://github.com/clapfoot/warapi)**: Official Foxhole API for town data and map status.
+- **[Discord.py](https://discordpy.readthedocs.io/)**: Discord API wrapper.
+- **[SQLAlchemy](https://www.sqlalchemy.org/)**: Database abstraction.
+
+---
+
 ## Future Roadmap
 
-- **Dynamic Inventory Cleanup**: Automatically handle destroyed/captured towns via WarAPI.
-- **Faction Tracking**: Filter inventories based on real-time faction ownership.
-- **Logistics Threat Mapping**: Warn drivers if routes pass through contested territory.
-- **Supply Drop Alerts**: Automated pings for low-supply frontline bases.
-- **Trend Charts**: Visual graphs of stockpile changes over time.
+While the core logic is now stable, the following UI and feature enhancements are planned:
+
+- **Dynamic Inventory Cleanup**: Automatically remove or "grey out" inventories for Seaports or Storage Warehouses that the WarAPI reports as **Destroyed** or **Captured** by the enemy.
+- **Faction Tracking**: Only show inventories that belong to the bot-owner's faction (Colonials/Wardens) in real-time.
+- **Logistics Threat Mapping**: Overlay current "Front Line" map data to warn logistics drivers if a `/locate` result requires driving through contested or enemy-held territory.
+- **Supply Drop Alerts**: Automated pings when a critical frontline base (based on WarAPI status) is low on Soldier Supplies or AT weapons.
+- **Trend Charts**: Visual graphs of stockpile changes over the last 24-48 hours.
 
 ---
 
@@ -67,6 +82,14 @@ HexMaster relies on several critical community-maintained tools:
 - **[WarAPI](https://github.com/clapfoot/warapi)**: Official Foxhole API for town data and map status.
 - **[Discord.py](https://discordpy.readthedocs.io/)**: Discord API wrapper.
 - **[SQLAlchemy](https://www.sqlalchemy.org/)**: Database abstraction.
+
+---
+
+## Technical Reference
+
+- **Bot Implementation**: `src/hexmaster/bot/main.py`
+- **Database Schema**: `src/hexmaster/db/models.py`
+- **Reference Data**: Located in `data/` (Towns, Regions, Catalog)
 
 ---
 

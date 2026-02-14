@@ -4,7 +4,16 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -27,9 +36,15 @@ class GuildConfig(Base):
     __tablename__ = "guild_configs"
 
     guild_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    faction: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # Colonial / Warden
-    shard: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # Alpha / Bravo / Charlie
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    faction: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # Colonial / Warden
+    shard: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # Alpha / Bravo / Charlie
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class Priority(Base):
@@ -54,10 +69,15 @@ class StockpileSnapshot(Base):
     struct_type: Mapped[str] = mapped_column(String(100))
     stockpile_name: Mapped[str] = mapped_column(String(255))
     war_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    shard: Mapped[Optional[str]] = mapped_column(String(20), index=True, nullable=True)
+    captured_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
     # Relationship to the items within this snapshot
-    items: Mapped[List["SnapshotItem"]] = relationship(back_populates="snapshot", cascade="all, delete-orphan")
+    items: Mapped[List["SnapshotItem"]] = relationship(
+        back_populates="snapshot", cascade="all, delete-orphan"
+    )
 
 
 class SnapshotItem(Base):
@@ -65,7 +85,9 @@ class SnapshotItem(Base):
 
     __tablename__ = "snapshot_items"
 
-    snapshot_id: Mapped[int] = mapped_column(ForeignKey("stockpile_snapshots.id"), primary_key=True)
+    snapshot_id: Mapped[int] = mapped_column(
+        ForeignKey("stockpile_snapshots.id"), primary_key=True
+    )
     code_name: Mapped[str] = mapped_column(String(100), primary_key=True)
     is_crated: Mapped[bool] = mapped_column(Boolean, default=False, primary_key=True)
     item_name: Mapped[str] = mapped_column(String(255))
@@ -89,7 +111,9 @@ class Town(Base):
     global_q: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     global_r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     town_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class Region(Base):
@@ -101,4 +125,6 @@ class Region(Base):
     raw_r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     r: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     distance_to_origin: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
