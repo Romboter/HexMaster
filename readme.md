@@ -103,14 +103,14 @@ While the core logic is now stable, the following UI and feature enhancements ar
 
 You can run the bot using the pre-built Docker image from the GitHub Container Registry.
 
-1.  **Clone the repository** (to get the `docker-compose.yml`):
+1. **Clone the repository** (to get the `docker-compose.yml`):
 
     ```bash
     git clone https://github.com/garykuepper/HexMaster.git
     cd HexMaster
     ```
 
-2.  **Configure environment**:
+2. **Configure environment**:
     Copy `.env.example` to `.env` and fill in your `DISCORD_TOKEN`.
 
     ```bash
@@ -118,10 +118,12 @@ You can run the bot using the pre-built Docker image from the GitHub Container R
     nano .env
     ```
 
-3.  **Run the bot**:
+3. **Run the bot**:
+
     ```bash
     docker-compose up -d
     ```
+
     This will pull the latest image from `ghcr.io/garykuepper/hexmaster:main` and start the bot and database.
 
 ### Local Development / Building from Source
@@ -169,7 +171,6 @@ services:
       - DATABASE_URL=postgresql+asyncpg://hexmaster:hexmaster@127.0.0.1:5432/hexmaster
       - OCR_URL=http://localhost:8000
       - WARAPI_BASE_URL=https://war-service-live.foxholeservices.com/api
-      - DISCORD_GUILD_ID=175795857138909185
     volumes:
       - shared_data:/app/shared
     network_mode: host
