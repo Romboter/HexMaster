@@ -63,16 +63,12 @@ class StockpileCog(commands.Cog):
                     towns = cached_towns
                 else:
                     towns = await (
-                        fetch_func()
-                        if inspect.iscoroutinefunction(fetch_func)
-                        else asyncio.to_thread(fetch_func)
+                        fetch_func() if inspect.iscoroutinefunction(fetch_func) else asyncio.to_thread(fetch_func)
                     )
                     self._autocomplete_cache[cache_key] = (now, towns)
             else:
                 towns = await (
-                    fetch_func()
-                    if inspect.iscoroutinefunction(fetch_func)
-                    else asyncio.to_thread(fetch_func)
+                    fetch_func() if inspect.iscoroutinefunction(fetch_func) else asyncio.to_thread(fetch_func)
                 )
                 self._autocomplete_cache[cache_key] = (now, towns)
 
@@ -84,9 +80,7 @@ class StockpileCog(commands.Cog):
                     continue
                 town_name = str(town)
                 if not search or search in town_name.lower():
-                    choices.append(
-                        app_commands.Choice(name=town_name[:100], value=town_name[:100])
-                    )
+                    choices.append(app_commands.Choice(name=town_name[:100], value=town_name[:100]))
                 if len(choices) >= 25:
                     break
             return choices
@@ -100,9 +94,7 @@ class StockpileCog(commands.Cog):
         """Helper to handle caching and filtering for general autocomplete."""
         now = time.time()
         # Decorate cache key with args if any
-        full_cache_key = (
-            f"{cache_key}:{':'.join(map(str, args))}" if args else cache_key
-        )
+        full_cache_key = f"{cache_key}:{':'.join(map(str, args))}" if args else cache_key
 
         try:
             if full_cache_key in self._autocomplete_cache:
@@ -132,9 +124,7 @@ class StockpileCog(commands.Cog):
                     continue
                 item_name = str(item)
                 if not search or search in item_name.lower():
-                    choices.append(
-                        app_commands.Choice(name=item_name[:100], value=item_name[:100])
-                    )
+                    choices.append(app_commands.Choice(name=item_name[:100], value=item_name[:100]))
                 if len(choices) >= 25:
                     break
             return choices
@@ -142,12 +132,8 @@ class StockpileCog(commands.Cog):
             print(f"Autocomplete error for {full_cache_key}: {e}")
             return []
 
-    @app_commands.command(
-        name="report", description="File an Intelligence Report (upload screenshot)"
-    )
-    @app_commands.describe(
-        image="Stockpile screenshot", town="Town Name", stockpile="Stockpile Name"
-    )
+    @app_commands.command(name="report", description="File an Intelligence Report (upload screenshot)")
+    @app_commands.describe(image="Stockpile screenshot", town="Town Name", stockpile="Stockpile Name")
     async def report(
         self,
         interaction: discord.Interaction,
@@ -157,9 +143,7 @@ class StockpileCog(commands.Cog):
     ) -> None:
         guild_id = interaction.guild_id
         if not guild_id:
-            return await send_error(
-                interaction, "This command can only be used in a server."
-            )
+            return await send_error(interaction, "This command can only be used in a server.")
 
         if not image.content_type or not image.content_type.startswith("image/"):
             return await send_error(interaction, "Please upload a valid image file.")
@@ -168,16 +152,10 @@ class StockpileCog(commands.Cog):
         try:
             image_bytes = await image.read()
             shard = await self._get_shard(guild_id)
-            war_number = (
-                await self.war_service.get_current_war_number(shard)
-                if self.war_service
-                else None
-            )
+            war_number = await self.war_service.get_current_war_number(shard) if self.war_service else None
 
-            snapshot_id, count, struct_type = (
-                await self.service.process_remote_and_ingest(
-                    guild_id, image_bytes, town, stockpile, shard, war_number
-                )
+            snapshot_id, count, struct_type = await self.service.process_remote_and_ingest(
+                guild_id, image_bytes, town, stockpile, shard, war_number
             )
             # Show the inventory table immediately for feedback
             success_msg = f"Imported {count} items. Snapshot ID: `{snapshot_id}`"
@@ -207,16 +185,10 @@ class StockpileCog(commands.Cog):
     async def report_town_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(
-            current, "all_towns", self.repo.get_all_towns
-        )
+        return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
-    @app_commands.command(
-        name="inventory", description="View the Inventory for a specific town"
-    )
-    @app_commands.describe(
-        town="Town Name", structure="Structure Type", stockpile="Stockpile Name"
-    )
+    @app_commands.command(name="inventory", description="View the Inventory for a specific town")
+    @app_commands.describe(town="Town Name", structure="Structure Type", stockpile="Stockpile Name")
     async def view_inventory(
         self,
         interaction: discord.Interaction,
@@ -226,17 +198,13 @@ class StockpileCog(commands.Cog):
     ) -> None:
         guild_id = interaction.guild_id
         if not guild_id:
-            return await send_error(
-                interaction, "This command can only be used in a server."
-            )
+            return await send_error(interaction, "This command can only be used in a server.")
 
         town_input = (town or "").strip()
         if not town_input:
             return await send_error(interaction, "Town is required.")
 
-        await self._send_inventory_results(
-            interaction, guild_id, town_input, structure, stockpile
-        )
+        await self._send_inventory_results(interaction, guild_id, town_input, structure, stockpile)
 
     async def _send_inventory_results(
         self,
@@ -249,18 +217,10 @@ class StockpileCog(commands.Cog):
     ) -> None:
         """Reusable helper to fetch inventory and render table."""
         shard = await self._get_shard(guild_id)
-        rows = await self.repo.get_latest_inventory(
-            guild_id, shard, town_name, structure, stockpile
-        )
+        rows = await self.repo.get_latest_inventory(guild_id, shard, town_name, structure, stockpile)
         if not rows:
-            filter_msg = (
-                f" (filtered by `{structure}`/ `{stockpile}`)"
-                if structure or stockpile
-                else ""
-            )
-            return await send_error(
-                interaction, f"No snapshots found for `{town_name}`{filter_msg}."
-            )
+            filter_msg = f" (filtered by `{structure}`/ `{stockpile}`)" if structure or stockpile else ""
+            return await send_error(interaction, f"No snapshots found for `{town_name}`{filter_msg}.")
 
         priority_list = await self.repo.get_priority_list(guild_id)
         priority_map = {p["codename"]: p for p in priority_list}
@@ -269,17 +229,13 @@ class StockpileCog(commands.Cog):
         def sort_key(r):
             p_data = priority_map.get(r["code_name"])
             priority_val = p_data["priority"] if p_data else 9999
-            qty_crates = self.service.get_qty_crates(
-                r["total"], r.get("catalog_qpc"), r.get("per_crate")
-            )
+            qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
             return (priority_val, -qty_crates, (r.get("item_name") or "").lower())
 
         rows.sort(key=sort_key)
         table_rows = []
         for r in rows:
-            qty_crates = self.service.get_qty_crates(
-                r["total"], r.get("catalog_qpc"), r.get("per_crate")
-            )
+            qty_crates = self.service.get_qty_crates(r["total"], r.get("catalog_qpc"), r.get("per_crate"))
 
             p_data = priority_map.get(r["code_name"])
             status = " "  # Default empty
@@ -329,9 +285,7 @@ class StockpileCog(commands.Cog):
             shard = await self._get_shard(guild_id)
             current_war = await self.war_service.get_current_war_number(shard)
             if war_num and current_war and war_num < current_war:
-                past_war_warning = (
-                    f"\n⚠️ **Warning: Data from past war (War {war_num})**"
-                )
+                past_war_warning = f"\n⚠️ **Warning: Data from past war (War {war_num})**"
 
         oldest_snapshot = min(r["captured_at"] for r in rows if r.get("captured_at"))
         age_str = get_age_str(oldest_snapshot)
@@ -353,9 +307,7 @@ class StockpileCog(commands.Cog):
         if past_war_warning:
             title += past_war_warning
 
-        await render_and_truncate_table(
-            interaction, table_rows, ["Item", "Qty", "Need", "S"], title, as_embed=True
-        )
+        await render_and_truncate_table(interaction, table_rows, ["Item", "Qty", "Need", "S"], title, as_embed=True)
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(
@@ -434,9 +386,7 @@ class StockpileCog(commands.Cog):
     ) -> None:
         guild_id = interaction.guild_id
         if not guild_id:
-            return await send_error(
-                interaction, "This command can only be used in a server."
-            )
+            return await send_error(interaction, "This command can only be used in a server.")
 
         await interaction.response.defer(ephemeral=True)
 
@@ -459,9 +409,7 @@ class StockpileCog(commands.Cog):
                 msg = f"✅ `{recv_town}` meets all priority minimums!"
                 if result.get("warning"):
                     msg = f"{result['warning']}\n{msg}"
-                return await send_success(
-                    interaction, msg, title="Requisition Order Complete"
-                )
+                return await send_success(interaction, msg, title="Requisition Order Complete")
 
             table_rows = []
             for d in comparison_data:
@@ -496,23 +444,11 @@ class StockpileCog(commands.Cog):
                 )
 
             ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
-            ship_p = (
-                ship_snap["pretty_town"]
-                if ship_snap and ship_snap.get("pretty_town")
-                else ship_town.title()
-            )
-            recv_p = (
-                recv_snap["pretty_town"]
-                if recv_snap and recv_snap.get("pretty_town")
-                else recv_town.title()
-            )
+            ship_p = ship_snap["pretty_town"] if ship_snap and ship_snap.get("pretty_town") else ship_town.title()
+            recv_p = recv_snap["pretty_town"] if recv_snap and recv_snap.get("pretty_town") else recv_town.title()
 
-            ship_age = (
-                f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
-            )
-            recv_age = (
-                f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
-            )
+            ship_age = f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
+            recv_age = f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
 
             # Enhance title with filters
             filter_info = ""
@@ -548,11 +484,7 @@ class StockpileCog(commands.Cog):
             return []
 
         shard = await self._get_shard(guild_id)
-        war_number = (
-            await self.war_service.get_current_war_number(shard)
-            if self.war_service
-            else None
-        )
+        war_number = await self.war_service.get_current_war_number(shard) if self.war_service else None
 
         # Pass war_number to ensure we only see hubs for the current war
         return await self._get_cached_choices(
@@ -658,26 +590,18 @@ class StockpileCog(commands.Cog):
 
     @app_commands.command(name="locate", description="Locate an item")
     @app_commands.describe(item="Item Name", ref_town="Reference Town")
-    async def locate(
-        self, interaction: discord.Interaction, item: str, ref_town: str
-    ) -> None:
+    async def locate(self, interaction: discord.Interaction, item: str, ref_town: str) -> None:
         guild_id = interaction.guild_id
         if not guild_id:
-            return await send_error(
-                interaction, "This command can only be used in a server."
-            )
+            return await send_error(interaction, "This command can only be used in a server.")
 
         await interaction.response.defer(ephemeral=True)
 
         try:
             shard = await self._get_shard(guild_id)
-            results, ref_town_data = await self.service.locate_item(
-                guild_id, item, ref_town, shard
-            )
+            results, ref_town_data = await self.service.locate_item(guild_id, item, ref_town, shard)
             if not results:
-                return await send_error(
-                    interaction, f"`{item}` is not in any stockpile."
-                )
+                return await send_error(interaction, f"`{item}` is not in any stockpile.")
 
             table_rows = []
             for d in results:
@@ -736,9 +660,7 @@ class StockpileCog(commands.Cog):
     async def locate_town_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        return await self._get_cached_town_choices(
-            current, "all_towns", self.repo.get_all_towns
-        )
+        return await self._get_cached_town_choices(current, "all_towns", self.repo.get_all_towns)
 
 
 async def setup(bot: commands.Bot) -> None:

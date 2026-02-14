@@ -36,9 +36,7 @@ class HealthCog(commands.Cog):
     def engine(self):
         return getattr(self.bot, "engine")
 
-    @app_commands.command(
-        name="ping", description="Healthcheck and DB connectivity test."
-    )
+    @app_commands.command(name="ping", description="Healthcheck and DB connectivity test.")
     @app_commands.default_permissions(administrator=True)
     async def ping(self, interaction: discord.Interaction) -> None:
         start_time = time.time()
@@ -52,15 +50,11 @@ class HealthCog(commands.Cog):
             ephemeral=True,
         )
 
-    @app_commands.command(
-        name="db_stats", description="Show system database statistics."
-    )
+    @app_commands.command(name="db_stats", description="Show system database statistics.")
     @app_commands.default_permissions(administrator=True)
     async def db_stats(self, interaction: discord.Interaction) -> None:
         async with self.engine.connect() as conn:
-            snapshots = await conn.scalar(
-                text("SELECT COUNT(*) FROM stockpile_snapshots")
-            )
+            snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
             items = await conn.scalar(text("SELECT COUNT(*) FROM snapshot_items"))
 
         table_rows = [["Snapshots", snapshots or 0], ["Items", items or 0]]
@@ -72,9 +66,7 @@ class HealthCog(commands.Cog):
             as_embed=True,
         )
 
-    @app_commands.command(
-        name="check_towns", description="Verify the towns table content."
-    )
+    @app_commands.command(name="check_towns", description="Verify the towns table content.")
     @app_commands.default_permissions(administrator=True)
     async def check_towns(self, interaction: discord.Interaction) -> None:
         """Health check to see if towns are correctly seeded."""
@@ -105,16 +97,12 @@ class HealthCog(commands.Cog):
             as_embed=True,
         )
 
-    @app_commands.command(
-        name="check_regions", description="Verify the regions table content."
-    )
+    @app_commands.command(name="check_regions", description="Verify the regions table content.")
     @app_commands.default_permissions(administrator=True)
     async def check_regions(self, interaction: discord.Interaction) -> None:
         """Health check to see if regions are correctly seeded."""
         async with self.engine.connect() as conn:
-            result = await conn.execute(
-                text("SELECT name, q, r FROM regions ORDER BY name LIMIT 10")
-            )
+            result = await conn.execute(text("SELECT name, q, r FROM regions ORDER BY name LIMIT 10"))
             rows = result.all()
             total = await conn.scalar(text("SELECT COUNT(*) FROM regions"))
 
@@ -130,17 +118,13 @@ class HealthCog(commands.Cog):
             as_embed=True,
         )
 
-    @app_commands.command(
-        name="check_priority", description="Verify the priority table content."
-    )
+    @app_commands.command(name="check_priority", description="Verify the priority table content.")
     @app_commands.default_permissions(administrator=True)
     async def check_priority(self, interaction: discord.Interaction) -> None:
         """Health check to see if priority list is correctly seeded."""
         async with self.engine.connect() as conn:
             result = await conn.execute(
-                text(
-                    "SELECT name, codename, priority FROM priority ORDER BY priority LIMIT 10"
-                )
+                text("SELECT name, codename, priority FROM priority ORDER BY priority LIMIT 10")
             )
             rows = result.all()
             total = await conn.scalar(text("SELECT COUNT(*) FROM priority"))
@@ -157,14 +141,10 @@ class HealthCog(commands.Cog):
             as_embed=True,
         )
 
-    @app_commands.command(
-        name="snapshots", description="View recently uploaded snapshots"
-    )
+    @app_commands.command(name="snapshots", description="View recently uploaded snapshots")
     @app_commands.describe(limit="Number of snapshots to show (default 10, max 25)")
     @app_commands.default_permissions(administrator=True)
-    async def view_snapshots(
-        self, interaction: discord.Interaction, limit: int = 10
-    ) -> None:
+    async def view_snapshots(self, interaction: discord.Interaction, limit: int = 10) -> None:
         limit = max(1, min(limit, 25))
         await interaction.response.defer(ephemeral=True)
 
@@ -175,9 +155,7 @@ class HealthCog(commands.Cog):
 
             results = await self.repo.get_latest_snapshots_summary(guild_id, limit)
             if not results:
-                return await interaction.followup.send(
-                    "No snapshots found in the database."
-                )
+                return await interaction.followup.send("No snapshots found in the database.")
 
             table_rows = []
             for r in results:
@@ -202,27 +180,19 @@ class HealthCog(commands.Cog):
             )
 
         except Exception as e:
-            await interaction.followup.send(
-                f"❌ **Error fetching snapshots:** {str(e)}"
-            )
+            await interaction.followup.send(f"❌ **Error fetching snapshots:** {str(e)}")
 
-    @app_commands.command(
-        name="system_status", description="Comprehensive system health overview."
-    )
+    @app_commands.command(name="system_status", description="Comprehensive system health overview.")
     @app_commands.default_permissions(administrator=True)
     async def system_status(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer(ephemeral=True)
 
-        embed = discord.Embed(
-            title="🌐 HexMaster System Status", color=EMBED_COLOR_INFO
-        )
+        embed = discord.Embed(title="🌐 HexMaster System Status", color=EMBED_COLOR_INFO)
 
         # 1. Database Status
         try:
             async with self.engine.connect() as conn:
-                snapshots = await conn.scalar(
-                    text("SELECT COUNT(*) FROM stockpile_snapshots")
-                )
+                snapshots = await conn.scalar(text("SELECT COUNT(*) FROM stockpile_snapshots"))
                 items = await conn.scalar(text("SELECT COUNT(*) FROM snapshot_items"))
                 db_status = "✅ Connected"
         except Exception:
@@ -279,9 +249,7 @@ class HealthCog(commands.Cog):
 
         await interaction.followup.send(embed=embed, ephemeral=True)
 
-    @app_commands.command(
-        name="help", description="List all available commands and their usage."
-    )
+    @app_commands.command(name="help", description="List all available commands and their usage.")
     async def help(self, interaction: discord.Interaction) -> None:
         """Shows help information for the bot, dynamically filtered by permissions."""
         is_admin = interaction.permissions.administrator

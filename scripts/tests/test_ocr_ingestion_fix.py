@@ -1,12 +1,11 @@
 import os
 import sys
 import unittest
-import pandas as pd
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src"))
-)
+import pandas as pd
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src")))
 
 from hexmaster.services.stockpile_service import StockpileService
 

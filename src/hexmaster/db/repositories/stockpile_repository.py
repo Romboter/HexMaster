@@ -28,7 +28,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    def _normalize_name(self, name: str) -> str:
+    def _normalize_name(self, name: str | None) -> str:
         """Helper to normalize town/stockpile names."""
         return name.strip().lower() if name else ""
 
@@ -67,9 +67,7 @@ class StockpileRepository:
             subq = subq.where(StockpileSnapshot.stockpile_name == stockpile.strip())
         return subq
 
-    async def get_towns_with_snapshots(
-        self, guild_id: int, shard: str | None = "Alpha"
-    ) -> list[str]:
+    async def get_towns_with_snapshots(self, guild_id: int, shard: str | None = "Alpha") -> list[str]:
         """Fetches unique pretty town names that already have snapshots in the DB for a guild and shard."""
         async with self.engine.connect() as conn:
             stmt = (
@@ -88,9 +86,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_struct_types_for_town(
-        self, guild_id: int, town: str, shard: str | None = "Alpha"
-    ) -> list[str]:
+    async def get_struct_types_for_town(self, guild_id: int, town: str, shard: str | None = "Alpha") -> list[str]:
         """Fetches unique structure types for a specific town, guild, and shard."""
         async with self.engine.connect() as conn:
             stmt = (
@@ -268,11 +264,7 @@ class StockpileRepository:
     async def get_priority_list(self, guild_id: int) -> list[dict]:
         """Fetches the full priority list from the DB for a specific guild."""
         async with self.engine.connect() as conn:
-            stmt = (
-                select(Priority)
-                .where(Priority.guild_id == guild_id)
-                .order_by(Priority.priority)
-            )
+            stmt = select(Priority).where(Priority.guild_id == guild_id).order_by(Priority.priority)
             result = await conn.execute(stmt)
             return [dict(row) for row in result.mappings().all()]
 
@@ -326,30 +318,20 @@ class StockpileRepository:
                 .where(StockpileSnapshot.guild_id == guild_id)
             )
             if shard:
-                latest_snap_stmt = latest_snap_stmt.where(
-                    StockpileSnapshot.shard == shard
-                )
+                latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.shard == shard)
             if struct_type:
-                latest_snap_stmt = latest_snap_stmt.where(
-                    StockpileSnapshot.struct_type == struct_type.strip()
-                )
+                latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.struct_type == struct_type.strip())
             if stockpile:
-                latest_snap_stmt = latest_snap_stmt.where(
-                    StockpileSnapshot.stockpile_name == stockpile.strip()
-                )
+                latest_snap_stmt = latest_snap_stmt.where(StockpileSnapshot.stockpile_name == stockpile.strip())
 
-            latest_snap_stmt = latest_snap_stmt.order_by(
-                desc(StockpileSnapshot.captured_at)
-            ).limit(1)
+            latest_snap_stmt = latest_snap_stmt.order_by(desc(StockpileSnapshot.captured_at)).limit(1)
 
             snap_res = await conn.execute(latest_snap_stmt)
             snapshot = snap_res.mappings().first()
 
             return snapshot, items
 
-    async def search_item_across_stockpiles(
-        self, guild_id: int, item_name: str, shard: str | None = "Alpha"
-    ):
+    async def search_item_across_stockpiles(self, guild_id: int, item_name: str, shard: str | None = "Alpha"):
         """Finds all latest instances of an item across all towns for a guild and shard."""
         async with self.engine.connect() as conn:
             subq = self._latest_snapshots_subquery(guild_id=guild_id, shard=shard)
@@ -385,9 +367,7 @@ class StockpileRepository:
             result = await conn.execute(stmt)
             return result.mappings().all()
 
-    async def get_latest_snapshots_summary(
-        self, guild_id: int, shard: str | None = "Alpha", limit: int = 10
-    ):
+    async def get_latest_snapshots_summary(self, guild_id: int, shard: str | None = "Alpha", limit: int = 10):
         """Fetches a summary of the most recent snapshots across all towns for a guild and shard."""
         async with self.engine.connect() as conn:
             stmt = (
@@ -428,25 +408,21 @@ class StockpileRepository:
         async with self.engine.connect() as conn:
             # Use DISTINCT on item_name from SnapshotItem or displayname from CatalogItem
             # CatalogItem is more robust for autocomplete
-            stmt = (
-                select(CatalogItem.displayname)
-                .distinct()
-                .order_by(CatalogItem.displayname)
-            )
+            stmt = select(CatalogItem.displayname).distinct().order_by(CatalogItem.displayname)
             result = await conn.execute(stmt)
             return [row[0] for row in result.all()]
 
-    async def get_items_in_stockpiles(
-        self, guild_id: int, shard: str | None = "Alpha"
-    ) -> list[str]:
-        """Fetches unique item names that are currently present in at least one stockpile snapshot for a guild and shard."""
+    async def get_items_in_stockpiles(self, guild_id: int, shard: str | None = "Alpha") -> list[str]:
+        """
+        Fetches unique item names that are currently present in
+        at least one stockpile snapshot for a guild and shard.
+        """
+
         async with self.engine.connect() as conn:
             stmt = (
                 select(SnapshotItem.item_name)
                 .distinct()
-                .join(
-                    StockpileSnapshot, StockpileSnapshot.id == SnapshotItem.snapshot_id
-                )
+                .join(StockpileSnapshot, StockpileSnapshot.id == SnapshotItem.snapshot_id)
                 .where(StockpileSnapshot.guild_id == guild_id)
             )
             if shard:
@@ -493,11 +469,7 @@ class StockpileRepository:
         async with self.engine.begin() as conn:
             from sqlalchemy import delete
 
-            stmt = (
-                delete(Priority)
-                .where(Priority.guild_id == guild_id)
-                .where(Priority.codename == codename)
-            )
+            stmt = delete(Priority).where(Priority.guild_id == guild_id).where(Priority.codename == codename)
             await conn.execute(stmt)
 
     async def delete_all_priorities(self, guild_id: int):
