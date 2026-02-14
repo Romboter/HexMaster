@@ -33,6 +33,8 @@ services:
       - WARAPI_BASE_URL=https://war-service-live.foxholeservices.com/api
     volumes:
       - shared_data:/app/shared
+      # To provide your own priority templates or core data, uncomment the line below:
+      # - ./data:/app/data
     network_mode: host
 
 volumes:

@@ -83,7 +83,7 @@ class SetupCog(commands.Cog):
 
                 import pandas as pd
 
-                priority_csv = Path("data/Priority.csv")
+                priority_csv = Path("data/core/Priority.csv")
                 if priority_csv.exists():
                     df = pd.read_csv(priority_csv)
                     for _, row in df.iterrows():
