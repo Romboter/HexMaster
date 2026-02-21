@@ -5,6 +5,8 @@ import asyncio
 import inspect
 import time
 
+from typing import Any, Dict, List, Optional, Tuple
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -21,9 +23,11 @@ from hexmaster.utils.discord_utils import (
 
 
 class StockpileCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    """Handles commands for reporting and viewing stockpile snapshot data."""
+
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initializes the StockpileCog with its dependencies and local cache."""
         self.bot = bot
-        # Core data access
         self.repo = getattr(bot, "repo")
 
         # Initialize business service
@@ -38,12 +42,12 @@ class StockpileCog(commands.Cog):
         self.settings_repo = SettingsRepository(self.repo.engine)
 
         # Cache for autocomplete results (cache_key -> (timestamp, list_of_strings))
-        self._autocomplete_cache: dict[str, tuple[float, list[str]]] = {}
+        self._autocomplete_cache: Dict[str, Tuple[float, List[str]]] = {}
 
-    async def _get_shard(self, guild_id: int | None) -> str | None:
-        """Fetches the configured shard for a guild."""
+    async def _get_shard(self, guild_id: Optional[int]) -> str:
+        """Fetches the configured shard for a guild, defaulting to Alpha."""
         if not guild_id:
-            return None
+            return "Alpha"
         config = await self.settings_repo.get_config(guild_id)
         return config.shard if config else "Alpha"
 
@@ -52,95 +56,61 @@ class StockpileCog(commands.Cog):
         pass  # Autocomplete warming is harder now due to guild_id being required
 
     async def _get_cached_town_choices(
-        self, current: str, cache_key: str, fetch_func
-    ) -> list[app_commands.Choice[str]]:
+        self, current: str, cache_key: str, fetch_func: Any
+    ) -> List[app_commands.Choice[str]]:
         """Helper to handle caching and filtering for town autocomplete."""
         now = time.time()
-        try:
-            if cache_key in self._autocomplete_cache:
-                timestamp, cached_towns = self._autocomplete_cache[cache_key]
-                if now - timestamp < 60:
-                    towns = cached_towns
-                else:
-                    towns = await (
-                        fetch_func()
-                        if inspect.iscoroutinefunction(fetch_func)
-                        else asyncio.to_thread(fetch_func)
-                    )
-                    self._autocomplete_cache[cache_key] = (now, towns)
-            else:
-                towns = await (
-                    fetch_func()
-                    if inspect.iscoroutinefunction(fetch_func)
-                    else asyncio.to_thread(fetch_func)
-                )
-                self._autocomplete_cache[cache_key] = (now, towns)
 
-            search = current.lower().strip()
-            choices = []
+        # Check cache validity (60s)
+        if cache_key in self._autocomplete_cache:
+            timestamp, cached_towns = self._autocomplete_cache[cache_key]
+            if now - timestamp < 60:
+                return self._filter_choices(current, cached_towns)
 
-            for town in towns:
-                if not town:
-                    continue
-                town_name = str(town)
-                if not search or search in town_name.lower():
-                    choices.append(
-                        app_commands.Choice(name=town_name[:100], value=town_name[:100])
-                    )
-                if len(choices) >= 25:
-                    break
-            return choices
-        except Exception as e:
-            print(f"Autocomplete error for {cache_key}: {e}")
-            return []
+        # Fetch fresh data
+        towns = await (
+            fetch_func()
+            if inspect.iscoroutinefunction(fetch_func)
+            else asyncio.to_thread(fetch_func)
+        )
+        self._autocomplete_cache[cache_key] = (now, towns)
+        return self._filter_choices(current, towns)
+
+    def _filter_choices(
+        self, current: str, items: List[str]
+    ) -> List[app_commands.Choice[str]]:
+        """Filters a list of strings into a list of discord.py Choices."""
+        search = current.lower().strip()
+        choices = []
+        for item in items:
+            if not item:
+                continue
+            name = str(item)
+            if not search or search in name.lower():
+                choices.append(app_commands.Choice(name=name[:100], value=name[:100]))
+            if len(choices) >= 25:
+                break
+        return choices
 
     async def _get_cached_choices(
-        self, current: str, cache_key: str, fetch_func, *args
-    ) -> list[app_commands.Choice[str]]:
+        self, current: str, cache_key: str, fetch_func: Any, *args: Any
+    ) -> List[app_commands.Choice[str]]:
         """Helper to handle caching and filtering for general autocomplete."""
         now = time.time()
-        # Decorate cache key with args if any
-        full_cache_key = (
-            f"{cache_key}:{':'.join(map(str, args))}" if args else cache_key
+        f_key = f"{cache_key}:{':'.join(map(str, args))}" if args else cache_key
+
+        if f_key in self._autocomplete_cache:
+            ts, cached = self._autocomplete_cache[f_key]
+            if now - ts < 30:
+                return self._filter_choices(current, cached)
+
+        items = await (
+            fetch_func(*args)
+            if inspect.iscoroutinefunction(fetch_func)
+            else asyncio.to_thread(fetch_func, *args)
         )
-
-        try:
-            if full_cache_key in self._autocomplete_cache:
-                timestamp, cached_items = self._autocomplete_cache[full_cache_key]
-                if now - timestamp < 30:  # Shorter cache for town-specific items
-                    items = cached_items
-                else:
-                    items = await (
-                        fetch_func(*args)
-                        if inspect.iscoroutinefunction(fetch_func)
-                        else asyncio.to_thread(fetch_func, *args)
-                    )
-                    self._autocomplete_cache[full_cache_key] = (now, items)
-            else:
-                items = await (
-                    fetch_func(*args)
-                    if inspect.iscoroutinefunction(fetch_func)
-                    else asyncio.to_thread(fetch_func, *args)
-                )
-                self._autocomplete_cache[full_cache_key] = (now, items)
-
-            search = current.lower().strip()
-            choices = []
-
-            for item in items:
-                if not item:
-                    continue
-                item_name = str(item)
-                if not search or search in item_name.lower():
-                    choices.append(
-                        app_commands.Choice(name=item_name[:100], value=item_name[:100])
-                    )
-                if len(choices) >= 25:
-                    break
-            return choices
-        except Exception as e:
-            print(f"Autocomplete error for {full_cache_key}: {e}")
-            return []
+        self._autocomplete_cache[f_key] = (now, items)
+        return self._filter_choices(current, items)
 
     @app_commands.command(
         name="report", description="File an Intelligence Report (upload screenshot)"
@@ -155,8 +125,8 @@ class StockpileCog(commands.Cog):
         town: str,
         stockpile: str = "Public",
     ) -> None:
-        guild_id = interaction.guild_id
-        if not guild_id:
+        """Processes an image report and ingests items into the database."""
+        if not interaction.guild_id:
             return await send_error(
                 interaction, "This command can only be used in a server."
             )
@@ -167,35 +137,40 @@ class StockpileCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         try:
             image_bytes = await image.read()
-            shard = await self._get_shard(guild_id)
-            war_number = (
-                await self.war_service.get_current_war_number(shard)
-                if self.war_service
-                else None
-            )
+            shard = await self._get_shard(interaction.guild_id)
+            war_num = await self._get_war_number(shard)
 
-            snapshot_id, count, struct_type = (
-                await self.service.process_remote_and_ingest(
-                    guild_id, image_bytes, town, stockpile, shard, war_number
-                )
+            snap_id, count, s_type = await self.service.process_remote_and_ingest(
+                interaction.guild_id, image_bytes, town, stockpile, shard, war_num
             )
             await send_success(
                 interaction,
-                f"Imported {count} items for `{stockpile}` ({struct_type}) in `{town}`.\nSnapshot ID: `{snapshot_id}`",
+                f"Imported {count} items for `{stockpile}` ({s_type}) in `{town}`.\nSnapshot ID: `{snap_id}`",
             )
         except OCRServiceError as e:
-            print(f"OCR Service Error: {e.message}\nDetails: {e.technical_details}")
-            await send_error(
-                interaction,
-                (
-                    f"**OCR Service Error**\n{e.message}\n\n"
-                    "*Transient errors are common during high load. Please try again in a few minutes.*"
-                ),
-                title="OCR Failure",
-            )
+            await self._handle_ocr_error(interaction, e)
         except Exception as e:
-            print(f"General Error during report: {str(e)}")
             await send_error(interaction, f"Error during upload: {str(e)}")
+
+    async def _get_war_number(self, shard: str) -> Optional[int]:
+        """Utility to fetch the current war number for a given shard."""
+        if not self.war_service:
+            return None
+        return await self.war_service.get_current_war_number(shard)
+
+    async def _handle_ocr_error(
+        self, interaction: discord.Interaction, e: OCRServiceError
+    ) -> None:
+        """Centralized error handling for OCR-specific failures."""
+        print(f"OCR Service Error: {e.message}\nDetails: {e.technical_details}")
+        await send_error(
+            interaction,
+            (
+                f"**OCR Service Error**\n{e.message}\n\n"
+                "*Transient errors are common during high load. Please try again in a few minutes.*"
+            ),
+            title="OCR Failure",
+        )
 
     @report.autocomplete("town")
     async def report_town_autocomplete(
@@ -215,38 +190,61 @@ class StockpileCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         town: str,
-        structure: str | None = None,
-        stockpile: str | None = None,
+        structure: Optional[str] = None,
+        stockpile: Optional[str] = None,
     ) -> None:
-        guild_id = interaction.guild_id
-        if not guild_id:
+        """Displays a formatted table of items in a specified town's stockpile."""
+        if not interaction.guild_id:
             return await send_error(
                 interaction, "This command can only be used in a server."
             )
 
-        town_input = (town or "").strip()
+        town_input = town.strip() if town else ""
         if not town_input:
             return await send_error(interaction, "Town is required.")
 
-        shard = await self._get_shard(guild_id)
+        shard = await self._get_shard(interaction.guild_id)
         rows = await self.repo.get_latest_inventory(
-            guild_id, shard, town_input, structure, stockpile
+            interaction.guild_id, shard, town_input, structure, stockpile
         )
         if not rows:
-            filter_msg = (
-                f" (filtered by `{structure}`/ `{stockpile}`)"
-                if structure or stockpile
-                else ""
-            )
-            return await send_error(
-                interaction, f"No snapshots found for `{town_input}`{filter_msg}."
+            return await self._handle_empty_inventory(
+                interaction, town_input, structure, stockpile
             )
 
-        priority_list = await self.repo.get_priority_list(guild_id)
+        # Process and format rows
+        priority_list = await self.repo.get_priority_list(interaction.guild_id)
         priority_map = {p["codename"]: p for p in priority_list}
 
-        # Sort rows: priority (asc), then qty (desc), then name (asc)
-        def sort_key(r):
+        self._sort_inventory_rows(rows, priority_map)
+        table_rows = self._format_inventory_table_rows(rows, priority_map)
+
+        title = await self._generate_inventory_title(
+            interaction.guild_id, rows, town_input, stockpile
+        )
+        await render_and_truncate_table(
+            interaction, table_rows, ["Item", "Qty", "Need", "S"], title, as_embed=True
+        )
+
+    async def _handle_empty_inventory(
+        self,
+        interaction: discord.Interaction,
+        town: str,
+        struct: Optional[str],
+        stockpile: Optional[str],
+    ) -> None:
+        """Handles the case where search returns no results."""
+        filter_msg = (
+            f" (filtered by `{struct}` / `{stockpile}`)" if struct or stockpile else ""
+        )
+        await send_error(interaction, f"No snapshots found for `{town}`{filter_msg}.")
+
+    def _sort_inventory_rows(
+        self, rows: List[Dict[str, Any]], priority_map: Dict[str, Dict[str, Any]]
+    ) -> None:
+        """Sorts inventory rows by priority, then quantity, then name."""
+
+        def sort_key(r: Dict[str, Any]) -> Tuple[float, float, str]:
             p_data = priority_map.get(r["code_name"])
             priority_val = p_data["priority"] if p_data else 9999
             qty_crates = self.service.get_qty_crates(
@@ -255,78 +253,69 @@ class StockpileCog(commands.Cog):
             return (priority_val, -qty_crates, (r.get("item_name") or "").lower())
 
         rows.sort(key=sort_key)
+
+    def _format_inventory_table_rows(
+        self, rows: List[Dict[str, Any]], priority_map: Dict[str, Dict[str, Any]]
+    ) -> List[List[str]]:
+        """Transforms raw inventory data into formatted strings for table display."""
         table_rows = []
+        is_hub = any(h in rows[0]["struct_type"] for h in ["Storage Depot", "Seaport"])
+
         for r in rows:
-            qty_crates = self.service.get_qty_crates(
+            qty = self.service.get_qty_crates(
                 r["total"], r.get("catalog_qpc"), r.get("per_crate")
             )
-
             p_data = priority_map.get(r["code_name"])
-            status = " "  # Default empty
-            min_val = 0
 
+            # Determine status and need
+            min_val = p_data.get("min_for_base_crates", 0) if p_data else 0
+            status = " "
             if p_data:
-                min_val = p_data.get("min_for_base_crates") or 0
-                if qty_crates < min_val:
-                    status = "🔴"
-                else:
-                    status = "🟢"
+                status = "🟢" if qty >= min_val else "🔴"
 
-            need_val = max(0, min_val - qty_crates) if p_data else 0
-            # Determine tags based on location type
-            # Hubs: Crates = No Tag, Loose = (itm)
-            # Bases: All = No Tag
-            hubs = ["Storage Depot", "Seaport"]
-            is_hub = any(h in rows[0]["struct_type"] for h in hubs)
+            need_val = max(0, min_val - qty) if p_data else 0
 
-            crated_tag = ""
-            if is_hub:
-                if not r["is_crated"]:
-                    crated_tag = " (itm)"
-            else:
-                # Base/other: No tags for anything, everything assumed loose/available
-                pass
-
-            # Truncate item name to 20 chars
-            base_name = r["item_name"] or "Unknown"
-            if len(base_name) > 20:
-                base_name = base_name[:20].strip() + "..."
+            # Formatting tags and names
+            tag = " (itm)" if is_hub and not r["is_crated"] else ""
+            name = (r["item_name"] or "Unknown")[:20].strip()
+            if len(r["item_name"] or "") > 20:
+                name += "..."
 
             table_rows.append(
                 [
-                    f"{base_name}{crated_tag}",
-                    f"{round(qty_crates, 1):g}",
+                    f"{name}{tag}",
+                    f"{round(qty, 1):g}",
                     f"{round(need_val, 1):g}" if need_val > 0 else "-",
                     status,
                 ]
             )
+        return table_rows
 
+    async def _generate_inventory_title(
+        self,
+        guild_id: int,
+        rows: List[Dict[str, Any]],
+        town_input: str,
+        stockpile_filter: Optional[str],
+    ) -> str:
+        """Creates a detailed title string including age, war number, and warnings."""
         pretty_name = rows[0].get("pretty_town") or town_input.title()
         war_num = rows[0].get("war_number")
-
-        past_war_warning = ""
-        if self.war_service:
-            shard = await self._get_shard(guild_id)
-            current_war = await self.war_service.get_current_war_number(shard)
-            if war_num and current_war and war_num < current_war:
-                past_war_warning = (
-                    f"\n⚠️ **Warning: Data from past war (War {war_num})**"
-                )
-
         oldest_snapshot = min(r["captured_at"] for r in rows if r.get("captured_at"))
-        age_str = get_age_str(oldest_snapshot)
 
-        title = f"{pretty_name} ({age_str})"
-        if war_num and not past_war_warning:
+        title = f"{pretty_name} ({get_age_str(oldest_snapshot)})"
+        if war_num:
             title += f" (War {war_num})"
-        if stockpile:
-            title += f" (Filter: {stockpile})"
-        if past_war_warning:
-            title += past_war_warning
+        if stockpile_filter:
+            title += f" (Filter: {stockpile_filter})"
 
-        await render_and_truncate_table(
-            interaction, table_rows, ["Item", "Qty", "Need", "S"], title, as_embed=True
-        )
+        # Past war check
+        shard = await self._get_shard(guild_id)
+        current_war = await self._get_war_number(shard)
+        if war_num and current_war and war_num < current_war:
+            title += f"\n⚠️ **Warning: Data from past war (War {war_num})**"
+
+        return title
 
     @view_inventory.autocomplete("town")
     async def inventory_town_autocomplete(
@@ -397,24 +386,23 @@ class StockpileCog(commands.Cog):
         interaction: discord.Interaction,
         ship_town: str,
         recv_town: str,
-        ship_struct: str | None = None,
-        ship_stockpile: str | None = None,
-        recv_struct: str | None = None,
-        recv_stockpile: str | None = None,
-        multiplier: float | None = None,
+        ship_struct: Optional[str] = None,
+        ship_stockpile: Optional[str] = None,
+        recv_struct: Optional[str] = None,
+        recv_stockpile: Optional[str] = None,
+        multiplier: Optional[float] = None,
     ) -> None:
-        guild_id = interaction.guild_id
-        if not guild_id:
+        """Compares two towns and displays an order of needed supplies."""
+        if not interaction.guild_id:
             return await send_error(
                 interaction, "This command can only be used in a server."
             )
 
         await interaction.response.defer(ephemeral=True)
-
         try:
-            shard = await self._get_shard(guild_id)
+            shard = await self._get_shard(interaction.guild_id)
             result = await self.service.get_requisition_comparison(
-                guild_id,
+                interaction.guild_id,
                 ship_town,
                 recv_town,
                 shard,
@@ -425,79 +413,13 @@ class StockpileCog(commands.Cog):
                 recv_stockpile,
             )
 
-            comparison_data = result["comparison_data"]
-            if not comparison_data:
-                msg = f"✅ `{recv_town}` meets all priority minimums!"
-                if result.get("warning"):
-                    msg = f"{result['warning']}\n{msg}"
-                return await send_success(
-                    interaction, msg, title="Requisition Order Complete"
+            if not result["comparison_data"]:
+                return await self._handle_fulfilled_requisition(
+                    interaction, recv_town, result
                 )
 
-            table_rows = []
-            for d in comparison_data:
-                if d["Avail"] <= 0:
-                    status = "🔴"
-                elif d["Avail"] < d["Need"]:
-                    status = "🟡"
-                else:
-                    status = "🟢"
-
-                # Truncate item name for requisition (20 chars)
-                item_name = d["Item"] or "Unknown"
-                if len(item_name) > 20:
-                    item_name = item_name[:20].strip() + "..."
-
-                # Tag logic for Requisition
-                # If is_crated is True, no tag.
-                # If is_crated is False, add (itm) tag.
-                # Note: The service layer already filters strictly for Base destinations,
-                # so we can just trust the is_crated flag here.
-                tag = ""
-                if not d.get("is_crated", True):
-                    tag = " (itm)"
-
-                table_rows.append(
-                    [
-                        f"{item_name}{tag}",
-                        f"{round(d['Avail'], 1):g}",
-                        f"{round(d['Need'], 1):g}",
-                        status,
-                    ]
-                )
-
-            ship_snap, recv_snap = result["ship_snap"], result["recv_snap"]
-            ship_p = (
-                ship_snap["pretty_town"]
-                if ship_snap and ship_snap.get("pretty_town")
-                else ship_town.title()
-            )
-            recv_p = (
-                recv_snap["pretty_town"]
-                if recv_snap and recv_snap.get("pretty_town")
-                else recv_town.title()
-            )
-
-            ship_age = (
-                f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
-            )
-            recv_age = (
-                f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
-            )
-
-            # Enhance title with filters
-            filter_info = ""
-            if any([ship_struct, ship_stockpile, recv_struct, recv_stockpile]):
-                filters = []
-                if ship_struct or ship_stockpile:
-                    filters.append(f"Ship: {ship_struct or ''} {ship_stockpile or ''}")
-                if recv_struct or recv_stockpile:
-                    filters.append(f"Recv: {recv_struct or ''} {recv_stockpile or ''}")
-                filter_info = f"\nFilters: {' | '.join(filters)}"
-
-            title = f"{ship_p}{ship_age} ➔ {recv_p}{recv_age} ({result['actual_multiplier']:g}x)"
-            if filter_info:
-                title += f"\n{filter_info}"
+            table_rows = self._format_requisition_table_rows(result["comparison_data"])
+            title = self._generate_requisition_title(ship_town, recv_town, result)
 
             await render_and_truncate_table(
                 interaction,
@@ -506,9 +428,62 @@ class StockpileCog(commands.Cog):
                 title,
                 as_embed=True,
             )
-
         except Exception as e:
             await send_error(interaction, f"Error during comparison: {str(e)}")
+
+    async def _handle_fulfilled_requisition(
+        self, interaction: discord.Interaction, town: str, res: Dict[str, Any]
+    ) -> None:
+        """Sends a success message when all priority needs are met."""
+        msg = f"✅ `{town}` meets all priority minimums!"
+        if res.get("warning"):
+            msg = f"{res['warning']}\n{msg}"
+        await send_success(interaction, msg, title="Requisition Order Complete")
+
+    def _format_requisition_table_rows(
+        self, data: List[Dict[str, Any]]
+    ) -> List[List[str]]:
+        """Formats item needs and availability for the requisition table."""
+        table_rows = []
+        for d in data:
+            # Determine status based on availability vs need
+            status = (
+                "🔴" if d["Avail"] <= 0 else ("🟡" if d["Avail"] < d["Need"] else "🟢")
+            )
+
+            # Formatting tags and names
+            tag = " (itm)" if not d.get("is_crated", True) else ""
+            name = (d["Item"] or "Unknown")[:20].strip()
+            if len(d["Item"] or "") > 20:
+                name += "..."
+
+            table_rows.append(
+                [
+                    f"{name}{tag}",
+                    f"{round(d['Avail'], 1):g}",
+                    f"{round(d['Need'], 1):g}",
+                    status,
+                ]
+            )
+        return table_rows
+
+    def _generate_requisition_title(
+        self, ship_town: str, recv_town: str, res: Dict[str, Any]
+    ) -> str:
+        """Constructs the directional title for a requisition order."""
+        ship_snap, recv_snap = res["ship_snap"], res["recv_snap"]
+
+        s_name = ship_snap.get("pretty_town") if ship_snap else ship_town.title()
+        r_name = recv_snap.get("pretty_town") if recv_snap else recv_town.title()
+
+        s_age = f" ({get_age_str(ship_snap['captured_at'])})" if ship_snap else ""
+        r_age = f" ({get_age_str(recv_snap['captured_at'])})" if recv_snap else ""
+
+        title = f"{s_name}{s_age} ➔ {r_name}{r_age} ({res['actual_multiplier']:g}x)"
+        if res.get("warning"):
+            title = f"{res['warning']}\n{title}"
+
+        return title
 
     @requisition.autocomplete("ship_town")
     async def requisition_ship_autocomplete(
@@ -632,49 +607,28 @@ class StockpileCog(commands.Cog):
     async def locate(
         self, interaction: discord.Interaction, item: str, ref_town: str
     ) -> None:
-        guild_id = interaction.guild_id
-        if not guild_id:
+        """Searches across all stockpiles for an item and sorts by distance."""
+        if not interaction.guild_id:
             return await send_error(
                 interaction, "This command can only be used in a server."
             )
 
         await interaction.response.defer(ephemeral=True)
-
         try:
-            shard = await self._get_shard(guild_id)
-            results, ref_town_data = await self.service.locate_item(
-                guild_id, item, ref_town, shard
+            shard = await self._get_shard(interaction.guild_id)
+            results, ref_data = await self.service.locate_item(
+                interaction.guild_id, item, ref_town, shard
             )
+
             if not results:
                 return await send_error(
                     interaction, f"`{item}` is not in any stockpile."
                 )
 
-            table_rows = []
-            for d in results:
-                qty = d["Qty"]
-                if qty >= 50:
-                    status = "🟢"
-                elif qty < 10:
-                    status = "🔴"
-                else:
-                    status = "🟡"
-
-                table_rows.append(
-                    [
-                        d["Town"][:12],
-                        d["Stockpile"][:10],
-                        d["Type"][:6],
-                        f"{round(qty, 1):g}",
-                        f"{d['Dist']:.1f}",
-                        get_age_str(d["captured_at"]),
-                        status,
-                    ]
-                )
-
+            table_rows = self._format_locate_table_rows(results)
             title = f"Available Stockpiles for {item}"
-            if ref_town_data and ref_town_data.get("name"):
-                title += f" (Ref: {ref_town_data['name']})"
+            if ref_data and ref_data.get("name"):
+                title += f" (Ref: {ref_data['name']})"
 
             await render_and_truncate_table(
                 interaction,
@@ -683,9 +637,30 @@ class StockpileCog(commands.Cog):
                 title,
                 as_embed=True,
             )
-
         except Exception as e:
             await send_error(interaction, f"Error during search: {str(e)}")
+
+    def _format_locate_table_rows(
+        self, results: List[Dict[str, Any]]
+    ) -> List[List[str]]:
+        """Formats location search results into table strings."""
+        table_rows = []
+        for d in results:
+            qty = d["Qty"]
+            status = "🟢" if qty >= 50 else ("🔴" if qty < 10 else "🟡")
+
+            table_rows.append(
+                [
+                    d["Town"][:12],
+                    d["Stockpile"][:10],
+                    d["Type"][:6],
+                    f"{round(qty, 1):g}",
+                    f"{d['Dist']:.1f}",
+                    get_age_str(d["captured_at"]),
+                    status,
+                ]
+            )
+        return table_rows
 
     @locate.autocomplete("item")
     async def locate_item_autocomplete(
