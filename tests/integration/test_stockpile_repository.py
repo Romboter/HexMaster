@@ -1,12 +1,14 @@
-import pytest
 from datetime import datetime, timezone
-from sqlalchemy import select, insert
+
+import pytest
+from sqlalchemy import insert, select
+
 from hexmaster.db.models import (
-    Town,
-    Region,
     CatalogItem,
-    StockpileSnapshot,
+    Region,
     SnapshotItem,
+    StockpileSnapshot,
+    Town,
 )
 
 GUILD_ID = 123456789

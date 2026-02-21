@@ -5,8 +5,8 @@
 from pathlib import Path
 from typing import Optional
 
-import pandas as pd
 import discord
+import pandas as pd
 from discord import app_commands
 from discord.ext import commands
 

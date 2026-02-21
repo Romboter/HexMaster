@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 import discord
 from discord import app_commands

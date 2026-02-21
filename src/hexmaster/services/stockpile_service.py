@@ -2,8 +2,9 @@
 # Licensed under the MIT License.
 """Service for managing stockpile data, OCR ingestion, and requisition logic."""
 
-import pandas as pd
 from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 
 from hexmaster.utils.geo_utils import calculate_distance
 

@@ -2,10 +2,10 @@
 # Licensed under the MIT License.
 """Service for interacting with external OCR for image processing."""
 
+from typing import Any, Dict, Optional
+
 import aiohttp
-import json
 import pandas as pd
-from typing import Any, Dict, List, Optional
 
 
 class OCRServiceError(Exception):
