@@ -33,3 +33,9 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 check_untyped_defs = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+    "ignore:DISTINCT ON is currently supported only by the PostgreSQL dialect:sqlalchemy.exc.SADeprecationWarning"
+]
