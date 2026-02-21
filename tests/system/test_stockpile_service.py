@@ -17,7 +17,7 @@ async def test_process_remote_and_ingest_success(
             {
                 "CodeName": "bmat2000",
                 "Name": "Item 2000",
-                "Quantity": 100,
+                "Quantity": 10,
                 "Crated?": "Yes",
                 "Per Crate": 100,
                 "Total": 1000,
